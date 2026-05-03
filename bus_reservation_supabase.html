@@ -1,0 +1,561 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+.site{font-family:sans-serif;color:var(--color-text-primary);background:var(--color-background-primary)}
+.nav{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between;height:58px;flex-wrap:wrap;gap:4px}
+.nav-logo{font-size:15px;font-weight:700;color:#BA7517;line-height:1.2}
+.nav-logo span{display:block;font-size:10px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.07em;text-transform:uppercase}
+.nav-tabs{display:flex;gap:2px;flex-wrap:wrap}
+.tab-btn{background:none;border:none;padding:6px 11px;font-family:sans-serif;font-size:12px;font-weight:600;color:var(--color-text-secondary);cursor:pointer;border-radius:8px;transition:background .15s,color .15s}
+.tab-btn:hover{background:var(--color-background-secondary);color:var(--color-text-primary)}
+.tab-btn.active{background:#FAEEDA;color:#BA7517}
+.page{display:none}.page.active{display:block}
+.hero{background:#FAEEDA;padding:2rem 1.5rem;text-align:center}
+.hero h1{font-size:22px;font-weight:700;color:#412402;margin-bottom:.4rem}
+.hero p{font-size:13px;color:#633806;max-width:420px;margin:0 auto}
+.section{padding:1.5rem}
+.msg{padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:10px}
+.msg.ok{background:#EAF3DE;color:#27500A}
+.msg.err{background:#FCEBEB;color:#A32D2D}
+.msg.info{background:#E6F1FB;color:#0C447C}
+.fg{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
+.fg label{font-size:11px;font-weight:600;color:var(--color-text-secondary)}
+.fg input,.fg select,.fg textarea{font-family:sans-serif;font-size:13px}
+.fg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.btn-primary{background:#BA7517;color:#fff;border:none;padding:11px 20px;border-radius:9px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer;width:100%}
+.btn-primary:hover{background:#854F0B}
+.btn-primary:disabled{background:#D3D1C7;cursor:not-allowed}
+.btn-outline{background:none;border:0.5px solid var(--color-border-secondary);color:var(--color-text-primary);padding:9px 16px;border-radius:9px;font-family:sans-serif;font-size:13px;font-weight:600;cursor:pointer;width:100%}
+.btn-outline:hover{background:var(--color-background-secondary)}
+.card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1.1rem;margin-bottom:.75rem}
+.card h3{font-size:13px;font-weight:700;color:#BA7517;margin-bottom:.75rem}
+.route-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1.25rem}
+.route-btn{padding:12px 8px;border:0.5px solid var(--color-border-secondary);border-radius:10px;background:var(--color-background-secondary);font-family:sans-serif;font-size:12px;font-weight:700;color:var(--color-text-secondary);cursor:pointer;text-align:center;transition:all .15s}
+.route-btn.active{background:#FAEEDA;border-color:#EF9F27;color:#854F0B}
+.route-btn .rf{font-size:10px;font-weight:500;margin-top:2px}
+.route-btn.active .rf{color:#854F0B}
+.trip-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:0.5px solid var(--color-border-tertiary);border-radius:10px;margin-bottom:6px;background:var(--color-background-primary);cursor:pointer;transition:border-color .15s}
+.trip-item:hover:not(.disabled):not(.cancelled){border-color:#EF9F27}
+.trip-item.selected{border:2px solid #EF9F27;background:#FAEEDA}
+.trip-item.disabled,.trip-item.cancelled{opacity:.5;cursor:not-allowed;background:var(--color-background-secondary)}
+.badge{font-size:11px;font-weight:700;padding:3px 8px;border-radius:20px}
+.badge-ok{background:#EAF3DE;color:#27500A}
+.badge-few{background:#FAEEDA;color:#854F0B}
+.badge-none{background:#FCEBEB;color:#A32D2D}
+.badge-cancel{background:#FCEBEB;color:#A32D2D}
+.no-trips{text-align:center;padding:1.5rem;color:var(--color-text-secondary);font-size:13px;background:var(--color-background-secondary);border-radius:10px}
+.step-label{font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.5rem}
+.admin-trip{display:flex;align-items:flex-start;justify-content:space-between;padding:8px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:9px;margin-bottom:5px;background:var(--color-background-primary);gap:8px}
+.admin-trip.cancelled{opacity:.6;background:var(--color-background-secondary)}
+.at-info{flex:1;min-width:0}
+.at-date{font-size:12px;font-weight:700}
+.at-sub{font-size:11px;color:var(--color-text-secondary)}
+.cancel-btn{background:none;border:0.5px solid #E24B4A;color:#A32D2D;border-radius:7px;padding:4px 9px;font-family:sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.cancel-btn:hover{background:#FCEBEB}
+.restore-btn{background:none;border:0.5px solid #639922;color:#3B6D11;border-radius:7px;padding:4px 9px;font-family:sans-serif;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap}
+.restore-btn:hover{background:#EAF3DE}
+.admin-month-ctrl{display:flex;align-items:center;gap:8px;margin-bottom:1rem}
+.admin-month-ctrl span{font-size:14px;font-weight:700;flex:1;text-align:center}
+.month-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:7px;padding:5px 10px;cursor:pointer;font-size:13px;font-family:sans-serif;color:var(--color-text-primary)}
+.atabs{display:flex;gap:4px;margin-bottom:1rem}
+.atab{flex:1;padding:7px;border:0.5px solid var(--color-border-secondary);border-radius:8px;background:var(--color-background-secondary);font-family:sans-serif;font-size:12px;font-weight:600;color:var(--color-text-secondary);cursor:pointer}
+.atab.active{background:#FAEEDA;border-color:#EF9F27;color:#854F0B}
+.res-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:10px;padding:10px;margin-bottom:6px}
+.divider{border:none;border-top:0.5px solid var(--color-border-tertiary);margin:10px 0}
+.footer{border-top:0.5px solid var(--color-border-tertiary);padding:1rem;text-align:center;font-size:11px;color:var(--color-text-secondary)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #fff;border-top-color:transparent;border-radius:50%;animation:spin .6s linear infinite;vertical-align:middle;margin-right:6px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.user-bar{background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);padding:6px 1.25rem;display:flex;align-items:center;justify-content:space-between;font-size:12px}
+.user-bar span{color:var(--color-text-secondary)}
+.user-bar strong{color:var(--color-text-primary)}
+.small-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:6px;padding:3px 9px;font-family:sans-serif;font-size:11px;cursor:pointer;color:var(--color-text-secondary)}
+.small-btn:hover{background:var(--color-background-primary)}
+</style>
+
+<div class="site">
+
+<nav class="nav">
+  <div class="nav-logo">Wynajem Busów<span>Jarosław</span></div>
+  <div class="nav-tabs">
+    <button class="tab-btn active" onclick="showPage('home',this)">Strona główna</button>
+    <button class="tab-btn" onclick="showPage('booking',this)">Rezerwacja</button>
+    <button class="tab-btn" onclick="showPage('myres',this)">Moje rezerwacje</button>
+    <button class="tab-btn" onclick="showPage('about',this)">O firmie</button>
+    <button class="tab-btn" onclick="showPage('contact',this)">Kontakt</button>
+    <button class="tab-btn" id="admin-tab" style="display:none" onclick="showPage('admin',this)">Panel</button>
+  </div>
+</nav>
+
+<div id="user-bar" class="user-bar" style="display:none">
+  <span>Zalogowany jako: <strong id="user-email-bar"></strong></span>
+  <button class="small-btn" onclick="signOut()">Wyloguj</button>
+</div>
+
+<div id="page-home" class="page active">
+  <div class="hero">
+    <div style="font-size:40px;margin-bottom:.5rem">🚌</div>
+    <h1>Wynajem busów i przejazdy do Austrii</h1>
+    <p>Regularne kursy Jarosław ↔ Wiedeń co tydzień. Zarezerwuj miejsce online.</p>
+    <div style="margin-top:1rem;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
+      <button style="background:#BA7517;color:#fff;border:none;padding:10px 20px;border-radius:9px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer" onclick="showPage('booking',document.querySelectorAll('.tab-btn')[1])">Zarezerwuj miejsce</button>
+      <button style="background:none;border:0.5px solid #BA7517;color:#BA7517;padding:10px 20px;border-radius:9px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer" onclick="showPage('auth',null)" id="home-login-btn">Zaloguj się</button>
+    </div>
+  </div>
+  <div class="section">
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:24px;margin-bottom:.5rem">🚐</div><div style="font-size:12px;font-weight:700;margin-bottom:.3rem">Wynajem busów</div><div style="font-size:11px;color:var(--color-text-secondary)">Na eventy i wycieczki grupowe</div></div>
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:24px;margin-bottom:.5rem">🛣️</div><div style="font-size:12px;font-weight:700;margin-bottom:.3rem">Kursy do Austrii</div><div style="font-size:11px;color:var(--color-text-secondary)">Jarosław↔Wiedeń co tydzień</div></div>
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:24px;margin-bottom:.5rem">🚛</div><div style="font-size:12px;font-weight:700;margin-bottom:.3rem">Transport lawetą</div><div style="font-size:11px;color:var(--color-text-secondary)">Przewóz pojazdów Polska↔Austria</div></div>
+      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:24px;margin-bottom:.5rem">🚗</div><div style="font-size:12px;font-weight:700;margin-bottom:.3rem">Sprowadzanie aut</div><div style="font-size:11px;color:var(--color-text-secondary)">Z Austrii do Polski</div></div>
+    </div>
+  </div>
+</div>
+
+<div id="page-auth" class="page">
+  <div style="max-width:340px;margin:2rem auto;padding:0 1rem">
+    <div id="auth-msg"></div>
+    <div id="auth-login-form">
+      <div class="card">
+        <h3>Zaloguj się</h3>
+        <div class="fg"><label>Email</label><input type="email" id="login-email" placeholder="jan@example.com" /></div>
+        <div class="fg"><label>Hasło</label><input type="password" id="login-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()" /></div>
+        <button class="btn-primary" id="login-btn" onclick="doLogin()">Zaloguj się</button>
+        <hr class="divider">
+        <button class="btn-outline" onclick="switchAuthForm('register')">Nie masz konta? Zarejestruj się</button>
+        <button class="btn-outline" style="margin-top:6px" onclick="switchAuthForm('reset')">Zapomniałem hasła</button>
+      </div>
+    </div>
+    <div id="auth-register-form" style="display:none">
+      <div class="card">
+        <h3>Rejestracja</h3>
+        <div class="fg2">
+          <div class="fg"><label>Imię</label><input type="text" id="reg-fname" placeholder="Jan" /></div>
+          <div class="fg"><label>Nazwisko</label><input type="text" id="reg-lname" placeholder="Kowalski" /></div>
+        </div>
+        <div class="fg"><label>Email</label><input type="email" id="reg-email" placeholder="jan@example.com" /></div>
+        <div class="fg"><label>Hasło (min. 6 znaków)</label><input type="password" id="reg-pass" placeholder="••••••••" /></div>
+        <div class="fg"><label>Telefon (opcjonalnie)</label><input type="tel" id="reg-phone" placeholder="+48 000 000 000" /></div>
+        <button class="btn-primary" id="reg-btn" onclick="doRegister()">Zarejestruj się</button>
+        <hr class="divider">
+        <button class="btn-outline" onclick="switchAuthForm('login')">Mam już konto</button>
+      </div>
+    </div>
+    <div id="auth-reset-form" style="display:none">
+      <div class="card">
+        <h3>Reset hasła</h3>
+        <div class="fg"><label>Email</label><input type="email" id="reset-email" placeholder="jan@example.com" /></div>
+        <button class="btn-primary" id="reset-btn" onclick="doReset()">Wyślij link resetujący</button>
+        <hr class="divider">
+        <button class="btn-outline" onclick="switchAuthForm('login')">Wróć do logowania</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-booking" class="page">
+  <div class="hero">
+    <h1>Rezerwacja miejsca</h1>
+    <p>Wybierz trasę i termin. Potwierdzenie wyślemy na email.</p>
+  </div>
+  <div class="section">
+    <div id="book-msg"></div>
+    <p class="step-label">1. Wybierz trasę</p>
+    <div class="route-btns">
+      <button class="route-btn active" id="rb-JW" onclick="selectRoute('JW')">
+        <div style="font-size:18px;margin-bottom:3px">🇵🇱→🇦🇹</div>
+        Jarosław → Wiedeń
+        <div class="rf">każda niedziela</div>
+      </button>
+      <button class="route-btn" id="rb-WJ" onclick="selectRoute('WJ')">
+        <div style="font-size:18px;margin-bottom:3px">🇦🇹→🇵🇱</div>
+        Wiedeń → Jarosław
+        <div class="rf">każdy piątek</div>
+      </button>
+    </div>
+    <p class="step-label">2. Wybierz termin</p>
+    <div id="trips-loading" class="no-trips">Ładowanie terminów...</div>
+    <div id="trips-list"></div>
+    <div id="booking-form" style="display:none">
+      <p class="step-label" style="margin-top:1rem">3. Dane pasażera</p>
+      <div class="card">
+        <div class="fg2">
+          <div class="fg"><label>Imię i nazwisko</label><input type="text" id="b-name" placeholder="Jan Kowalski" /></div>
+          <div class="fg"><label>Email</label><input type="email" id="b-email" placeholder="jan@example.com" /></div>
+        </div>
+        <div class="fg2">
+          <div class="fg"><label>Telefon</label><input type="tel" id="b-phone" placeholder="+48 000 000 000" /></div>
+          <div class="fg"><label>Liczba miejsc</label><input type="number" id="b-seats" min="1" max="7" value="1" /></div>
+        </div>
+        <div class="fg"><label>Uwagi (opcjonalnie)</label><input type="text" id="b-notes" placeholder="np. bagaż ponadgabarytowy" /></div>
+        <button class="btn-primary" id="submit-btn" onclick="submitBooking()">Zarezerwuj miejsce</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-myres" class="page">
+  <div class="hero">
+    <h1>Moje rezerwacje</h1>
+    <p>Historia Twoich przejazdów.</p>
+  </div>
+  <div class="section">
+    <div id="myres-msg"></div>
+    <div id="myres-list"><div class="no-trips">Zaloguj się, aby zobaczyć rezerwacje.</div></div>
+  </div>
+</div>
+
+<div id="page-about" class="page">
+  <div style="background:var(--color-background-secondary);border-bottom:0.5px solid var(--color-border-tertiary);padding:2rem 1.5rem;text-align:center">
+    <h2 style="font-size:20px;font-weight:700;margin-bottom:.5rem">O naszej firmie</h2>
+    <p style="font-size:13px;color:var(--color-text-secondary);max-width:440px;margin:0 auto;line-height:1.7">Lorem ipsum dolor sit amet, consectetur adipiscing elit. Od lat świadczymy usługi transportowe z Jarosławia, łącząc Polskę z Austrią.</p>
+  </div>
+  <div class="section">
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem">
+      <div style="background:#FAEEDA;border-radius:10px;padding:.9rem;text-align:center"><span style="font-size:22px;font-weight:700;color:#BA7517;display:block">10+</span><span style="font-size:10px;color:#854F0B;font-weight:600;text-transform:uppercase">lat doświadczenia</span></div>
+      <div style="background:#FAEEDA;border-radius:10px;padding:.9rem;text-align:center"><span style="font-size:22px;font-weight:700;color:#BA7517;display:block">500+</span><span style="font-size:10px;color:#854F0B;font-weight:600;text-transform:uppercase">klientów</span></div>
+      <div style="background:#FAEEDA;border-radius:10px;padding:.9rem;text-align:center"><span style="font-size:22px;font-weight:700;color:#BA7517;display:block">7</span><span style="font-size:10px;color:#854F0B;font-weight:600;text-transform:uppercase">miejsc w busie</span></div>
+    </div>
+    <div class="card"><h3>Regularne kursy Jarosław ↔ Wiedeń</h3><p style="font-size:12px;color:var(--color-text-secondary);line-height:1.7">Kursujemy co tydzień – w niedzielę z Jarosławia do Wiednia, w piątek z Wiednia do Jarosławia.</p></div>
+  </div>
+</div>
+
+<div id="page-contact" class="page">
+  <div style="background:#FAEEDA;padding:2rem 1.5rem;text-align:center">
+    <h2 style="font-size:20px;font-weight:700;color:#412402;margin-bottom:.4rem">Skontaktuj się z nami</h2>
+    <p style="font-size:13px;color:#633806">Chętnie odpowiemy na pytania.</p>
+  </div>
+  <div style="padding:1.5rem;display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px">
+    <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:22px;margin-bottom:.5rem">📞</div><div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem">Telefon</div><div style="font-size:13px;font-weight:600">+48 xxx xxx xxx</div></div>
+    <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:22px;margin-bottom:.5rem">✉️</div><div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem">Email</div><div style="font-size:13px;font-weight:600">kontakt@lorem.pl</div></div>
+    <div style="background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:22px;margin-bottom:.5rem">📍</div><div style="font-size:11px;font-weight:700;color:var(--color-text-secondary);text-transform:uppercase;letter-spacing:.07em;margin-bottom:.3rem">Adres</div><div style="font-size:13px;font-weight:600">ul. Przykładowa 1<br>37-500 Jarosław</div></div>
+  </div>
+</div>
+
+<div id="page-admin" class="page">
+  <div class="section">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+      <h2 style="font-size:16px;font-weight:700">Panel właściciela</h2>
+      <button class="small-btn" onclick="signOut()">Wyloguj</button>
+    </div>
+    <div class="atabs">
+      <button class="atab active" onclick="switchAdminTab('trips',this)">Terminy kursów</button>
+      <button class="atab" onclick="switchAdminTab('res',this)">Rezerwacje</button>
+    </div>
+    <div id="admin-trips-panel">
+      <div class="admin-month-ctrl">
+        <button class="month-btn" onclick="adminPrevMonth()">‹</button>
+        <span id="admin-month-label"></span>
+        <button class="month-btn" onclick="adminNextMonth()">›</button>
+      </div>
+      <button style="width:100%;background:#BA7517;color:#fff;border:none;padding:10px;border-radius:9px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:.75rem" onclick="generateMonth()">Wystaw terminy na ten miesiąc</button>
+      <div id="admin-gen-msg" style="margin-bottom:8px"></div>
+      <p style="font-size:12px;font-weight:700;color:#BA7517;margin-bottom:6px">🇵🇱→🇦🇹 Jarosław → Wiedeń (niedziele)</p>
+      <div id="admin-list-JW"></div>
+      <p style="font-size:12px;font-weight:700;color:#BA7517;margin-bottom:6px;margin-top:12px">🇦🇹→🇵🇱 Wiedeń → Jarosław (piątki)</p>
+      <div id="admin-list-WJ"></div>
+    </div>
+    <div id="admin-res-panel" style="display:none">
+      <div id="admin-res-list"><div class="no-trips">Ładowanie...</div></div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">© 2025 Wynajem Busów Jarosław · Wszelkie prawa zastrzeżone</div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+<script>
+const SB_URL='https://fzjvrjowptibysaythwa.supabase.co';
+const SB_KEY='sb_publishable_IwEk9ePTdCzXivBHz8Gjcw_6iURm6p_';
+const sb=supabase.createClient(SB_URL,SB_KEY);
+const MAX_SEATS=7;
+const MONTHS=['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
+
+let currentUser=null;
+let currentProfile=null;
+let selectedRoute='JW';
+let selectedTripId=null;
+let adminViewMonth=new Date();
+let cachedTrips=[];
+
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(btn)btn.classList.add('active');
+  if(id==='booking')loadTrips();
+  if(id==='myres')loadMyReservations();
+  if(id==='admin')renderAdminPanel();
+}
+
+function showMsg(elId,text,type){
+  const el=document.getElementById(elId);
+  if(el)el.innerHTML=text?'<div class="msg '+type+'">'+text+'</div>':'';
+}
+
+function formatDate(d){
+  const dt=new Date(d+'T12:00:00');
+  return dt.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+
+async function initAuth(){
+  const{data:{session}}=await sb.auth.getSession();
+  if(session)await onLogin(session.user);
+  sb.auth.onAuthStateChange(async(_,session)=>{
+    if(session)await onLogin(session.user);
+    else onLogout();
+  });
+}
+
+async function onLogin(user){
+  currentUser=user;
+  const{data}=await sb.from('profiles').select('*').eq('id',user.id).single();
+  currentProfile=data;
+  document.getElementById('user-bar').style.display='flex';
+  document.getElementById('user-email-bar').textContent=user.email;
+  document.getElementById('home-login-btn').style.display='none';
+  if(data&&data.role==='admin'){
+    document.getElementById('admin-tab').style.display='inline-block';
+  }
+  if(document.getElementById('page-booking').classList.contains('active'))prefillBookingForm();
+  if(document.getElementById('page-myres').classList.contains('active'))loadMyReservations();
+}
+
+function onLogout(){
+  currentUser=null;currentProfile=null;
+  document.getElementById('user-bar').style.display='none';
+  document.getElementById('home-login-btn').style.display='inline-block';
+  document.getElementById('admin-tab').style.display='none';
+}
+
+function prefillBookingForm(){
+  if(!currentUser)return;
+  const meta=currentUser.user_metadata||{};
+  const name=(meta.full_name||'').trim();
+  if(name&&document.getElementById('b-name'))document.getElementById('b-name').value=name;
+  if(document.getElementById('b-email'))document.getElementById('b-email').value=currentUser.email||'';
+  if(currentProfile&&currentProfile.phone&&document.getElementById('b-phone'))document.getElementById('b-phone').value=currentProfile.phone;
+}
+
+function switchAuthForm(f){
+  ['login','register','reset'].forEach(x=>document.getElementById('auth-'+x+'-form').style.display='none');
+  document.getElementById('auth-'+f+'-form').style.display='block';
+  showMsg('auth-msg','','');
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pass=document.getElementById('login-pass').value;
+  if(!email||!pass){showMsg('auth-msg','Wpisz email i hasło.','err');return}
+  const btn=document.getElementById('login-btn');
+  btn.innerHTML='<span class="spinner"></span>Loguję...';btn.disabled=true;
+  const{error}=await sb.auth.signInWithPassword({email,password:pass});
+  btn.innerHTML='Zaloguj się';btn.disabled=false;
+  if(error){showMsg('auth-msg','Błąd: '+error.message,'err');return}
+  showPage('home',document.querySelectorAll('.tab-btn')[0]);
+}
+
+async function doRegister(){
+  const fname=document.getElementById('reg-fname').value.trim();
+  const lname=document.getElementById('reg-lname').value.trim();
+  const email=document.getElementById('reg-email').value.trim();
+  const pass=document.getElementById('reg-pass').value;
+  const phone=document.getElementById('reg-phone').value.trim();
+  if(!fname||!lname||!email||!pass){showMsg('auth-msg','Wypełnij wymagane pola.','err');return}
+  const btn=document.getElementById('reg-btn');
+  btn.innerHTML='<span class="spinner"></span>Rejestruję...';btn.disabled=true;
+  const{error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:fname+' '+lname,phone}}});
+  btn.innerHTML='Zarejestruj się';btn.disabled=false;
+  if(error){showMsg('auth-msg','Błąd: '+error.message,'err');return}
+  showMsg('auth-msg','Sprawdź skrzynkę email – wyślaliśmy link potwierdzający.','ok');
+}
+
+async function doReset(){
+  const email=document.getElementById('reset-email').value.trim();
+  if(!email){showMsg('auth-msg','Wpisz email.','err');return}
+  const btn=document.getElementById('reset-btn');
+  btn.innerHTML='<span class="spinner"></span>Wysyłam...';btn.disabled=true;
+  const{error}=await sb.auth.resetPasswordForEmail(email);
+  btn.innerHTML='Wyślij link resetujący';btn.disabled=false;
+  if(error){showMsg('auth-msg','Błąd: '+error.message,'err');return}
+  showMsg('auth-msg','Link resetujący wysłany na '+email,'ok');
+}
+
+async function signOut(){
+  await sb.auth.signOut();
+  showPage('home',document.querySelectorAll('.tab-btn')[0]);
+}
+
+function selectRoute(r){
+  selectedRoute=r;selectedTripId=null;
+  document.getElementById('rb-JW').classList.toggle('active',r==='JW');
+  document.getElementById('rb-WJ').classList.toggle('active',r==='WJ');
+  document.getElementById('booking-form').style.display='none';
+  renderTrips();
+}
+
+async function loadTrips(){
+  document.getElementById('trips-loading').style.display='block';
+  document.getElementById('trips-list').innerHTML='';
+  const today=new Date().toISOString().split('T')[0];
+  const{data,error}=await sb.from('trips_with_seats').select('*').gte('date',today).order('date');
+  document.getElementById('trips-loading').style.display='none';
+  if(error){showMsg('book-msg','Błąd ładowania terminów: '+error.message,'err');return}
+  cachedTrips=data||[];
+  renderTrips();
+  prefillBookingForm();
+}
+
+function renderTrips(){
+  const trips=(cachedTrips||[]).filter(t=>t.route===selectedRoute);
+  const el=document.getElementById('trips-list');
+  if(!trips.length){el.innerHTML='<div class="no-trips">Brak dostępnych terminów na ten miesiąc.<br>Właściciel wystawi terminy wkrótce.</div>';return}
+  el.innerHTML=trips.map(t=>{
+    const free=t.free_seats||0;
+    const cancelled=t.cancelled;
+    let badge='',cls='';
+    if(cancelled){badge='<span class="badge badge-cancel">Odwołany</span>';cls='cancelled'}
+    else if(free===0){badge='<span class="badge badge-none">Brak miejsc</span>';cls='disabled'}
+    else if(free<=2){badge='<span class="badge badge-few">Zostały: '+free+'</span>'}
+    else{badge='<span class="badge badge-ok">Wolne: '+free+'/'+MAX_SEATS+'</span>'}
+    const sel=selectedTripId===t.id?' selected':'';
+    return'<div class="trip-item'+' '+cls+sel+'" onclick="selectTrip(\''+t.id+'\','+!!cancelled+','+(free===0)+')"><div><div style="font-size:13px;font-weight:700">'+formatDate(t.date)+'</div><div style="font-size:11px;color:var(--color-text-secondary)">'+(t.route==='JW'?'Jarosław → Wiedeń':'Wiedeń → Jarosław')+'</div></div><div>'+badge+'</div></div>';
+  }).join('');
+}
+
+function selectTrip(id,cancelled,full){
+  if(cancelled||full)return;
+  selectedTripId=id;
+  renderTrips();
+  document.getElementById('booking-form').style.display='block';
+  showMsg('book-msg','','');
+}
+
+async function submitBooking(){
+  const name=document.getElementById('b-name').value.trim();
+  const email=document.getElementById('b-email').value.trim();
+  const phone=document.getElementById('b-phone').value.trim();
+  const seats=parseInt(document.getElementById('b-seats').value)||1;
+  const notes=document.getElementById('b-notes').value.trim();
+  if(!name||!email){showMsg('book-msg','Wpisz imię, nazwisko i email.','err');return}
+  if(!selectedTripId){showMsg('book-msg','Wybierz termin.','err');return}
+  const trip=cachedTrips.find(t=>t.id===selectedTripId);
+  if(!trip||trip.cancelled){showMsg('book-msg','Ten kurs jest odwołany.','err');return}
+  if((trip.free_seats||0)<seats){showMsg('book-msg','Dostępnych miejsc: '+(trip.free_seats||0)+'. Zmień liczbę.','err');return}
+  const btn=document.getElementById('submit-btn');
+  btn.innerHTML='<span class="spinner"></span>Rezerwuję...';btn.disabled=true;
+  const resId='R'+Date.now();
+  const payload={id:resId,trip_id:selectedTripId,passenger_name:name,passenger_email:email,passenger_phone:phone||null,seats,notes:notes||null,status:'confirmed'};
+  if(currentUser)payload.user_id=currentUser.id;
+  const{error}=await sb.from('reservations').insert(payload);
+  btn.innerHTML='Zarezerwuj miejsce';btn.disabled=false;
+  if(error){showMsg('book-msg','Błąd rezerwacji: '+error.message,'err');return}
+  selectedTripId=null;
+  document.getElementById('booking-form').style.display='none';
+  ['b-name','b-email','b-phone','b-notes'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('b-seats').value='1';
+  await loadTrips();
+  showMsg('book-msg','✅ Rezerwacja potwierdzona! Nr: '+resId,'ok');
+}
+
+async function loadMyReservations(){
+  const el=document.getElementById('myres-list');
+  if(!currentUser){el.innerHTML='<div class="no-trips">Zaloguj się, aby zobaczyć rezerwacje. <button class="btn-outline" style="margin-top:8px" onclick="showPage(\'auth\',null)">Zaloguj się</button></div>';return}
+  el.innerHTML='<div class="no-trips">Ładowanie...</div>';
+  const{data,error}=await sb.from('reservations').select('*,trips(route,date,cancelled)').eq('user_id',currentUser.id).order('created_at',{ascending:false});
+  if(error){el.innerHTML='<div class="msg err">Błąd: '+error.message+'</div>';return}
+  if(!data||!data.length){el.innerHTML='<div class="no-trips">Brak rezerwacji.</div>';return}
+  el.innerHTML=data.map(r=>{
+    const route=r.trips?r.trips.route:'–';
+    const date=r.trips?formatDate(r.trips.date):'–';
+    const cancelled=r.trips&&r.trips.cancelled;
+    const statusBadge=r.status==='cancelled'?'<span class="badge badge-cancel">Anulowana</span>':cancelled?'<span class="badge badge-cancel">Kurs odwołany</span>':'<span class="badge badge-ok">Potwierdzona</span>';
+    return'<div class="res-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div style="font-size:13px;font-weight:700">'+date+'</div>'+statusBadge+'</div><div style="font-size:12px;color:var(--color-text-secondary)">'+(route==='JW'?'Jarosław → Wiedeń':'Wiedeń → Jarosław')+'</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px">Miejsc: '+r.seats+(r.notes?' · '+r.notes:'')+'</div><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">ID: '+r.id+'</div></div>';
+  }).join('');
+}
+
+function switchAdminTab(tab,btn){
+  document.querySelectorAll('.atab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  document.getElementById('admin-trips-panel').style.display=tab==='trips'?'block':'none';
+  document.getElementById('admin-res-panel').style.display=tab==='res'?'block':'none';
+  if(tab==='res')loadAdminReservations();
+}
+
+function renderAdminPanel(){
+  document.getElementById('admin-month-label').textContent=MONTHS[adminViewMonth.getMonth()]+' '+adminViewMonth.getFullYear();
+  loadAdminTrips();
+}
+function adminPrevMonth(){adminViewMonth=new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth()-1,1);renderAdminPanel()}
+function adminNextMonth(){adminViewMonth=new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth()+1,1);renderAdminPanel()}
+
+async function loadAdminTrips(){
+  const y=adminViewMonth.getFullYear();
+  const m=(adminViewMonth.getMonth()+1).toString().padStart(2,'0');
+  const from=y+'-'+m+'-01';
+  const last=new Date(y,adminViewMonth.getMonth()+1,0).getDate();
+  const to=y+'-'+m+'-'+last.toString().padStart(2,'0');
+  const{data}=await sb.from('trips_with_seats').select('*').gte('date',from).lte('date',to).order('date');
+  renderAdminList('JW',data||[]);
+  renderAdminList('WJ',data||[]);
+}
+
+async function loadAdminReservations(){
+  const el=document.getElementById('admin-res-list');
+  el.innerHTML='<div class="no-trips">Ładowanie...</div>';
+  const{data,error}=await sb.from('reservations').select('*,trips(route,date)').order('created_at',{ascending:false});
+  if(error){el.innerHTML='<div class="msg err">Błąd: '+error.message+'</div>';return}
+  if(!data||!data.length){el.innerHTML='<div class="no-trips">Brak rezerwacji.</div>';return}
+  el.innerHTML=data.map(r=>{
+    const route=r.trips?r.trips.route:'–';
+    const date=r.trips?formatDate(r.trips.date):'–';
+    return'<div class="res-card"><div style="display:flex;justify-content:space-between"><div style="font-size:12px;font-weight:700">'+r.passenger_name+'</div><span class="badge '+(r.status==='confirmed'?'badge-ok':'badge-cancel')+'">'+r.seats+' miejsce(a)</span></div><div style="font-size:11px;color:var(--color-text-secondary)">'+r.passenger_email+(r.passenger_phone?' · '+r.passenger_phone:'')+'</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">'+(route==='JW'?'Jarosław→Wiedeń':'Wiedeń→Jarosław')+' · '+date+'</div>'+(r.notes?'<div style="font-size:11px;color:var(--color-text-secondary)">Uwagi: '+r.notes+'</div>':'')+'<div style="font-size:10px;color:var(--color-text-secondary);margin-top:2px">ID: '+r.id+' · '+new Date(r.created_at).toLocaleString('pl-PL')+'</div></div>';
+  }).join('');
+}
+
+function renderAdminList(route,trips){
+  const filtered=trips.filter(t=>t.route===route).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const el=document.getElementById('admin-list-'+route);
+  if(!filtered.length){el.innerHTML='<p style="font-size:12px;color:var(--color-text-secondary);padding:8px 0">Brak terminów w tym miesiącu.</p>';return}
+  el.innerHTML=filtered.map(t=>{
+    const actionBtn=t.cancelled
+      ?'<button class="restore-btn" onclick="toggleTrip(\''+t.id+'\',false)">Przywróć</button>'
+      :'<button class="cancel-btn" onclick="toggleTrip(\''+t.id+'\',true)">Odwołaj</button>';
+    const resInfo=t.used_seats+'/'+(t.max_seats||MAX_SEATS)+' miejsc zajętych';
+    return'<div class="admin-trip'+(t.cancelled?' cancelled':'')+'"><div class="at-info"><div class="at-date">'+formatDate(t.date)+(t.cancelled?' – ODWOŁANY':'')+'</div><div class="at-sub">'+resInfo+'</div></div>'+actionBtn+'</div>';
+  }).join('');
+}
+
+async function generateMonth(){
+  const y=adminViewMonth.getFullYear();
+  const m=adminViewMonth.getMonth();
+  const mStr=(m+1).toString().padStart(2,'0');
+  const from=y+'-'+mStr+'-01';
+  const last=new Date(y,m+1,0).getDate();
+  const to=y+'-'+mStr+'-'+last.toString().padStart(2,'0');
+  const{data:existing}=await sb.from('trips').select('id').gte('date',from).lte('date',to);
+  if(existing&&existing.length>0){
+    document.getElementById('admin-gen-msg').innerHTML='<div class="msg err">Terminy na '+MONTHS[m]+' '+y+' już istnieją ('+existing.length+' kursów).</div>';return;
+  }
+  const newTrips=[];
+  const daysInMonth=new Date(y,m+1,0).getDate();
+  for(let d=1;d<=daysInMonth;d++){
+    const dow=new Date(y,m,d).getDay();
+    const dStr=d.toString().padStart(2,'0');
+    const date=y+'-'+mStr+'-'+dStr;
+    if(dow===0)newTrips.push({id:'T'+y+mStr+dStr+'JW',route:'JW',date,cancelled:false,max_seats:MAX_SEATS});
+    if(dow===5)newTrips.push({id:'T'+y+mStr+dStr+'WJ',route:'WJ',date,cancelled:false,max_seats:MAX_SEATS});
+  }
+  const{error}=await sb.from('trips').insert(newTrips);
+  if(error){document.getElementById('admin-gen-msg').innerHTML='<div class="msg err">Błąd: '+error.message+'</div>';return}
+  document.getElementById('admin-gen-msg').innerHTML='<div class="msg ok">Wystawiono '+newTrips.length+' terminów na '+MONTHS[m]+' '+y+'.</div>';
+  loadAdminTrips();
+}
+
+async function toggleTrip(id,cancel){
+  if(cancel&&!confirm('Odwołać ten kurs?'))return;
+  await sb.from('trips').update({cancelled:cancel}).eq('id',id);
+  loadAdminTrips();
+}
+
+initAuth();
+</script>
