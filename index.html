@@ -1,4 +1,12 @@
 
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Wynajem Busów Jarosław</title>
+</head>
+<body>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 .site{font-family:sans-serif;color:var(--color-text-primary);background:var(--color-background-primary)}
@@ -364,7 +372,7 @@ async function doRegister(){
   if(!fname||!lname||!email||!pass){showMsg('auth-msg','Wypełnij wymagane pola.','err');return}
   const btn=document.getElementById('reg-btn');
   btn.innerHTML='<span class="spinner"></span>Rejestruję...';btn.disabled=true;
-  const{error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:fname+' '+lname,phone}}});
+  const{error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:fname+' '+lname,phone},emailRedirectTo:'https://strona-taty-darii.onrender.com/verify-email.html'}});
   btn.innerHTML='Zarejestruj się';btn.disabled=false;
   if(error){showMsg('auth-msg','Błąd: '+error.message,'err');return}
   showMsg('auth-msg','Sprawdź skrzynkę email – wyślaliśmy link potwierdzający.','ok');
@@ -375,7 +383,7 @@ async function doReset(){
   if(!email){showMsg('auth-msg','Wpisz email.','err');return}
   const btn=document.getElementById('reset-btn');
   btn.innerHTML='<span class="spinner"></span>Wysyłam...';btn.disabled=true;
-  const{error}=await sb.auth.resetPasswordForEmail(email);
+  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:'https://strona-taty-darii.onrender.com/verify-email.html'});
   btn.innerHTML='Wyślij link resetujący';btn.disabled=false;
   if(error){showMsg('auth-msg','Błąd: '+error.message,'err');return}
   showMsg('auth-msg','Link resetujący wysłany na '+email,'ok');
@@ -559,3 +567,5 @@ async function toggleTrip(id,cancel){
 
 initAuth();
 </script>
+</body>
+</html>

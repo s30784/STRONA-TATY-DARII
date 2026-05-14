@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Potwierdzenie emaila</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: sans-serif;
+      background: #f5f5f5;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 1rem;
+    }
+    .container {
+      background: white;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 400px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .icon {
+      font-size: 48px;
+      margin-bottom: 1rem;
+    }
+    h1 {
+      font-size: 22px;
+      color: #412402;
+      margin-bottom: 0.5rem;
+    }
+    p {
+      font-size: 14px;
+      color: #666;
+      margin-bottom: 1rem;
+      line-height: 1.5;
+    }
+    .spinner {
+      display: inline-block;
+      width: 16px;
+      height: 16px;
+      border: 2px solid #ddd;
+      border-top-color: #BA7517;
+      border-radius: 50%;
+      animation: spin 0.6s linear infinite;
+      margin-right: 8px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .msg {
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      font-size: 13px;
+    }
+    .msg.loading {
+      background: #E6F1FB;
+      color: #0C447C;
+    }
+    .msg.success {
+      background: #EAF3DE;
+      color: #27500A;
+    }
+    .msg.error {
+      background: #FCEBEB;
+      color: #A32D2D;
+    }
+    a {
+      display: inline-block;
+      margin-top: 1rem;
+      padding: 10px 20px;
+      background: #BA7517;
+      color: white;
+      text-decoration: none;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 13px;
+      transition: background 0.15s;
+    }
+    a:hover {
+      background: #854F0B;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon" id="icon">⏳</div>
+    <h1 id="title">Potwierdzanie emaila...</h1>
+    <div id="message" class="msg loading">
+      <span class="spinner"></span>Czekaj, weryfikuję Twój adres email...
+    </div>
+    <a href="/" id="redirect-link" style="display: none;">Wróć do strony głównej</a>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
+  <script>
+    const SB_URL = 'https://fzjvrjowptibysaythwa.supabase.co';
+    const SB_KEY = 'sb_publishable_IwEk9ePTdCzXivBHz8Gjcw_6iURm6p_';
+    const sb = supabase.createClient(SB_URL, SB_KEY);
+
+    async function verifyEmail() {
+      try {
+        // Pobierz parametry z URL
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
+        const type = params.get('type');
+        const token_hash = params.get('token_hash');
+        const email = params.get('email');
+
+        if (!token_hash) {
+          throw new Error('Brak tokenu weryfikacyjnego w URL. Sprawdź link z emaila.');
+        }
+
+        // Weryfikuj email
+        const { data, error } = await sb.auth.verifyOtp({
+          type: type || 'email',
+          token_hash: token_hash,
+          email: email
+        });
+
+        if (error) throw error;
+
+        // Sukces
+        document.getElementById('icon').textContent = '✅';
+        document.getElementById('title').textContent = 'Email potwierdzony!';
+        document.getElementById('message').className = 'msg success';
+        document.getElementById('message').innerHTML = 'Twój adres email został potwierdzony. Możesz się zalogować i rezerwować miejsca.';
+        document.getElementById('redirect-link').style.display = 'inline-block';
+        
+        // Auto redirect po 3 sekundach
+        setTimeout(() => {
+          window.location.href = '/';
+        }, 3000);
+
+      } catch (err) {
+        document.getElementById('icon').textContent = '❌';
+        document.getElementById('title').textContent = 'Błąd weryfikacji';
+        document.getElementById('message').className = 'msg error';
+        document.getElementById('message').innerHTML = 'Nie udało się potwierdzić emaila: ' + (err.message || 'Nieznany błąd');
+        document.getElementById('redirect-link').textContent = 'Wróć na stronę główną';
+        document.getElementById('redirect-link').style.display = 'inline-block';
+      }
+    }
+
+    verifyEmail();
+  </script>
+</body>
+</html>
