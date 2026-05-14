@@ -1,0 +1,2 @@
+
+ gunicorn generuj_mail:app
