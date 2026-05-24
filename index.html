@@ -9,7 +9,15 @@
 <body>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
-.site{font-family:sans-serif;color:var(--color-text-primary);background:var(--color-background-primary)}
+:root{
+  --color-text-primary:#241B14;
+  --color-text-secondary:#675B50;
+  --color-background-primary:#FFFEFB;
+  --color-background-secondary:#F7F3EC;
+  --color-border-secondary:#D8CDC0;
+  --color-border-tertiary:#E9E0D6;
+}
+.site{font-family:sans-serif;color:var(--color-text-primary);background:var(--color-background-primary);min-height:100vh}
 .nav{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between;height:58px;flex-wrap:wrap;gap:4px}
 .nav-logo{font-size:15px;font-weight:700;color:#BA7517;line-height:1.2}
 .nav-logo span{display:block;font-size:10px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.07em;text-transform:uppercase}
@@ -20,7 +28,61 @@
 .page{display:none}.page.active{display:block}
 .hero{background:#FAEEDA;padding:2rem 1.5rem;text-align:center}
 .hero h1{font-size:22px;font-weight:700;color:#412402;margin-bottom:.4rem}
-.hero p{font-size:13px;color:#633806;max-width:420px;margin:0 auto}
+.hero p{font-size:13px;color:#633806;max-width:520px;margin:0 auto;line-height:1.6}
+.home-hero{position:relative;min-height:430px;padding:3.5rem 1.5rem 2rem;display:flex;align-items:flex-end;text-align:left;background:linear-gradient(180deg,rgba(36,27,20,.2),rgba(36,27,20,.82)),url('https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/2024_Mercedes_V_Class.jpg/1280px-2024_Mercedes_V_Class.jpg') center/cover;color:#fff}
+.home-hero-inner{width:min(1080px,100%);margin:0 auto}
+.home-hero h1{font-size:clamp(30px,5vw,52px);line-height:1.05;margin-bottom:.75rem;color:#fff;max-width:720px;letter-spacing:0}
+.home-hero p{font-size:15px;line-height:1.7;max-width:610px;color:#FFF4E5;margin:0}
+.hero-actions{margin-top:1.1rem;display:flex;gap:8px;flex-wrap:wrap}
+.hero-btn{border:none;padding:11px 18px;border-radius:8px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer}
+.hero-btn.primary{background:#BA7517;color:#fff}
+.hero-btn.secondary{background:#fff;color:#412402}
+.service-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}
+.service-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden}
+.service-card img{width:100%;height:145px;object-fit:cover;display:block}
+.service-body{padding:1rem}
+.service-body h3{font-size:15px;color:#412402;margin-bottom:.4rem}
+.service-body p{font-size:12px;color:var(--color-text-secondary);line-height:1.6;margin-bottom:.75rem}
+.mini-list{display:grid;gap:6px;margin:.75rem 0}
+.mini-list li{font-size:12px;color:var(--color-text-secondary);list-style:none;padding-left:18px;position:relative;line-height:1.45}
+.mini-list li:before{content:"";width:7px;height:7px;border-radius:50%;background:#BA7517;position:absolute;left:2px;top:6px}
+.service-link{background:#FAEEDA;color:#854F0B;border:0.5px solid #EF9F27;border-radius:8px;padding:9px 12px;font-size:12px;font-weight:700;cursor:pointer;width:100%}
+.split-layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:14px;align-items:start}
+.fleet-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px}
+.fleet-card{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:8px;overflow:hidden}
+.fleet-card.selected{border-color:#EF9F27;box-shadow:0 0 0 2px #FAEEDA}
+.fleet-card img{width:100%;height:155px;object-fit:cover;display:block;background:#eee}
+.fleet-card-body{padding:1rem}
+.fleet-card h3{font-size:15px;color:#412402;margin-bottom:.35rem}
+.fleet-meta{display:flex;gap:6px;flex-wrap:wrap;margin:.6rem 0}
+.pill{font-size:11px;font-weight:700;background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:999px;padding:4px 8px}
+.price-table{width:100%;border-collapse:collapse;font-size:12px}
+.price-table th,.price-table td{padding:9px;border-bottom:0.5px solid var(--color-border-tertiary);text-align:left}
+.price-table th{color:#854F0B;background:#FAEEDA}
+.availability-list{display:grid;gap:7px}
+.availability-item{display:flex;justify-content:space-between;gap:8px;align-items:center;padding:9px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:8px;background:var(--color-background-secondary);font-size:12px}
+.map-frame{width:100%;height:320px;border:0;border-radius:8px;background:var(--color-background-secondary)}
+.route-diagram{position:relative;display:grid;gap:12px;padding:12px;border-radius:8px;background:linear-gradient(180deg,#FFFEFB,#F7F3EC);border:0.5px solid var(--color-border-tertiary);overflow:hidden}
+.route-line{position:absolute;left:31px;top:25px;bottom:calc(36px + var(--route-tail, 0px));width:3px;background:#E0C39B;border-radius:99px}
+.route-stop{position:relative;display:grid;grid-template-columns:40px 1fr;gap:8px;align-items:flex-start;border:none;background:transparent;text-align:left;cursor:pointer;padding:4px 0;font-family:sans-serif}
+.route-dot{position:relative;z-index:1;width:26px;height:26px;min-width:26px;border-radius:50%;background:#fff;border:3px solid #BA7517;box-shadow:0 0 0 4px #FAEEDA;margin:0 auto;display:flex;align-items:center;justify-content:center;color:#854F0B;font-size:11px;font-weight:800;line-height:1;text-align:center;font-variant-numeric:tabular-nums}
+.route-stop:hover .route-dot{background:#BA7517;color:#fff}
+.route-stop.start .route-dot{background:#27500A;border-color:#639922;color:#fff;box-shadow:0 0 0 4px #EAF3DE}
+.route-stop.end .route-dot{background:#854F0B;border-color:#BA7517;color:#fff;box-shadow:0 0 0 4px #FAEEDA}
+.route-stop.start strong:after{content:"Start";margin-left:6px;font-size:10px;font-weight:800;color:#27500A;background:#EAF3DE;border-radius:999px;padding:2px 6px;vertical-align:middle}
+.route-stop.end strong:after{content:"Koniec";margin-left:6px;font-size:10px;font-weight:800;color:#854F0B;background:#FAEEDA;border-radius:999px;padding:2px 6px;vertical-align:middle}
+.route-stop strong{display:block;font-size:13px;color:#412402;margin-bottom:2px}
+.route-stop span{display:block;font-size:11px;color:var(--color-text-secondary);line-height:1.45}
+.route-actions{display:flex;gap:8px;flex-wrap:wrap;margin-left:48px;margin-top:4px}
+.route-actions button,.map-link{border:0.5px solid var(--color-border-secondary);background:#fff;color:#412402;border-radius:8px;padding:8px 10px;font-size:12px;font-weight:700;font-family:sans-serif;cursor:pointer;text-decoration:none;display:inline-block}
+.route-actions button:hover,.map-link:hover{background:#FAEEDA;border-color:#EF9F27;color:#854F0B}
+.stops-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px}
+.stop-item{border:0.5px solid var(--color-border-tertiary);border-radius:8px;padding:10px;background:var(--color-background-primary);cursor:pointer;text-align:left;width:100%}
+.stop-item:hover{border-color:#EF9F27;background:#FAEEDA}
+.stop-item strong{font-size:12px;color:#412402;display:block;margin-bottom:3px}
+.stop-item span{font-size:11px;color:var(--color-text-secondary);line-height:1.45;display:block}
+.tow-form-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+.form-help{font-size:12px;color:var(--color-text-secondary);line-height:1.6;margin-bottom:12px}
 .section{padding:1.5rem}
 .msg{padding:10px 12px;border-radius:8px;font-size:13px;margin-bottom:10px}
 .msg.ok{background:#EAF3DE;color:#27500A}
@@ -28,7 +90,7 @@
 .msg.info{background:#E6F1FB;color:#0C447C}
 .fg{display:flex;flex-direction:column;gap:3px;margin-bottom:8px}
 .fg label{font-size:11px;font-weight:600;color:var(--color-text-secondary)}
-.fg input,.fg select,.fg textarea{font-family:sans-serif;font-size:13px}
+.fg input,.fg select,.fg textarea{font-family:sans-serif;font-size:13px;border:0.5px solid var(--color-border-secondary);border-radius:8px;padding:10px;background:#fff;color:var(--color-text-primary);width:100%}
 .fg2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 .btn-primary{background:#BA7517;color:#fff;border:none;padding:11px 20px;border-radius:9px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer;width:100%}
 .btn-primary:hover{background:#854F0B}
@@ -42,7 +104,25 @@
 .route-btn.active{background:#FAEEDA;border-color:#EF9F27;color:#854F0B}
 .route-btn .rf{font-size:10px;font-weight:500;margin-top:2px}
 .route-btn.active .rf{color:#854F0B}
-.trip-item{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border:0.5px solid var(--color-border-tertiary);border-radius:10px;margin-bottom:6px;background:var(--color-background-primary);cursor:pointer;transition:border-color .15s}
+.calendar-controls{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:12px}
+.month-title{font-size:14px;font-weight:700;color:#412402}
+.calendar-weekdays{display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:5px}
+.weekday{font-size:11px;font-weight:700;text-align:center;color:#633806}
+.calendar-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.calendar-day{min-height:72px;padding:8px;border:0.5px solid var(--color-border-tertiary);border-radius:12px;background:var(--color-background-primary);font-size:12px;color:var(--color-text-primary);cursor:pointer;transition:transform .15s,background .15s;border-color:transparent}
+.calendar-day:hover{transform:translateY(-1px);border-color:#EF9F27}
+.calendar-day.disabled{opacity:.45;cursor:not-allowed;background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.calendar-day.unavailable{opacity:.7;cursor:pointer;background:var(--color-background-secondary);border-color:var(--color-border-secondary)}
+.calendar-day.available{background:#EAF3DE;border-color:#639922}
+.calendar-day.confirmed{background:#FAEEDA;border-color:#EF9F27}
+.calendar-day.cancelled{background:#FCEBEB;border-color:#E24B4A;opacity:.8}
+.calendar-day header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
+.calendar-day .day-number{font-weight:700}
+.calendar-day .day-meta{font-size:10px;color:#633806;margin-top:4px;line-height:1.3}
+.route-switch{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:1rem}
+.route-switch button{padding:9px 12px;border:0.5px solid var(--color-border-secondary);border-radius:10px;background:var(--color-background-secondary);color:var(--color-text-secondary);font-family:sans-serif;font-size:12px;font-weight:700;cursor:pointer;transition:all .15s}
+.route-switch button.active{background:#BA7517;color:#fff;border-color:#BA7517}
+.admin-calendar-section{background:var(--color-background-primary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;margin-bottom:1rem}
 .trip-item:hover:not(.disabled):not(.cancelled){border-color:#EF9F27}
 .trip-item.selected{border:2px solid #EF9F27;background:#FAEEDA}
 .trip-item.disabled,.trip-item.cancelled{opacity:.5;cursor:not-allowed;background:var(--color-background-secondary)}
@@ -78,6 +158,14 @@
 .user-bar strong{color:var(--color-text-primary)}
 .small-btn{background:none;border:0.5px solid var(--color-border-secondary);border-radius:6px;padding:3px 9px;font-family:sans-serif;font-size:11px;cursor:pointer;color:var(--color-text-secondary)}
 .small-btn:hover{background:var(--color-background-primary)}
+@media(max-width:760px){
+  .nav{height:auto;padding:.75rem 1rem;align-items:flex-start}
+  .nav-tabs{width:100%}
+  .tab-btn{flex:1 1 auto}
+  .home-hero{min-height:500px}
+  .split-layout,.tow-form-grid,.fg2{grid-template-columns:1fr}
+  .map-frame{height:260px}
+}
 </style>
 
 <div class="site">
@@ -85,11 +173,12 @@
 <nav class="nav">
   <div class="nav-logo">Wynajem Busów<span>Jarosław</span></div>
   <div class="nav-tabs">
-    <button class="tab-btn active" onclick="showPage('home',this)">Strona główna</button>
-    <button class="tab-btn" onclick="showPage('booking',this)">Rezerwacja</button>
-    <button class="tab-btn" onclick="showPage('myres',this)">Moje rezerwacje</button>
-    <button class="tab-btn" onclick="showPage('about',this)">O firmie</button>
-    <button class="tab-btn" onclick="showPage('contact',this)">Kontakt</button>
+    <button class="tab-btn active" data-page-tab="home" onclick="showPage('home',this)">Strona główna</button>
+    <button class="tab-btn" data-page-tab="rental" onclick="showPage('rental',this)">Wynajem busów</button>
+    <button class="tab-btn" data-page-tab="booking" onclick="showPage('booking',this)">Jarosław-Wiedeń</button>
+    <button class="tab-btn" data-page-tab="tow" onclick="showPage('tow',this)">Laweta</button>
+    <button class="tab-btn" data-page-tab="myres" onclick="showPage('myres',this)">Moje rezerwacje</button>
+    <button class="tab-btn" data-page-tab="contact" onclick="showPage('contact',this)">Kontakt</button>
     <button class="tab-btn" id="admin-tab" style="display:none" onclick="showPage('admin',this)">Panel</button>
   </div>
 </nav>
@@ -100,21 +189,127 @@
 </div>
 
 <div id="page-home" class="page active">
-  <div class="hero">
-    <div style="font-size:40px;margin-bottom:.5rem">🚌</div>
-    <h1>Wynajem busów i przejazdy do Austrii</h1>
-    <p>Regularne kursy Jarosław ↔ Wiedeń co tydzień. Zarezerwuj miejsce online.</p>
-    <div style="margin-top:1rem;display:flex;gap:8px;justify-content:center;flex-wrap:wrap">
-      <button style="background:#BA7517;color:#fff;border:none;padding:10px 20px;border-radius:9px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer" onclick="showPage('booking',document.querySelectorAll('.tab-btn')[1])">Zarezerwuj miejsce</button>
-      <button style="background:none;border:0.5px solid #BA7517;color:#BA7517;padding:10px 20px;border-radius:9px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer" onclick="showPage('auth',null)" id="home-login-btn">Zaloguj się</button>
+  <div class="home-hero">
+    <div class="home-hero-inner">
+      <h1>Transport dla ludzi, grup i pojazdów na trasie Polska-Austria</h1>
+      <p>Wynajem busów w okolicach Rzeszowa i Jarosławia, regularne przejazdy Jarosław-Wiedeń oraz transport lawetą na tej samej trasie.</p>
+      <div class="hero-actions">
+        <button class="hero-btn primary" onclick="showPage('booking',document.querySelector('[data-page-tab=booking]'))">Zarezerwuj przejazd</button>
+        <button class="hero-btn secondary" onclick="showPage('rental',document.querySelector('[data-page-tab=rental]'))">Sprawdź busy</button>
+        <button class="hero-btn secondary" onclick="showPage('auth',null)" id="home-login-btn">Zaloguj się</button>
+      </div>
     </div>
   </div>
   <div class="section">
-    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:10px">
-      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:24px;margin-bottom:.5rem">🚐</div><div style="font-size:12px;font-weight:700;margin-bottom:.3rem">Wynajem busów</div><div style="font-size:11px;color:var(--color-text-secondary)">Na eventy i wycieczki grupowe</div></div>
-      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:24px;margin-bottom:.5rem">🛣️</div><div style="font-size:12px;font-weight:700;margin-bottom:.3rem">Kursy do Austrii</div><div style="font-size:11px;color:var(--color-text-secondary)">Jarosław↔Wiedeń co tydzień</div></div>
-      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:24px;margin-bottom:.5rem">🚛</div><div style="font-size:12px;font-weight:700;margin-bottom:.3rem">Transport lawetą</div><div style="font-size:11px;color:var(--color-text-secondary)">Przewóz pojazdów Polska↔Austria</div></div>
-      <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:12px;padding:1rem;text-align:center"><div style="font-size:24px;margin-bottom:.5rem">🚗</div><div style="font-size:12px;font-weight:700;margin-bottom:.3rem">Sprowadzanie aut</div><div style="font-size:11px;color:var(--color-text-secondary)">Z Austrii do Polski</div></div>
+    <div class="service-grid">
+      <article class="service-card">
+        <img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg" alt="Mercedes-Benz Vito 2024 do wynajęcia">
+        <div class="service-body">
+          <h3>Wynajem busów</h3>
+          <p>Busy dla rodzin, firm, ekip i grup wyjazdowych w okolicach Jarosławia, Przeworska i Rzeszowa.</p>
+          <ul class="mini-list"><li>wybór pojazdu i podgląd szczegółów</li><li>cennik oraz kalendarz dostępności</li></ul>
+          <button class="service-link" onclick="showPage('rental',document.querySelector('[data-page-tab=rental]'))">Przejdź do wynajmu</button>
+        </div>
+      </article>
+      <article class="service-card">
+        <img src="https://assets.volkswagen.com/is/image/volkswagenag/cv001184pic-vw-caravelle-gallery-01-2x1?Zml0PWNyb3AsMSZmbXQ9cG5nJndpZD04MDAmYWxpZ249MC4wMCwwLjAwJmJmYz1vZmYmYzRiMA=%3D" alt="Nowy Volkswagen Caravelle">
+        <div class="service-body">
+          <h3>Przejazdy Jarosław-Wiedeń</h3>
+          <p>Regularne kursy z rezerwacją miejsc online i podglądem dostępnych terminów w kalendarzu.</p>
+          <ul class="mini-list"><li>mapy tras i przystanki po drodze</li><li>rezerwacja blokowana po wyczerpaniu miejsc</li></ul>
+          <button class="service-link" onclick="showPage('booking',document.querySelector('[data-page-tab=booking]'))">Zarezerwuj miejsce</button>
+        </div>
+      </article>
+      <article class="service-card">
+        <img src="https://images.unsplash.com/photo-1673187139211-1e7ec3dd60ec?auto=format&fit=crop&w=900&q=80" alt="Uszkodzone auto transportowane na lawecie">
+        <div class="service-body">
+          <h3>Transport lawetą</h3>
+          <p>Przewóz samochodów i motocykli na trasie Polska-Austria, także przy okazji regularnych wyjazdów.</p>
+          <ul class="mini-list"><li>odbiór i dostawa pod wskazany adres</li><li>formularz szybkiej wyceny transportu</li></ul>
+          <button class="service-link" onclick="showPage('tow',document.querySelector('[data-page-tab=tow]'))">Zamów wycenę</button>
+        </div>
+      </article>
+    </div>
+  </div>
+</div>
+
+<div id="page-rental" class="page">
+  <div class="hero">
+    <h1>Wynajem busów w okolicach Rzeszowa</h1>
+    <p>Wybierz pojazd, sprawdź orientacyjny cennik i wyślij zapytanie o dostępność konkretnego terminu.</p>
+  </div>
+  <div class="section">
+    <div class="split-layout">
+      <div>
+        <div class="fleet-grid">
+          <article class="fleet-card selected" id="fleet-card-bus9">
+            <img src="https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg" alt="Mercedes-Benz Vito 2024">
+            <div class="fleet-card-body">
+              <h3>Mercedes-Benz Vito</h3>
+              <p style="font-size:12px;color:var(--color-text-secondary);line-height:1.6">Do wyjazdów rodzinnych, ekip pracowniczych i krótkich tras krajowych.</p>
+              <div class="fleet-meta"><span class="pill">9 miejsc</span><span class="pill">klimatyzacja</span><span class="pill">duży bagażnik</span></div>
+              <button class="btn-outline" onclick="selectBus('bus9')">Pokaż szczegóły</button>
+            </div>
+          </article>
+          <article class="fleet-card" id="fleet-card-bus8">
+            <img src="https://assets.volkswagen.com/is/image/volkswagenag/cv001184pic-vw-caravelle-gallery-01-2x1?Zml0PWNyb3AsMSZmbXQ9cG5nJndpZD04MDAmYWxpZ249MC4wMCwwLjAwJmJmYz1vZmYmYzRiMA=%3D" alt="Volkswagen Caravelle">
+            <div class="fleet-card-body">
+              <h3>Volkswagen Caravelle</h3>
+              <p style="font-size:12px;color:var(--color-text-secondary);line-height:1.6">Na dłuższe trasy, lotniska, wyjazdy firmowe i transfery międzynarodowe.</p>
+              <div class="fleet-meta"><span class="pill">8 miejsc</span><span class="pill">wygodne fotele</span><span class="pill">USB</span></div>
+              <button class="btn-outline" onclick="selectBus('bus8')">Pokaż szczegóły</button>
+            </div>
+          </article>
+        </div>
+        <div class="card" style="margin-top:12px">
+          <h3>Cennik orientacyjny</h3>
+          <table class="price-table">
+            <thead><tr><th>Usługa</th><th>Cena od</th></tr></thead>
+            <tbody>
+              <tr><td>Wynajem do 24h</td><td>350 zł</td></tr>
+              <tr><td>Weekend</td><td>850 zł</td></tr>
+              <tr><td>Dłuższa trasa z kierowcą</td><td>wycena indywidualna</td></tr>
+              <tr><td>Transfer lotniskowy</td><td>wycena po trasie</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <aside>
+        <div class="card">
+          <h3 id="bus-detail-title">Mercedes-Benz Vito</h3>
+          <div id="bus-detail-content" style="font-size:12px;color:var(--color-text-secondary);line-height:1.7"></div>
+        </div>
+        <div class="card">
+          <h3>Kalendarz dostępności</h3>
+          <div class="calendar-controls">
+            <div class="month-title" id="rental-month-label"></div>
+            <div>
+              <button class="month-btn" onclick="rentalPrevMonth()">‹</button>
+              <button class="month-btn" onclick="rentalNextMonth()">›</button>
+            </div>
+          </div>
+          <div class="calendar-weekdays">
+            <div class="weekday">Pn</div>
+            <div class="weekday">Wt</div>
+            <div class="weekday">Śr</div>
+            <div class="weekday">Cz</div>
+            <div class="weekday">Pt</div>
+            <div class="weekday">So</div>
+            <div class="weekday">Nd</div>
+          </div>
+          <div id="rental-calendar" class="calendar-grid"></div>
+          <div id="rental-calendar-note" class="no-trips" style="margin-top:10px;">Kliknij zielony dzień, aby wybrać termin.</div>
+        </div>
+        <div class="card">
+          <h3>Zapytanie o wynajem</h3>
+          <div id="rental-msg"></div>
+          <div class="fg"><label>Wybrany bus</label><select id="rental-bus" onchange="selectBusByName(this.value)"><option>Mercedes-Benz Vito</option><option>Volkswagen Caravelle</option></select></div>
+          <div class="fg"><label>Wybrany termin</label><input type="text" id="rental-date-label" placeholder="Wybierz zielony dzień w kalendarzu" readonly></div>
+          <div class="fg"><label>Telefon</label><input type="tel" id="rental-phone" placeholder="+48 000 000 000"></div>
+          <div class="fg"><label>Opis wyjazdu</label><textarea id="rental-notes" rows="3" placeholder="np. wesele, lotnisko, wyjazd firmowy"></textarea></div>
+          <button class="btn-primary" onclick="submitRentalRequest()">Wyślij zapytanie</button>
+        </div>
+      </aside>
     </div>
   </div>
 </div>
@@ -162,29 +357,46 @@
 
 <div id="page-booking" class="page">
   <div class="hero">
-    <h1>Rezerwacja miejsca</h1>
-    <p>Wybierz trasę i termin. Potwierdzenie wyślemy na email.</p>
+    <h1>Przejazdy Jarosław-Wiedeń</h1>
+    <p>Sprawdź trasę, przystanki i dostępne terminy. Rezerwacja zamyka się automatycznie, gdy nie ma już wolnych miejsc.</p>
   </div>
   <div class="section">
     <div id="book-msg"></div>
-    <p class="step-label">1. Wybierz trasę</p>
-    <div class="route-btns">
-      <button class="route-btn active" id="rb-JW" onclick="selectRoute('JW')">
-        <div style="font-size:18px;margin-bottom:3px">🇵🇱→🇦🇹</div>
-        Jarosław → Wiedeń
-        <div class="rf">każda niedziela</div>
-      </button>
-      <button class="route-btn" id="rb-WJ" onclick="selectRoute('WJ')">
-        <div style="font-size:18px;margin-bottom:3px">🇦🇹→🇵🇱</div>
-        Wiedeń → Jarosław
-        <div class="rf">każdy piątek</div>
-      </button>
+    <div class="route-switch">
+      <button id="bk-route-JW" class="active" onclick="selectBookingRoute('JW', this)">🇵🇱→🇦🇹 Jarosław → Wiedeń</button>
+      <button id="bk-route-WJ" onclick="selectBookingRoute('WJ', this)">🇦🇹→🇵🇱 Wiedeń → Jarosław</button>
     </div>
-    <p class="step-label">2. Wybierz termin</p>
-    <div id="trips-loading" class="no-trips">Ładowanie terminów...</div>
-    <div id="trips-list"></div>
-    <div id="booking-form" style="display:none">
-      <p class="step-label" style="margin-top:1rem">3. Dane pasażera</p>
+    <div class="split-layout" style="margin-bottom:1rem">
+      <div class="card">
+        <h3 id="route-map-title">Schemat trasy: Jarosław → Wiedeń</h3>
+        <div class="route-diagram" id="route-diagram"></div>
+      </div>
+      <div class="card">
+        <h3>Przystanki na trasie</h3>
+        <div class="stops-grid" id="route-stops"></div>
+      </div>
+    </div>
+    <p class="step-label">1. Wybierz termin przejazdu</p>
+    <div class="calendar-controls">
+      <div class="month-title" id="booking-month-label"></div>
+      <div>
+        <button class="month-btn" onclick="bookingPrevMonth()">‹</button>
+        <button class="month-btn" onclick="bookingNextMonth()">›</button>
+      </div>
+    </div>
+    <div class="calendar-weekdays">
+      <div class="weekday">Pn</div>
+      <div class="weekday">Wt</div>
+      <div class="weekday">Śr</div>
+      <div class="weekday">Cz</div>
+      <div class="weekday">Pt</div>
+      <div class="weekday">So</div>
+      <div class="weekday">Nd</div>
+    </div>
+    <div id="booking-calendar" class="calendar-grid"></div>
+    <div id="booking-note" class="no-trips" style="margin-top:10px;"></div>
+    <div id="booking-form" style="display:none;margin-top:1rem">
+      <p class="step-label">3. Dane pasażera</p>
       <div class="card">
         <div class="fg2">
           <div class="fg"><label>Imię i nazwisko</label><input type="text" id="b-name" placeholder="Jan Kowalski" /></div>
@@ -194,9 +406,60 @@
           <div class="fg"><label>Telefon</label><input type="tel" id="b-phone" placeholder="+48 000 000 000" /></div>
           <div class="fg"><label>Liczba miejsc</label><input type="number" id="b-seats" min="1" max="7" value="1" /></div>
         </div>
+        <div class="fg2">
+          <div class="fg"><label>Przystanek wsiadania</label><select id="b-pickup"></select></div>
+          <div class="fg"><label>Przystanek wysiadania</label><select id="b-dropoff"></select></div>
+        </div>
         <div class="fg"><label>Uwagi (opcjonalnie)</label><input type="text" id="b-notes" placeholder="np. bagaż ponadgabarytowy" /></div>
         <button class="btn-primary" id="submit-btn" onclick="submitBooking()">Zarezerwuj miejsce</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<div id="page-tow" class="page">
+  <div class="hero">
+    <h1>Transport lawetą Polska-Austria</h1>
+    <p>Przewóz samochodów, motocykli i pojazdów niesprawnych na trasie Jarosław-Wiedeń oraz w miejscowościach po drodze.</p>
+  </div>
+  <div class="section">
+    <div class="split-layout">
+      <div>
+        <div class="card">
+          <h3>Trasa lawety</h3>
+          <iframe class="map-frame" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Jaros%C5%82aw%20Poland%20to%20Vienna%20Austria&output=embed"></iframe>
+        </div>
+        <div class="card">
+          <h3>Co można zamówić</h3>
+          <ul class="mini-list">
+            <li>przewóz auta z Polski do Austrii albo z Austrii do Polski</li>
+            <li>transport pojazdu niesprawnego po awarii lub kolizji</li>
+            <li>odbiór pojazdu z adresu, parkingu, warsztatu albo komisu</li>
+            <li>dostarczenie pod wskazany adres na trasie przejazdu</li>
+          </ul>
+        </div>
+      </div>
+      <aside>
+        <div class="card">
+          <h3>Szybka wycena lawety</h3>
+          <p class="form-help">Podaj dane pojazdu i miejsca odbioru. Formularz przygotuje zapytanie, które możesz od razu wysłać do firmy.</p>
+          <div id="tow-msg"></div>
+          <div class="tow-form-grid">
+            <div class="fg"><label>Imię i nazwisko</label><input type="text" id="tow-name" placeholder="Jan Kowalski"></div>
+            <div class="fg"><label>Telefon</label><input type="tel" id="tow-phone" placeholder="+48 000 000 000"></div>
+            <div class="fg"><label>Marka i model</label><input type="text" id="tow-car" placeholder="np. Volkswagen Golf"></div>
+            <div class="fg"><label>Stan pojazdu</label><select id="tow-state"><option>Sprawny</option><option>Niesprawny, odpala</option><option>Niesprawny, nie odpala</option><option>Powypadkowy</option></select></div>
+          </div>
+          <div class="fg"><label>Miejsce odbioru</label><input type="text" id="tow-from" placeholder="np. Jarosław, adres lub przystanek na trasie"></div>
+          <div class="fg"><label>Miejsce dostawy</label><input type="text" id="tow-to" placeholder="np. Wiedeń, adres docelowy"></div>
+          <div class="fg2">
+            <div class="fg"><label>Preferowana data</label><input type="date" id="tow-date"></div>
+            <div class="fg"><label>Kierunek</label><select id="tow-direction"><option>Polska → Austria</option><option>Austria → Polska</option></select></div>
+          </div>
+          <div class="fg"><label>Dodatkowe informacje</label><textarea id="tow-notes" rows="3" placeholder="np. auto bez kół, niski prześwit, dokumenty, kontakt na miejscu"></textarea></div>
+          <button class="btn-primary" onclick="submitTowRequest()">Przygotuj zapytanie</button>
+        </div>
+      </aside>
     </div>
   </div>
 </div>
@@ -247,13 +510,31 @@
     </div>
     <div class="atabs">
       <button class="atab active" onclick="switchAdminTab('trips',this)">Terminy kursów</button>
+      <button class="atab" onclick="switchAdminTab('buses',this)">Dostępność busów</button>
       <button class="atab" onclick="switchAdminTab('res',this)">Rezerwacje</button>
     </div>
     <div id="admin-trips-panel">
       <div class="admin-month-ctrl">
-        <button class="month-btn" onclick="adminPrevMonth()">‹</button>
-        <span id="admin-month-label"></span>
-        <button class="month-btn" onclick="adminNextMonth()">›</button>
+        <button class="month-btn" onclick="adminCalendarPrevMonth()">‹</button>
+        <span id="admin-calendar-month-label"></span>
+        <button class="month-btn" onclick="adminCalendarNextMonth()">›</button>
+      </div>
+      <div class="admin-calendar-section">
+        <div class="route-switch">
+          <button id="admin-route-JW" class="active" onclick="selectAdminRoute('JW', this)">JW</button>
+          <button id="admin-route-WJ" onclick="selectAdminRoute('WJ', this)">WJ</button>
+        </div>
+        <div class="calendar-weekdays">
+          <div class="weekday">Pn</div>
+          <div class="weekday">Wt</div>
+          <div class="weekday">Śr</div>
+          <div class="weekday">Cz</div>
+          <div class="weekday">Pt</div>
+          <div class="weekday">So</div>
+          <div class="weekday">Nd</div>
+        </div>
+        <div id="admin-calendar" class="calendar-grid"></div>
+        <div id="admin-calendar-note" class="no-trips" style="margin-top:10px;"></div>
       </div>
       <button style="width:100%;background:#BA7517;color:#fff;border:none;padding:10px;border-radius:9px;font-family:sans-serif;font-size:13px;font-weight:700;cursor:pointer;margin-bottom:.75rem" onclick="generateMonth()">Wystaw terminy na ten miesiąc</button>
       <div id="admin-gen-msg" style="margin-bottom:8px"></div>
@@ -265,17 +546,41 @@
     <div id="admin-res-panel" style="display:none">
       <div id="admin-res-list"><div class="no-trips">Ładowanie...</div></div>
     </div>
+    <div id="admin-buses-panel" style="display:none">
+      <div class="admin-month-ctrl">
+        <button class="month-btn" onclick="adminBusPrevMonth()">‹</button>
+        <span id="admin-bus-month-label"></span>
+        <button class="month-btn" onclick="adminBusNextMonth()">›</button>
+      </div>
+      <div class="admin-calendar-section">
+        <div class="route-switch">
+          <button id="admin-bus-bus9" class="active" onclick="selectAdminBus('bus9', this)">Mercedes-Benz Vito</button>
+          <button id="admin-bus-bus8" onclick="selectAdminBus('bus8', this)">Volkswagen Caravelle</button>
+        </div>
+        <div class="calendar-weekdays">
+          <div class="weekday">Pn</div>
+          <div class="weekday">Wt</div>
+          <div class="weekday">Śr</div>
+          <div class="weekday">Cz</div>
+          <div class="weekday">Pt</div>
+          <div class="weekday">So</div>
+          <div class="weekday">Nd</div>
+        </div>
+        <div id="admin-bus-calendar" class="calendar-grid"></div>
+        <div id="admin-bus-note" class="no-trips" style="margin-top:10px;">Kliknij dzień, aby przełączyć dostępność busa.</div>
+      </div>
+    </div>
   </div>
 </div>
 
-<div class="footer">© 2025 Wynajem Busów Jarosław · Wszelkie prawa zastrzeżone</div>
+<div class="footer">© 2026 Wynajem Busów Jarosław · Wszelkie prawa zastrzeżone</div>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
 <script>
 const SB_URL='https://fzjvrjowptibysaythwa.supabase.co';
 const SB_KEY='sb_publishable_IwEk9ePTdCzXivBHz8Gjcw_6iURm6p_';
-const sb=supabase.createClient(SB_URL,SB_KEY);
+const sb=typeof supabase!=='undefined'?supabase.createClient(SB_URL,SB_KEY):null;
 const MAX_SEATS=7;
 const MONTHS=['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
 
@@ -283,15 +588,72 @@ let currentUser=null;
 let currentProfile=null;
 let selectedRoute='JW';
 let selectedTripId=null;
+let bookingViewMonth=new Date();
+let selectedBookingDate=null;
 let adminViewMonth=new Date();
+let selectedAdminRoute='JW';
 let cachedTrips=[];
+let cachedAdminTrips=[];
+let selectedBus='bus9';
+let rentalViewMonth=new Date();
+let selectedRentalDate=null;
+let cachedBusAvailability=[];
+let adminBusViewMonth=new Date();
+let selectedAdminBus='bus9';
+let cachedAdminBusAvailability=[];
+let busAvailabilityFallback=false;
+let selectedPickupStop='';
+let selectedDropoffStop='';
+
+const ROUTE_DETAILS={
+  JW:{
+    title:'Schemat trasy: Jarosław → Wiedeń',
+    mapUrl:'https://www.google.com/maps/dir/Jaros%C5%82aw/Rzesz%C3%B3w/Krak%C3%B3w/Wiede%C5%84',
+    stops:[
+      {name:'Jarosław',desc:'start kursu, dokładne miejsce do potwierdzenia telefonicznie',coords:[50.016,22.677]},
+      {name:'Przeworsk / Łańcut',desc:'możliwy odbiór po wcześniejszym ustaleniu',coords:[50.071,22.229]},
+      {name:'Rzeszów',desc:'dogodne miejsce dosiadki przy trasie',coords:[50.041,21.999]},
+      {name:'Kraków / okolice A4',desc:'przystanek zależny od konkretnego przejazdu',coords:[50.064,19.945]},
+      {name:'Wiedeń',desc:'wysiadka w uzgodnionym punkcie lub pod adresem',coords:[48.208,16.373]}
+    ]
+  },
+  WJ:{
+    title:'Schemat trasy: Wiedeń → Jarosław',
+    mapUrl:'https://www.google.com/maps/dir/Wiede%C5%84/Krak%C3%B3w/Rzesz%C3%B3w/Jaros%C5%82aw',
+    stops:[
+      {name:'Wiedeń',desc:'start kursu, punkt odbioru ustalany przy rezerwacji',coords:[48.208,16.373]},
+      {name:'Okolice granicy AT/CZ lub AT/SK',desc:'przystanki zależne od przejazdu',coords:[48.736,16.915]},
+      {name:'Kraków / okolice A4',desc:'możliwa wysiadka po wcześniejszym ustaleniu',coords:[50.064,19.945]},
+      {name:'Rzeszów',desc:'wygodny punkt wysiadki przy trasie',coords:[50.041,21.999]},
+      {name:'Jarosław',desc:'koniec kursu lub dowóz po uzgodnieniu',coords:[50.016,22.677]}
+    ]
+  }
+};
+
+const BUS_DETAILS={
+  bus9:{
+    name:'Mercedes-Benz Vito',
+    selectLabel:'Mercedes-Benz Vito',
+    description:'Nowoczesny bus do wyjazdów lokalnych, rodzinnych i pracowniczych. Dobry wybór na wesela, imprezy, lotniska i jednodniowe trasy.',
+    features:['9 miejsc z kierowcą','klimatyzacja','przestrzeń na bagaż','wynajem z kierowcą lub według ustaleń'],
+    availability:[['Poniedziałek-czwartek','często dostępny'],['Piątek-niedziela','wymaga wcześniejszej rezerwacji'],['Trasy międzynarodowe','wycena indywidualna']]
+  },
+  bus8:{
+    name:'Volkswagen Caravelle',
+    selectLabel:'Volkswagen Caravelle',
+    description:'Komfortowy wariant na dłuższe przejazdy, transfery i wyjazdy firmowe, gdzie liczy się wygoda pasażerów oraz elastyczna przestrzeń.',
+    features:['8 miejsc pasażerskich','wygodne fotele','USB / ładowanie','polecany na dłuższe trasy'],
+    availability:[['Najbliższe weekendy','ograniczona dostępność'],['Transfery lotniskowe','po potwierdzeniu godziny'],['Wyjazdy firmowe','rezerwacja z wyprzedzeniem']]
+  }
+};
 
 function showPage(id,btn){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
   document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-'+id).classList.add('active');
   if(btn)btn.classList.add('active');
-  if(id==='booking')loadTrips();
+  if(id==='rental')loadRentalBusAvailability();
+  if(id==='booking'){renderRouteDetails();loadTrips();}
   if(id==='myres')loadMyReservations();
   if(id==='admin')renderAdminPanel();
 }
@@ -301,12 +663,256 @@ function showMsg(elId,text,type){
   if(el)el.innerHTML=text?'<div class="msg '+type+'">'+text+'</div>':'';
 }
 
+function buildMailto(subject,body){
+  return 'mailto:kontakt@lorem.pl?subject='+encodeURIComponent(subject)+'&body='+encodeURIComponent(body);
+}
+
+function renderRouteDetails(){
+  const details=ROUTE_DETAILS[selectedRoute]||ROUTE_DETAILS.JW;
+  const title=document.getElementById('route-map-title');
+  const stops=document.getElementById('route-stops');
+  if(title)title.textContent=details.title;
+  renderRouteDiagram(details);
+  if(stops){
+    stops.innerHTML=details.stops.map((s,i)=>'<button class="stop-item" type="button" onclick="chooseStopFromList('+i+')"><strong>'+(i+1)+'. '+s.name+'</strong><span>'+s.desc+'</span></button>').join('');
+  }
+  populateStopSelects();
+}
+
+function renderRouteDiagram(details){
+  const el=document.getElementById('route-diagram');
+  if(!el)return;
+  const stopsHtml=details.stops.map((stop,i)=>{
+    const positionClass=i===0?' start':i===details.stops.length-1?' end':'';
+    return '<div class="route-stop-wrap"><button class="route-stop'+positionClass+'" type="button" onclick="chooseStopFromList('+i+')"><span class="route-dot">'+(i+1)+'</span><span><strong>'+stop.name+'</strong><span>'+stop.desc+'</span></span></button><div class="route-actions"><button type="button" onclick="chooseStop('+i+',&quot;pickup&quot;)">Wsiadam tutaj</button><button type="button" onclick="chooseStop('+i+',&quot;dropoff&quot;)">Wysiadam tutaj</button></div></div>';
+  }).join('');
+  el.style.setProperty('--route-tail','58px');
+  el.innerHTML='<div class="route-line"></div>'+stopsHtml+'<a class="map-link" href="'+details.mapUrl+'" target="_blank" rel="noopener">Otwórz trasę w Google Maps</a>';
+}
+
+function populateStopSelects(){
+  const details=ROUTE_DETAILS[selectedRoute]||ROUTE_DETAILS.JW;
+  const pickup=document.getElementById('b-pickup');
+  const dropoff=document.getElementById('b-dropoff');
+  if(!pickup||!dropoff)return;
+  pickup.innerHTML=details.stops.map((s,i)=>'<option value="'+s.name+'">'+(i+1)+'. '+s.name+'</option>').join('');
+  dropoff.innerHTML=details.stops.map((s,i)=>'<option value="'+s.name+'">'+(i+1)+'. '+s.name+'</option>').join('');
+  selectedPickupStop=details.stops[0].name;
+  selectedDropoffStop=details.stops[details.stops.length-1].name;
+  pickup.value=selectedPickupStop;
+  dropoff.value=selectedDropoffStop;
+}
+
+function chooseStop(index,type){
+  const details=ROUTE_DETAILS[selectedRoute]||ROUTE_DETAILS.JW;
+  const stop=details.stops[index];
+  if(!stop)return;
+  const target=type==='dropoff'?document.getElementById('b-dropoff'):document.getElementById('b-pickup');
+  if(target){
+    target.value=stop.name;
+    if(type==='dropoff')selectedDropoffStop=stop.name;
+    else selectedPickupStop=stop.name;
+  }
+}
+
+function chooseStopFromList(index){
+  chooseStop(index,'pickup');
+  showMsg('book-msg','Wybrano przystanek wsiadania: '+(ROUTE_DETAILS[selectedRoute].stops[index].name),'info');
+}
+
+function selectBus(busId){
+  selectedBus=busId;
+  selectedRentalDate=null;
+  document.querySelectorAll('.fleet-card').forEach(card=>card.classList.remove('selected'));
+  const card=document.getElementById('fleet-card-'+busId);
+  if(card)card.classList.add('selected');
+  renderBusDetails();
+  loadRentalBusAvailability();
+}
+
+function selectBusByName(label){
+  selectBus(busIdFromLabel(label));
+}
+
+function renderBusDetails(){
+  const bus=BUS_DETAILS[selectedBus]||BUS_DETAILS.bus9;
+  const title=document.getElementById('bus-detail-title');
+  const content=document.getElementById('bus-detail-content');
+  const rentalSelect=document.getElementById('rental-bus');
+  if(title)title.textContent=bus.name;
+  if(content)content.innerHTML='<p>'+bus.description+'</p><ul class="mini-list">'+bus.features.map(f=>'<li>'+f+'</li>').join('')+'</ul>';
+  if(rentalSelect)rentalSelect.value=bus.selectLabel;
+}
+
+function rentalPrevMonth(){
+  rentalViewMonth=new Date(rentalViewMonth.getFullYear(),rentalViewMonth.getMonth()-1,1);
+  loadRentalBusAvailability();
+}
+
+function rentalNextMonth(){
+  rentalViewMonth=new Date(rentalViewMonth.getFullYear(),rentalViewMonth.getMonth()+1,1);
+  loadRentalBusAvailability();
+}
+
+async function loadRentalBusAvailability(){
+  renderBusDetails();
+  cachedBusAvailability=await fetchBusAvailability(selectedBus,rentalViewMonth);
+  renderRentalCalendar();
+}
+
+function renderRentalCalendar(){
+  const range=monthRange(rentalViewMonth);
+  const label=document.getElementById('rental-month-label');
+  const calendar=document.getElementById('rental-calendar');
+  if(!calendar)return;
+  if(label)label.textContent=MONTHS[range.month]+' '+range.year;
+  const firstDay=new Date(range.year,range.month,1).getDay();
+  const startOffset=(firstDay+6)%7;
+  calendar.innerHTML='';
+  for(let i=0;i<startOffset;i++){
+    calendar.innerHTML+='<div class="calendar-day disabled"></div>';
+  }
+  for(let day=1;day<=range.days;day++){
+    const dateStr=range.year+'-'+String(range.month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const isAvailable=getCachedBusAvailability(cachedBusAvailability,selectedBus,dateStr);
+    const isPast=dateStr<todayStr();
+    const selected=selectedRentalDate===dateStr;
+    let classes='calendar-day '+(isAvailable&&!isPast?'available':'disabled');
+    if(isPast)classes='calendar-day disabled';
+    if(selected)classes+=' confirmed';
+    const meta=isPast?'Minął':isAvailable?'Dostępny':'Niedostępny';
+    const onclick=(!isPast&&isAvailable)?'onclick="selectRentalDate(\''+dateStr+'\')"':'';
+    calendar.innerHTML+='<div class="'+classes+'" '+onclick+'><header><span class="day-number">'+day+'</span></header><div class="day-meta">'+meta+'</div></div>';
+  }
+  const note=document.getElementById('rental-calendar-note');
+  if(note)note.textContent=selectedRentalDate?'Wybrano: '+formatDate(selectedRentalDate):'Kliknij zielony dzień, aby wybrać termin.';
+}
+
+function selectRentalDate(dateStr){
+  selectedRentalDate=dateStr;
+  const input=document.getElementById('rental-date-label');
+  if(input)input.value=formatDate(dateStr);
+  renderRentalCalendar();
+  showMsg('rental-msg','','');
+}
+
+function submitRentalRequest(){
+  const bus=document.getElementById('rental-bus').value;
+  const phone=document.getElementById('rental-phone').value.trim();
+  const notes=document.getElementById('rental-notes').value.trim();
+  if(!selectedRentalDate||!phone){showMsg('rental-msg','Wybierz dostępny termin w kalendarzu i wpisz numer telefonu.','err');return}
+  const body='Zapytanie o wynajem busa\n\nBus: '+bus+'\nTermin: '+formatDate(selectedRentalDate)+'\nTelefon: '+phone+'\nOpis wyjazdu: '+(notes||'-');
+  showMsg('rental-msg','Zapytanie przygotowane. Otwieram wiadomość email z danymi.','ok');
+  window.location.href=buildMailto('Zapytanie o wynajem busa',body);
+}
+
+function submitTowRequest(){
+  const name=document.getElementById('tow-name').value.trim();
+  const phone=document.getElementById('tow-phone').value.trim();
+  const car=document.getElementById('tow-car').value.trim();
+  const state=document.getElementById('tow-state').value;
+  const from=document.getElementById('tow-from').value.trim();
+  const to=document.getElementById('tow-to').value.trim();
+  const date=document.getElementById('tow-date').value;
+  const direction=document.getElementById('tow-direction').value;
+  const notes=document.getElementById('tow-notes').value.trim();
+  if(!name||!phone||!car||!from||!to){showMsg('tow-msg','Uzupełnij dane kontaktowe, pojazd oraz miejsca transportu.','err');return}
+  const body='Zapytanie o transport lawetą\n\nImię i nazwisko: '+name+'\nTelefon: '+phone+'\nPojazd: '+car+'\nStan: '+state+'\nKierunek: '+direction+'\nOdbiór: '+from+'\nDostawa: '+to+'\nPreferowana data: '+(date||'-')+'\nDodatkowe informacje: '+(notes||'-');
+  showMsg('tow-msg','Zapytanie przygotowane. Otwieram wiadomość email z danymi.','ok');
+  window.location.href=buildMailto('Zapytanie o transport lawetą',body);
+}
+
 function formatDate(d){
   const dt=new Date(d+'T12:00:00');
   return dt.toLocaleDateString('pl-PL',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
 }
 
+function todayStr(){
+  return new Date().toISOString().split('T')[0];
+}
+
+function monthRange(viewDate){
+  const y=viewDate.getFullYear();
+  const m=viewDate.getMonth();
+  const mStr=String(m+1).padStart(2,'0');
+  const last=new Date(y,m+1,0).getDate();
+  return {
+    year:y,
+    month:m,
+    from:y+'-'+mStr+'-01',
+    to:y+'-'+mStr+'-'+String(last).padStart(2,'0'),
+    days:last
+  };
+}
+
+function busLabel(busId){
+  return (BUS_DETAILS[busId]||BUS_DETAILS.bus9).name;
+}
+
+function busIdFromLabel(label){
+  return Object.keys(BUS_DETAILS).find(id=>BUS_DETAILS[id].selectLabel===label)||'bus9';
+}
+
+function defaultBusAvailable(dateStr){
+  return dateStr>=todayStr();
+}
+
+function getCachedBusAvailability(cache,busId,dateStr){
+  const row=(cache||[]).find(x=>x.bus_id===busId&&x.date===dateStr);
+  if(row)return row.available!==false;
+  return defaultBusAvailable(dateStr);
+}
+
+function readBusAvailabilityFallback(busId,range){
+  try{
+    const all=JSON.parse(localStorage.getItem('busAvailability')||'{}');
+    return Object.keys(all).filter(date=>date>=range.from&&date<=range.to&&all[date][busId]!==undefined)
+      .map(date=>({bus_id:busId,date,available:all[date][busId]}));
+  }catch(_){
+    return [];
+  }
+}
+
+function writeBusAvailabilityFallback(busId,dateStr,available){
+  const all=JSON.parse(localStorage.getItem('busAvailability')||'{}');
+  all[dateStr]=all[dateStr]||{};
+  all[dateStr][busId]=available;
+  localStorage.setItem('busAvailability',JSON.stringify(all));
+}
+
+async function fetchBusAvailability(busId,viewDate){
+  const range=monthRange(viewDate);
+  if(!sb)return readBusAvailabilityFallback(busId,range);
+  if(busAvailabilityFallback)return readBusAvailabilityFallback(busId,range);
+  const {data,error}=await sb.from('bus_availability').select('*').eq('bus_id',busId).gte('date',range.from).lte('date',range.to);
+  if(error){
+    busAvailabilityFallback=true;
+    return readBusAvailabilityFallback(busId,range);
+  }
+  return data||[];
+}
+
+async function saveBusAvailability(busId,dateStr,available){
+  if(!sb){
+    writeBusAvailabilityFallback(busId,dateStr,available);
+    return null;
+  }
+  if(busAvailabilityFallback){
+    writeBusAvailabilityFallback(busId,dateStr,available);
+    return null;
+  }
+  const payload={bus_id:busId,date:dateStr,available};
+  const {error}=await sb.from('bus_availability').upsert(payload,{onConflict:'bus_id,date'});
+  if(error){
+    busAvailabilityFallback=true;
+    writeBusAvailabilityFallback(busId,dateStr,available);
+    return error;
+  }
+  return null;
+}
+
 async function initAuth(){
+  if(!sb)return;
   const{data:{session}}=await sb.auth.getSession();
   if(session)await onLogin(session.user);
   sb.auth.onAuthStateChange(async(_,session)=>{
@@ -394,47 +1000,87 @@ async function signOut(){
   showPage('home',document.querySelectorAll('.tab-btn')[0]);
 }
 
-function selectRoute(r){
-  selectedRoute=r;selectedTripId=null;
-  document.getElementById('rb-JW').classList.toggle('active',r==='JW');
-  document.getElementById('rb-WJ').classList.toggle('active',r==='WJ');
+function selectBookingRoute(route,btn){
+  selectedRoute=route;
+  document.getElementById('bk-route-JW').classList.toggle('active',route==='JW');
+  document.getElementById('bk-route-WJ').classList.toggle('active',route==='WJ');
+  renderRouteDetails();
+  selectedTripId=null;
+  selectedBookingDate=null;
+  selectedPickupStop='';
+  selectedDropoffStop='';
   document.getElementById('booking-form').style.display='none';
-  renderTrips();
+  renderBookingCalendar();
+}
+
+function bookingPrevMonth(){
+  bookingViewMonth=new Date(bookingViewMonth.getFullYear(),bookingViewMonth.getMonth()-1,1);
+  renderBookingCalendar();
+}
+
+function bookingNextMonth(){
+  bookingViewMonth=new Date(bookingViewMonth.getFullYear(),bookingViewMonth.getMonth()+1,1);
+  renderBookingCalendar();
 }
 
 async function loadTrips(){
-  document.getElementById('trips-loading').style.display='block';
-  document.getElementById('trips-list').innerHTML='';
+  if(!sb){showMsg('book-msg','Nie udało się połączyć z systemem rezerwacji. Odśwież stronę za chwilę.','err');renderBookingCalendar();return}
   const today=new Date().toISOString().split('T')[0];
   const{data,error}=await sb.from('trips_with_seats').select('*').gte('date',today).order('date');
-  document.getElementById('trips-loading').style.display='none';
   if(error){showMsg('book-msg','Błąd ładowania terminów: '+error.message,'err');return}
   cachedTrips=data||[];
-  renderTrips();
+  renderBookingCalendar();
   prefillBookingForm();
 }
 
-function renderTrips(){
-  const trips=(cachedTrips||[]).filter(t=>t.route===selectedRoute);
-  const el=document.getElementById('trips-list');
-  if(!trips.length){el.innerHTML='<div class="no-trips">Brak dostępnych terminów na ten miesiąc.<br>Właściciel wystawi terminy wkrótce.</div>';return}
-  el.innerHTML=trips.map(t=>{
-    const free=t.free_seats||0;
-    const cancelled=t.cancelled;
-    let badge='',cls='';
-    if(cancelled){badge='<span class="badge badge-cancel">Odwołany</span>';cls='cancelled'}
-    else if(free===0){badge='<span class="badge badge-none">Brak miejsc</span>';cls='disabled'}
-    else if(free<=2){badge='<span class="badge badge-few">Zostały: '+free+'</span>'}
-    else{badge='<span class="badge badge-ok">Wolne: '+free+'/'+MAX_SEATS+'</span>'}
-    const sel=selectedTripId===t.id?' selected':'';
-    return'<div class="trip-item'+' '+cls+sel+'" onclick="selectTrip(\''+t.id+'\','+!!cancelled+','+(free===0)+')"><div><div style="font-size:13px;font-weight:700">'+formatDate(t.date)+'</div><div style="font-size:11px;color:var(--color-text-secondary)">'+(t.route==='JW'?'Jarosław → Wiedeń':'Wiedeń → Jarosław')+'</div></div><div>'+badge+'</div></div>';
-  }).join('');
+function renderBookingCalendar(){
+  const month=bookingViewMonth.getMonth();
+  const year=bookingViewMonth.getFullYear();
+  document.getElementById('booking-month-label').textContent=MONTHS[month]+' '+year;
+  const firstDay=new Date(year,month,1).getDay();
+  const startOffset=(firstDay+6)%7;
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const calendar=document.getElementById('booking-calendar');
+  calendar.innerHTML='';
+  for(let i=0;i<startOffset;i++){
+    calendar.innerHTML+='<div class="calendar-day disabled"></div>';
+  }
+  let availableCount=0;
+  for(let day=1;day<=daysInMonth;day++){
+    const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const trip=(cachedTrips||[]).find(t=>t.route===selectedRoute&&t.date===dateStr);
+    let classes='calendar-day';
+    let meta='Brak kursu';
+    let onclick='';
+    if(trip){
+      if(trip.cancelled){classes+=' cancelled';meta='Odwołany';}
+      else if((trip.free_seats||0)<=0){classes+=' disabled';meta='Brak miejsc';}
+      else{classes+=' available';meta='Miejsc: '+(trip.free_seats||0);availableCount++; if(selectedTripId===trip.id)classes+=' confirmed'; onclick='onclick="selectBookingDay(\''+dateStr+'\')"';}
+    } else {
+      classes+=' disabled';
+    }
+    calendar.innerHTML+='<div class="'+classes+'" '+onclick+'><header><span class="day-number">'+day+'</span></header><div class="day-meta">'+meta+'</div></div>';
+  }
+  const note=document.getElementById('booking-note');
+  if(availableCount===0)note.textContent='Brak dostępnych terminów w tym miesiącu dla wybranej trasy.';
+  else note.textContent='Kliknij zielony dzień, aby wybrać termin.';
+}
+
+function selectBookingDay(dateStr){
+  const trip=(cachedTrips||[]).find(t=>t.route===selectedRoute&&t.date===dateStr&& !t.cancelled && (t.free_seats||0)>0);
+  if(!trip)return;
+  selectedTripId=trip.id;
+  selectedBookingDate=dateStr;
+  renderBookingCalendar();
+  populateStopSelects();
+  document.getElementById('booking-form').style.display='block';
+  showMsg('book-msg','Wybrano termin: '+formatDate(dateStr),'ok');
 }
 
 function selectTrip(id,cancelled,full){
   if(cancelled||full)return;
   selectedTripId=id;
-  renderTrips();
+  renderBookingCalendar();
   document.getElementById('booking-form').style.display='block';
   showMsg('book-msg','','');
 }
@@ -445,15 +1091,22 @@ async function submitBooking(){
   const phone=document.getElementById('b-phone').value.trim();
   const seats=parseInt(document.getElementById('b-seats').value)||1;
   const notes=document.getElementById('b-notes').value.trim();
+  const pickup=document.getElementById('b-pickup').value;
+  const dropoff=document.getElementById('b-dropoff').value;
   if(!name||!email){showMsg('book-msg','Wpisz imię, nazwisko i email.','err');return}
   if(!selectedTripId){showMsg('book-msg','Wybierz termin.','err');return}
+  if(!pickup||!dropoff){showMsg('book-msg','Wybierz przystanek wsiadania i wysiadania.','err');return}
+  if(pickup===dropoff){showMsg('book-msg','Przystanek wsiadania i wysiadania nie może być taki sam.','err');return}
+  const routeStops=(ROUTE_DETAILS[selectedRoute]||ROUTE_DETAILS.JW).stops.map(s=>s.name);
+  if(routeStops.indexOf(pickup)>routeStops.indexOf(dropoff)){showMsg('book-msg','Wybierz wysiadanie dalej na trasie niż miejsce wsiadania.','err');return}
   const trip=cachedTrips.find(t=>t.id===selectedTripId);
   if(!trip||trip.cancelled){showMsg('book-msg','Ten kurs jest odwołany.','err');return}
   if((trip.free_seats||0)<seats){showMsg('book-msg','Dostępnych miejsc: '+(trip.free_seats||0)+'. Zmień liczbę.','err');return}
   const btn=document.getElementById('submit-btn');
   btn.innerHTML='<span class="spinner"></span>Rezerwuję...';btn.disabled=true;
   const resId='R'+Date.now();
-  const payload={id:resId,trip_id:selectedTripId,passenger_name:name,passenger_email:email,passenger_phone:phone||null,seats,notes:notes||null,status:'confirmed'};
+  const stopNotes='Wsiadanie: '+pickup+' | Wysiadanie: '+dropoff+(notes?' | Uwagi: '+notes:'');
+  const payload={id:resId,trip_id:selectedTripId,passenger_name:name,passenger_email:email,passenger_phone:phone||null,seats,notes:stopNotes,status:'confirmed'};
   if(currentUser)payload.user_id=currentUser.id;
   const{error}=await sb.from('reservations').insert(payload);
   btn.innerHTML='Zarezerwuj miejsce';btn.disabled=false;
@@ -461,6 +1114,7 @@ async function submitBooking(){
   selectedTripId=null;
   document.getElementById('booking-form').style.display='none';
   ['b-name','b-email','b-phone','b-notes'].forEach(id=>document.getElementById(id).value='');
+  populateStopSelects();
   document.getElementById('b-seats').value='1';
   await loadTrips();
   showMsg('book-msg','✅ Rezerwacja potwierdzona! Nr: '+resId,'ok');
@@ -486,15 +1140,125 @@ function switchAdminTab(tab,btn){
   document.querySelectorAll('.atab').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
   document.getElementById('admin-trips-panel').style.display=tab==='trips'?'block':'none';
   document.getElementById('admin-res-panel').style.display=tab==='res'?'block':'none';
+  document.getElementById('admin-buses-panel').style.display=tab==='buses'?'block':'none';
   if(tab==='res')loadAdminReservations();
+  if(tab==='buses')loadAdminBusAvailability();
 }
 
 function renderAdminPanel(){
-  document.getElementById('admin-month-label').textContent=MONTHS[adminViewMonth.getMonth()]+' '+adminViewMonth.getFullYear();
+  document.getElementById('admin-calendar-month-label').textContent=MONTHS[adminViewMonth.getMonth()]+' '+adminViewMonth.getFullYear();
   loadAdminTrips();
 }
-function adminPrevMonth(){adminViewMonth=new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth()-1,1);renderAdminPanel()}
-function adminNextMonth(){adminViewMonth=new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth()+1,1);renderAdminPanel()}
+function adminCalendarPrevMonth(){
+  adminViewMonth=new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth()-1,1);
+  renderAdminPanel();
+}
+function adminCalendarNextMonth(){
+  adminViewMonth=new Date(adminViewMonth.getFullYear(),adminViewMonth.getMonth()+1,1);
+  renderAdminPanel();
+}
+
+function selectAdminRoute(route,btn){
+  selectedAdminRoute=route;
+  document.getElementById('admin-route-JW').classList.toggle('active',route==='JW');
+  document.getElementById('admin-route-WJ').classList.toggle('active',route==='WJ');
+  renderAdminCalendar();
+}
+
+function adminBusPrevMonth(){
+  adminBusViewMonth=new Date(adminBusViewMonth.getFullYear(),adminBusViewMonth.getMonth()-1,1);
+  loadAdminBusAvailability();
+}
+
+function adminBusNextMonth(){
+  adminBusViewMonth=new Date(adminBusViewMonth.getFullYear(),adminBusViewMonth.getMonth()+1,1);
+  loadAdminBusAvailability();
+}
+
+function selectAdminBus(busId,btn){
+  selectedAdminBus=busId;
+  document.getElementById('admin-bus-bus9').classList.toggle('active',busId==='bus9');
+  document.getElementById('admin-bus-bus8').classList.toggle('active',busId==='bus8');
+  loadAdminBusAvailability();
+}
+
+async function loadAdminBusAvailability(){
+  const label=document.getElementById('admin-bus-month-label');
+  if(label)label.textContent=MONTHS[adminBusViewMonth.getMonth()]+' '+adminBusViewMonth.getFullYear();
+  cachedAdminBusAvailability=await fetchBusAvailability(selectedAdminBus,adminBusViewMonth);
+  renderAdminBusCalendar();
+}
+
+function renderAdminBusCalendar(){
+  const range=monthRange(adminBusViewMonth);
+  const calendar=document.getElementById('admin-bus-calendar');
+  if(!calendar)return;
+  const firstDay=new Date(range.year,range.month,1).getDay();
+  const startOffset=(firstDay+6)%7;
+  calendar.innerHTML='';
+  for(let i=0;i<startOffset;i++){
+    calendar.innerHTML+='<div class="calendar-day disabled"></div>';
+  }
+  for(let day=1;day<=range.days;day++){
+    const dateStr=range.year+'-'+String(range.month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const isAvailable=getCachedBusAvailability(cachedAdminBusAvailability,selectedAdminBus,dateStr);
+    const classes='calendar-day '+(isAvailable?'available':'unavailable');
+    const meta=isAvailable?'Dostępny':'Niedostępny';
+    calendar.innerHTML+='<div class="'+classes+'" onclick="toggleAdminBusDate(\''+dateStr+'\')"><header><span class="day-number">'+day+'</span></header><div class="day-meta">'+meta+'</div></div>';
+  }
+  const note=document.getElementById('admin-bus-note');
+  if(note)note.textContent='Edytujesz: '+busLabel(selectedAdminBus)+'. Kliknięcie dnia przełącza status dostępny/niedostępny.';
+}
+
+async function toggleAdminBusDate(dateStr){
+  const current=getCachedBusAvailability(cachedAdminBusAvailability,selectedAdminBus,dateStr);
+  const next=!current;
+  await saveBusAvailability(selectedAdminBus,dateStr,next);
+  await loadAdminBusAvailability();
+  if(selectedBus===selectedAdminBus&&rentalViewMonth.getMonth()===adminBusViewMonth.getMonth()&&rentalViewMonth.getFullYear()===adminBusViewMonth.getFullYear()){
+    await loadRentalBusAvailability();
+  }
+}
+
+function renderAdminCalendar(){
+  const month=adminViewMonth.getMonth();
+  const year=adminViewMonth.getFullYear();
+  const firstDay=new Date(year,month,1).getDay();
+  const startOffset=(firstDay+6)%7;
+  const daysInMonth=new Date(year,month+1,0).getDate();
+  const calendar=document.getElementById('admin-calendar');
+  calendar.innerHTML='';
+  for(let i=0;i<startOffset;i++){
+    calendar.innerHTML+='<div class="calendar-day disabled"></div>';
+  }
+  let hasDates=false;
+  for(let day=1;day<=daysInMonth;day++){
+    const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
+    const trip=(cachedAdminTrips||[]).find(t=>t.route===selectedAdminRoute&&t.date===dateStr);
+    let classes='calendar-day';
+    let label='Dodaj';
+    if(trip){
+      hasDates=true;
+      if(trip.cancelled){classes+=' cancelled';label='Anulowany';}
+      else{classes+=' confirmed';label='Aktywny';}
+    }
+    calendar.innerHTML+='<div class="'+classes+'" onclick="toggleAdminTripDate(\''+dateStr+'\')"><header><span class="day-number">'+day+'</span></header><div class="day-meta">'+label+'</div></div>';
+  }
+  document.getElementById('admin-calendar-note').textContent=hasDates ? 'Kliknij datę, aby odwołać lub przywrócić kurs.' : 'Kliknij datę, aby dodać kurs.';
+}
+
+async function toggleAdminTripDate(dateStr){
+  const trip=(cachedAdminTrips||[]).find(t=>t.route===selectedAdminRoute&&t.date===dateStr);
+  if(trip){
+    const{error}=await sb.from('trips').update({cancelled:!trip.cancelled}).eq('id',trip.id);
+    if(error){document.getElementById('admin-calendar-note').textContent='Błąd: '+error.message;return}
+  } else {
+    const id='T'+dateStr.replace(/-/g,'')+selectedAdminRoute;
+    const{error}=await sb.from('trips').insert({id,route:selectedAdminRoute,date:dateStr,cancelled:false,max_seats:MAX_SEATS});
+    if(error){document.getElementById('admin-calendar-note').textContent='Błąd: '+error.message;return}
+  }
+  await loadAdminTrips();
+}
 
 async function loadAdminTrips(){
   const y=adminViewMonth.getFullYear();
@@ -502,9 +1266,12 @@ async function loadAdminTrips(){
   const from=y+'-'+m+'-01';
   const last=new Date(y,adminViewMonth.getMonth()+1,0).getDate();
   const to=y+'-'+m+'-'+last.toString().padStart(2,'0');
-  const{data}=await sb.from('trips_with_seats').select('*').gte('date',from).lte('date',to).order('date');
-  renderAdminList('JW',data||[]);
-  renderAdminList('WJ',data||[]);
+  const{data,error}=await sb.from('trips_with_seats').select('*').gte('date',from).lte('date',to).order('date');
+  if(error){document.getElementById('admin-calendar-note').textContent='Błąd ładowania: '+error.message;return}
+  cachedAdminTrips=data||[];
+  renderAdminCalendar();
+  renderAdminList('JW',cachedAdminTrips);
+  renderAdminList('WJ',cachedAdminTrips);
 }
 
 async function loadAdminReservations(){
@@ -565,6 +1332,8 @@ async function toggleTrip(id,cancel){
   loadAdminTrips();
 }
 
+renderRouteDetails();
+renderBusDetails();
 initAuth();
 </script>
 </body>
