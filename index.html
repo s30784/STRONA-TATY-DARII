@@ -838,7 +838,8 @@ function formatDate(d){
 }
 
 function todayStr(){
-  return new Date().toISOString().split('T')[0];
+  const now=new Date();
+  return now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
 }
 
 function monthRange(viewDate){
@@ -853,6 +854,75 @@ function monthRange(viewDate){
     to:y+'-'+mStr+'-'+String(last).padStart(2,'0'),
     days:last
   };
+}
+
+function dateOnly(value){
+  return value ? String(value).slice(0,10) : '';
+}
+
+function tripDate(trip){
+  return dateOnly(trip&&trip.date);
+}
+
+function tripMaxSeats(trip){
+  const seats=Number(trip&&trip.max_seats);
+  return Number.isFinite(seats)&&seats>0?seats:MAX_SEATS;
+}
+
+function tripUsedSeats(trip){
+  const seats=Number(trip&&trip.used_seats);
+  return Number.isFinite(seats)&&seats>0?seats:0;
+}
+
+function tripFreeSeats(trip){
+  const free=Number(trip&&trip.free_seats);
+  if(Number.isFinite(free))return Math.max(0,free);
+  return Math.max(0,tripMaxSeats(trip)-tripUsedSeats(trip));
+}
+
+function normalizeTrips(trips){
+  return (trips||[]).map(trip=>({
+    ...trip,
+    date:tripDate(trip),
+    max_seats:tripMaxSeats(trip),
+    used_seats:tripUsedSeats(trip),
+    free_seats:tripFreeSeats(trip)
+  }));
+}
+
+async function fetchTripsWithSeats(from,to){
+  let viewQuery=sb.from('trips_with_seats').select('*').gte('date',from);
+  if(to)viewQuery=viewQuery.lte('date',to);
+  const viewResult=await viewQuery.order('date');
+  if(!viewResult.error){
+    return {data:normalizeTrips(viewResult.data),error:null};
+  }
+
+  let tripsQuery=sb.from('trips').select('*').gte('date',from);
+  if(to)tripsQuery=tripsQuery.lte('date',to);
+  const {data:trips,error:tripsError}=await tripsQuery.order('date');
+  if(tripsError)return {data:[],error:tripsError};
+
+  const tripIds=(trips||[]).map(t=>t.id);
+  if(!tripIds.length)return {data:[],error:null};
+
+  const {data:reservations,error:resError}=await sb
+    .from('reservations')
+    .select('trip_id,seats,status')
+    .in('trip_id',tripIds);
+  if(resError)return {data:[],error:resError};
+
+  const usedByTrip=(reservations||[]).reduce((acc,res)=>{
+    if(res.status==='cancelled')return acc;
+    acc[res.trip_id]=(acc[res.trip_id]||0)+(Number(res.seats)||0);
+    return acc;
+  },{});
+
+  const data=(trips||[]).map(trip=>({
+    ...trip,
+    used_seats:usedByTrip[trip.id]||0
+  }));
+  return {data:normalizeTrips(data),error:null};
 }
 
 function busLabel(busId){
@@ -1035,8 +1105,8 @@ function bookingNextMonth(){
 
 async function loadTrips(){
   if(!sb){showMsg('book-msg','Nie udało się połączyć z systemem rezerwacji. Odśwież stronę za chwilę.','err');renderBookingCalendar();return}
-  const today=new Date().toISOString().split('T')[0];
-  const{data,error}=await sb.from('trips_with_seats').select('*').gte('date',today).order('date');
+  const today=todayStr();
+  const{data,error}=await fetchTripsWithSeats(today);
   if(error){showMsg('book-msg','Błąd ładowania terminów: '+error.message,'err');return}
   cachedTrips=data||[];
   renderBookingCalendar();
@@ -1058,14 +1128,14 @@ function renderBookingCalendar(){
   let availableCount=0;
   for(let day=1;day<=daysInMonth;day++){
     const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-    const trip=(cachedTrips||[]).find(t=>t.route===selectedRoute&&t.date===dateStr);
+    const trip=(cachedTrips||[]).find(t=>t.route===selectedRoute&&tripDate(t)===dateStr);
     let classes='calendar-day';
     let meta='Brak kursu';
     let onclick='';
     if(trip){
       if(trip.cancelled){classes+=' cancelled';meta='Odwołany';}
-      else if((trip.free_seats||0)<=0){classes+=' disabled';meta='Brak miejsc';}
-      else{classes+=' available';meta='Miejsc: '+(trip.free_seats||0);availableCount++; if(selectedTripId===trip.id)classes+=' confirmed'; onclick='onclick="selectBookingDay(\''+dateStr+'\')"';}
+      else if(tripFreeSeats(trip)<=0){classes+=' disabled';meta='Brak miejsc';}
+      else{classes+=' available';meta='Miejsc: '+tripFreeSeats(trip);availableCount++; if(selectedTripId===trip.id)classes+=' confirmed'; onclick='onclick="selectBookingDay(\''+dateStr+'\')"';}
     } else {
       classes+=' disabled';
     }
@@ -1077,7 +1147,7 @@ function renderBookingCalendar(){
 }
 
 function selectBookingDay(dateStr){
-  const trip=(cachedTrips||[]).find(t=>t.route===selectedRoute&&t.date===dateStr&& !t.cancelled && (t.free_seats||0)>0);
+  const trip=(cachedTrips||[]).find(t=>t.route===selectedRoute&&tripDate(t)===dateStr&& !t.cancelled && tripFreeSeats(t)>0);
   if(!trip)return;
   selectedTripId=trip.id;
   selectedBookingDate=dateStr;
@@ -1111,7 +1181,7 @@ async function submitBooking(){
   if(routeStops.indexOf(pickup)>routeStops.indexOf(dropoff)){showMsg('book-msg','Wybierz wysiadanie dalej na trasie niż miejsce wsiadania.','err');return}
   const trip=cachedTrips.find(t=>t.id===selectedTripId);
   if(!trip||trip.cancelled){showMsg('book-msg','Ten kurs jest odwołany.','err');return}
-  if((trip.free_seats||0)<seats){showMsg('book-msg','Dostępnych miejsc: '+(trip.free_seats||0)+'. Zmień liczbę.','err');return}
+  if(tripFreeSeats(trip)<seats){showMsg('book-msg','Dostępnych miejsc: '+tripFreeSeats(trip)+'. Zmień liczbę.','err');return}
   const btn=document.getElementById('submit-btn');
   btn.innerHTML='<span class="spinner"></span>Rezerwuję...';btn.disabled=true;
   const resId='R'+Date.now();
@@ -1268,7 +1338,7 @@ function renderAdminCalendar(){
   let hasDates=false;
   for(let day=1;day<=daysInMonth;day++){
     const dateStr=year+'-'+String(month+1).padStart(2,'0')+'-'+String(day).padStart(2,'0');
-    const trip=(cachedAdminTrips||[]).find(t=>t.route===selectedAdminRoute&&t.date===dateStr);
+    const trip=(cachedAdminTrips||[]).find(t=>t.route===selectedAdminRoute&&tripDate(t)===dateStr);
     let classes='calendar-day';
     let label='Dodaj';
     if(trip){
@@ -1282,7 +1352,7 @@ function renderAdminCalendar(){
 }
 
 async function toggleAdminTripDate(dateStr){
-  const trip=(cachedAdminTrips||[]).find(t=>t.route===selectedAdminRoute&&t.date===dateStr);
+  const trip=(cachedAdminTrips||[]).find(t=>t.route===selectedAdminRoute&&tripDate(t)===dateStr);
   if(trip){
     const{error}=await sb.from('trips').update({cancelled:!trip.cancelled}).eq('id',trip.id);
     if(error){document.getElementById('admin-calendar-note').textContent='Błąd: '+error.message;return}
@@ -1300,7 +1370,7 @@ async function loadAdminTrips(){
   const from=y+'-'+m+'-01';
   const last=new Date(y,adminViewMonth.getMonth()+1,0).getDate();
   const to=y+'-'+m+'-'+last.toString().padStart(2,'0');
-  const{data,error}=await sb.from('trips_with_seats').select('*').gte('date',from).lte('date',to).order('date');
+  const{data,error}=await fetchTripsWithSeats(from,to);
   if(error){document.getElementById('admin-calendar-note').textContent='Błąd ładowania: '+error.message;return}
   cachedAdminTrips=data||[];
   renderAdminCalendar();
@@ -1322,14 +1392,14 @@ async function loadAdminReservations(){
 }
 
 function renderAdminList(route,trips){
-  const filtered=trips.filter(t=>t.route===route).sort((a,b)=>new Date(a.date)-new Date(b.date));
+  const filtered=trips.filter(t=>t.route===route).sort((a,b)=>new Date(tripDate(a))-new Date(tripDate(b)));
   const el=document.getElementById('admin-list-'+route);
   if(!filtered.length){el.innerHTML='<p style="font-size:12px;color:var(--color-text-secondary);padding:8px 0">Brak terminów w tym miesiącu.</p>';return}
   el.innerHTML=filtered.map(t=>{
     const actionBtn=t.cancelled
       ?'<button class="restore-btn" onclick="toggleTrip(\''+t.id+'\',false)">Przywróć</button>'
       :'<button class="cancel-btn" onclick="toggleTrip(\''+t.id+'\',true)">Odwołaj</button>';
-    const resInfo=t.used_seats+'/'+(t.max_seats||MAX_SEATS)+' miejsc zajętych';
+    const resInfo=tripUsedSeats(t)+'/'+tripMaxSeats(t)+' miejsc zajętych';
     return'<div class="admin-trip'+(t.cancelled?' cancelled':'')+'"><div class="at-info"><div class="at-date">'+formatDate(t.date)+(t.cancelled?' – ODWOŁANY':'')+'</div><div class="at-sub">'+resInfo+'</div></div>'+actionBtn+'</div>';
   }).join('');
 }
