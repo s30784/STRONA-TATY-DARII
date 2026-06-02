@@ -795,7 +795,10 @@ function renderRentalCalendar(){
     calendar.innerHTML+='<div class="'+classes+'" '+onclick+'><header><span class="day-number">'+day+'</span></header><div class="day-meta">'+meta+'</div></div>';
   }
   const note=document.getElementById('rental-calendar-note');
-  if(note)note.textContent=selectedRentalDate?'Wybrano: '+formatDate(selectedRentalDate):'Kliknij zielony dzień, aby wybrać termin.';
+  if(note){
+    if(busAvailabilityFallback)note.textContent='Nie udało się pobrać dostępności z systemu. Spróbuj odświeżyć stronę.';
+    else note.textContent=selectedRentalDate?'Wybrano: '+formatDate(selectedRentalDate):'Kliknij zielony dzień, aby wybrać termin.';
+  }
 }
 
 function selectRentalDate(dateStr){
@@ -963,12 +966,12 @@ function writeBusAvailabilityFallback(busId,dateStr,available){
 async function fetchBusAvailability(busId,viewDate){
   const range=monthRange(viewDate);
   if(!sb)return readBusAvailabilityFallback(busId,range);
-  if(busAvailabilityFallback)return readBusAvailabilityFallback(busId,range);
   const {data,error}=await sb.from('bus_availability').select('*').eq('bus_id',busId).gte('date',range.from).lte('date',range.to);
   if(error){
     busAvailabilityFallback=true;
-    return readBusAvailabilityFallback(busId,range);
+    return [];
   }
+  busAvailabilityFallback=false;
   return data||[];
 }
 
@@ -977,17 +980,13 @@ async function saveBusAvailability(busId,dateStr,available){
     writeBusAvailabilityFallback(busId,dateStr,available);
     return null;
   }
-  if(busAvailabilityFallback){
-    writeBusAvailabilityFallback(busId,dateStr,available);
-    return null;
-  }
   const payload={bus_id:busId,date:dateStr,available};
   const {error}=await sb.from('bus_availability').upsert(payload,{onConflict:'bus_id,date'});
   if(error){
     busAvailabilityFallback=true;
-    writeBusAvailabilityFallback(busId,dateStr,available);
     return error;
   }
+  busAvailabilityFallback=false;
   return null;
 }
 
@@ -1317,7 +1316,12 @@ function renderAdminBusCalendar(){
 async function toggleAdminBusDate(dateStr){
   const current=getCachedBusAvailability(cachedAdminBusAvailability,selectedAdminBus,dateStr);
   const next=!current;
-  await saveBusAvailability(selectedAdminBus,dateStr,next);
+  const error=await saveBusAvailability(selectedAdminBus,dateStr,next);
+  if(error){
+    const note=document.getElementById('admin-bus-note');
+    if(note)note.textContent='Nie udało się zapisać dostępności w Supabase: '+error.message;
+    return;
+  }
   await loadAdminBusAvailability();
   if(selectedBus===selectedAdminBus&&rentalViewMonth.getMonth()===adminBusViewMonth.getMonth()&&rentalViewMonth.getFullYear()===adminBusViewMonth.getFullYear()){
     await loadRentalBusAvailability();
