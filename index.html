@@ -309,7 +309,7 @@ body{font-family:sans-serif;background:var(--color-background-secondary);color:v
           <div class="fg"><label>Wybrany termin</label><input type="text" id="rental-date-label" placeholder="Wybierz zielony dzień w kalendarzu" readonly></div>
           <div class="fg"><label>Telefon</label><input type="tel" id="rental-phone" placeholder="+48 000 000 000"></div>
           <div class="fg"><label>Opis wyjazdu</label><textarea id="rental-notes" rows="3" placeholder="np. wesele, lotnisko, wyjazd firmowy"></textarea></div>
-          <button class="btn-primary" onclick="submitRentalRequest()">Wyślij zapytanie</button>
+          <button class="btn-primary" id="rental-submit-btn" onclick="submitRentalRequest()">Wyślij zapytanie</button>
         </div>
       </aside>
     </div>
@@ -764,9 +764,15 @@ function rentalNextMonth(){
   loadRentalBusAvailability();
 }
 
-async function loadRentalBusAvailability(){
+async function loadRentalBusAvailability(silent=false){
   renderBusDetails();
   cachedBusAvailability=await fetchBusAvailability(selectedBus,rentalViewMonth);
+  if(selectedRentalDate&&(!getCachedBusAvailability(cachedBusAvailability,selectedBus,selectedRentalDate)||selectedRentalDate<todayStr())){
+    selectedRentalDate=null;
+    const input=document.getElementById('rental-date-label');
+    if(input)input.value='';
+    if(!silent)showMsg('rental-msg','Wybrany termin jest już niedostępny. Wybierz inny dzień.','err');
+  }
   renderRentalCalendar();
 }
 
@@ -809,13 +815,33 @@ function selectRentalDate(dateStr){
   showMsg('rental-msg','','');
 }
 
-function submitRentalRequest(){
+async function submitRentalRequest(){
   const bus=document.getElementById('rental-bus').value;
   const phone=document.getElementById('rental-phone').value.trim();
   const notes=document.getElementById('rental-notes').value.trim();
   if(!selectedRentalDate||!phone){showMsg('rental-msg','Wybierz dostępny termin w kalendarzu i wpisz numer telefonu.','err');return}
+  const btn=document.getElementById('rental-submit-btn');
+  btn.innerHTML='<span class="spinner"></span>Sprawdzam termin...';btn.disabled=true;
+  let stillAvailable=false;
+  try{
+    stillAvailable=await fetchBusAvailabilityForDate(selectedBus,selectedRentalDate);
+  }catch(error){
+    btn.innerHTML='Wyślij zapytanie';btn.disabled=false;
+    showMsg('rental-msg','Nie udało się potwierdzić dostępności terminu. Odśwież stronę i spróbuj ponownie.','err');
+    return;
+  }
+  if(!stillAvailable||selectedRentalDate<todayStr()){
+    btn.innerHTML='Wyślij zapytanie';btn.disabled=false;
+    selectedRentalDate=null;
+    const input=document.getElementById('rental-date-label');
+    if(input)input.value='';
+    await loadRentalBusAvailability();
+    showMsg('rental-msg','Ten termin jest już niedostępny. Wybierz inny dzień w kalendarzu.','err');
+    return;
+  }
   const body='Zapytanie o wynajem busa\n\nBus: '+bus+'\nTermin: '+formatDate(selectedRentalDate)+'\nTelefon: '+phone+'\nOpis wyjazdu: '+(notes||'-');
   showMsg('rental-msg','Zapytanie przygotowane. Otwieram wiadomość email z danymi.','ok');
+  btn.innerHTML='Wyślij zapytanie';btn.disabled=false;
   window.location.href=buildMailto('Zapytanie o wynajem busa',body);
 }
 
@@ -973,6 +999,18 @@ async function fetchBusAvailability(busId,viewDate){
   }
   busAvailabilityFallback=false;
   return data||[];
+}
+
+async function fetchBusAvailabilityForDate(busId,dateStr){
+  if(!sb)return getCachedBusAvailability(cachedBusAvailability,busId,dateStr);
+  const {data,error}=await sb
+    .from('bus_availability')
+    .select('available')
+    .eq('bus_id',busId)
+    .eq('date',dateStr)
+    .maybeSingle();
+  if(error)throw error;
+  return data?data.available!==false:defaultBusAvailable(dateStr);
 }
 
 async function saveBusAvailability(busId,dateStr,available){
@@ -1407,6 +1445,17 @@ function renderAdminList(route,trips){
     return'<div class="admin-trip'+(t.cancelled?' cancelled':'')+'"><div class="at-info"><div class="at-date">'+formatDate(t.date)+(t.cancelled?' – ODWOŁANY':'')+'</div><div class="at-sub">'+resInfo+'</div></div>'+actionBtn+'</div>';
   }).join('');
 }
+
+async function refreshRentalIfVisible(){
+  const rentalPage=document.getElementById('page-rental');
+  if(rentalPage&&rentalPage.classList.contains('active'))await loadRentalBusAvailability(true);
+}
+
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden)refreshRentalIfVisible();
+});
+
+setInterval(refreshRentalIfVisible,15000);
 
 async function generateMonth(){
   const y=adminViewMonth.getFullYear();
