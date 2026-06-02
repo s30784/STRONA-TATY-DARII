@@ -9,6 +9,7 @@
 <body>
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
+body{font-family:sans-serif;background:var(--color-background-secondary);color:var(--color-text-primary);min-height:100vh}
 :root{
   --color-text-primary:#241B14;
   --color-text-secondary:#675B50;
@@ -17,7 +18,8 @@
   --color-border-secondary:#D8CDC0;
   --color-border-tertiary:#E9E0D6;
 }
-.site{font-family:sans-serif;color:var(--color-text-primary);background:var(--color-background-primary);min-height:100vh}
+.site{font-family:sans-serif;color:var(--color-text-primary);background:var(--color-background-primary);min-height:100vh;padding:1.25rem 0 1.75rem}
+.page{display:none;padding-top:1rem}.page.active{display:block}
 .nav{background:var(--color-background-primary);border-bottom:0.5px solid var(--color-border-tertiary);padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between;height:58px;flex-wrap:wrap;gap:4px}
 .nav-logo{font-size:15px;font-weight:700;color:#BA7517;line-height:1.2}
 .nav-logo span{display:block;font-size:10px;font-weight:500;color:var(--color-text-secondary);letter-spacing:.07em;text-transform:uppercase}
@@ -471,6 +473,7 @@
   </div>
   <div class="section">
     <div id="myres-msg"></div>
+    <div id="myres-summary" class="card" style="margin-bottom:12px;display:none"></div>
     <div id="myres-list"><div class="no-trips">Zaloguj się, aby zobaczyć rezerwacje.</div></div>
   </div>
 </div>
@@ -581,6 +584,13 @@
 const SB_URL='https://fzjvrjowptibysaythwa.supabase.co';
 const SB_KEY='sb_publishable_IwEk9ePTdCzXivBHz8Gjcw_6iURm6p_';
 const sb=typeof supabase!=='undefined'?supabase.createClient(SB_URL,SB_KEY):null;
+const PUBLIC_APP_ORIGIN='https://strona-taty-darii.onrender.com';
+const CURRENT_HOST=window.location.hostname;
+const APP_ORIGIN=(CURRENT_HOST==='localhost'||CURRENT_HOST==='127.0.0.1'||window.location.protocol==='file:')?PUBLIC_APP_ORIGIN:window.location.origin;
+const AUTH_REDIRECTS={
+  verifyEmail:`${APP_ORIGIN}/verify-email.html`,
+  resetPassword:`${APP_ORIGIN}/reset-password.html`
+};
 const MAX_SEATS=7;
 const MONTHS=['Styczeń','Luty','Marzec','Kwiecień','Maj','Czerwiec','Lipiec','Sierpień','Wrzesień','Październik','Listopad','Grudzień'];
 
@@ -978,7 +988,7 @@ async function doRegister(){
   if(!fname||!lname||!email||!pass){showMsg('auth-msg','Wypełnij wymagane pola.','err');return}
   const btn=document.getElementById('reg-btn');
   btn.innerHTML='<span class="spinner"></span>Rejestruję...';btn.disabled=true;
-  const{error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:fname+' '+lname,phone},emailRedirectTo:'https://strona-taty-darii.onrender.com/verify-email.html'}});
+  const{error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:fname+' '+lname,phone},emailRedirectTo:AUTH_REDIRECTS.verifyEmail}});
   btn.innerHTML='Zarejestruj się';btn.disabled=false;
   if(error){showMsg('auth-msg','Błąd: '+error.message,'err');return}
   showMsg('auth-msg','Sprawdź skrzynkę email – wyślaliśmy link potwierdzający.','ok');
@@ -989,7 +999,7 @@ async function doReset(){
   if(!email){showMsg('auth-msg','Wpisz email.','err');return}
   const btn=document.getElementById('reset-btn');
   btn.innerHTML='<span class="spinner"></span>Wysyłam...';btn.disabled=true;
-  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:'https://strona-taty-darii.onrender.com/verify-email.html'});
+  const{error}=await sb.auth.resetPasswordForEmail(email,{redirectTo:AUTH_REDIRECTS.resetPassword});
   btn.innerHTML='Wyślij link resetujący';btn.disabled=false;
   if(error){showMsg('auth-msg','Błąd: '+error.message,'err');return}
   showMsg('auth-msg','Link resetujący wysłany na '+email,'ok');
@@ -1121,19 +1131,43 @@ async function submitBooking(){
 }
 
 async function loadMyReservations(){
-  const el=document.getElementById('myres-list');
-  if(!currentUser){el.innerHTML='<div class="no-trips">Zaloguj się, aby zobaczyć rezerwacje. <button class="btn-outline" style="margin-top:8px" onclick="showPage(\'auth\',null)">Zaloguj się</button></div>';return}
-  el.innerHTML='<div class="no-trips">Ładowanie...</div>';
+  const listEl=document.getElementById('myres-list');
+  const summaryEl=document.getElementById('myres-summary');
+  if(!currentUser){
+    summaryEl.style.display='none';
+    listEl.innerHTML='<div class="no-trips">Zaloguj się, aby zobaczyć rezerwacje. <button class="btn-outline" style="margin-top:8px" onclick="showPage(\'auth\',null)">Zaloguj się</button></div>';
+    return;
+  }
+  summaryEl.style.display='none';
+  listEl.innerHTML='<div class="no-trips">Ładowanie...</div>';
   const{data,error}=await sb.from('reservations').select('*,trips(route,date,cancelled)').eq('user_id',currentUser.id).order('created_at',{ascending:false});
-  if(error){el.innerHTML='<div class="msg err">Błąd: '+error.message+'</div>';return}
-  if(!data||!data.length){el.innerHTML='<div class="no-trips">Brak rezerwacji.</div>';return}
-  el.innerHTML=data.map(r=>{
+  if(error){listEl.innerHTML='<div class="msg err">Błąd: '+error.message+'</div>';return}
+  if(!data||!data.length){listEl.innerHTML='<div class="no-trips">Brak rezerwacji.</div>';return}
+  const totalCount=data.length;
+  const upcomingCount=data.filter(r=>{
+    const date=r.trips?new Date(r.trips.date):null;
+    return date && date >= new Date();
+  }).length;
+  const cancelledCount=data.filter(r=>r.status==='cancelled' || (r.trips&&r.trips.cancelled)).length;
+  summaryEl.innerHTML='\n    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:10px">\n      <div style="background:#FAEEDA;border-radius:10px;padding:12px">\n        <div style="font-size:12px;color:#854F0B;font-weight:700;margin-bottom:6px">Łącznie rezerwacji</div>\n        <div style="font-size:24px;font-weight:800;color:#412402">'+totalCount+'</div>\n      </div>\n      <div style="background:#EAF3DE;border-radius:10px;padding:12px">\n        <div style="font-size:12px;color:#27500A;font-weight:700;margin-bottom:6px">Nadchodzące</div>\n        <div style="font-size:24px;font-weight:800;color:#412402">'+upcomingCount+'</div>\n      </div>\n      <div style="background:#FCEBEB;border-radius:10px;padding:12px">\n        <div style="font-size:12px;color:#A32D2D;font-weight:700;margin-bottom:6px">Odwołane</div>\n        <div style="font-size:24px;font-weight:800;color:#412402">'+cancelledCount+'</div>\n      </div>\n    </div>';
+  summaryEl.style.display='block';
+  listEl.innerHTML=data.map(r=>{
     const route=r.trips?r.trips.route:'–';
     const date=r.trips?formatDate(r.trips.date):'–';
-    const cancelled=r.trips&&r.trips.cancelled;
-    const statusBadge=r.status==='cancelled'?'<span class="badge badge-cancel">Anulowana</span>':cancelled?'<span class="badge badge-cancel">Kurs odwołany</span>':'<span class="badge badge-ok">Potwierdzona</span>';
-    return'<div class="res-card"><div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px"><div style="font-size:13px;font-weight:700">'+date+'</div>'+statusBadge+'</div><div style="font-size:12px;color:var(--color-text-secondary)">'+(route==='JW'?'Jarosław → Wiedeń':'Wiedeń → Jarosław')+'</div><div style="font-size:11px;color:var(--color-text-secondary);margin-top:3px">Miejsc: '+r.seats+(r.notes?' · '+r.notes:'')+'</div><div style="font-size:10px;color:var(--color-text-secondary);margin-top:3px">ID: '+r.id+'</div></div>';
+    const cancelled=(r.status==='cancelled' || (r.trips&&r.trips.cancelled));
+    const statusBadge=cancelled?'<span class="badge badge-cancel">Anulowana</span>':'<span class="badge badge-ok">Potwierdzona</span>';
+    const cancelAction=!cancelled?'<button class="cancel-btn" onclick="cancelReservation(\''+r.id+'\')">Anuluj rezerwację</button>':'';
+    return'<div class="res-card">\n      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">\n        <div>\n          <div style="font-size:13px;font-weight:700">'+date+'</div>\n          <div style="font-size:11px;color:var(--color-text-secondary);margin-top:2px">'+(route==='JW'?'Jarosław → Wiedeń':'Wiedeń → Jarosław')+'</div>\n        </div>\n        '+statusBadge+'\n      </div>\n      <div style="font-size:12px;color:var(--color-text-secondary);margin-top:3px">Miejsc: '+r.seats+(r.notes?' · '+r.notes:'')+'</div>\n      <div style="font-size:10px;color:var(--color-text-secondary);margin-top:6px">ID: '+r.id+'</div>\n      '+cancelAction+'\n    </div>';
   }).join('');
+}
+
+async function cancelReservation(resId){
+  if(!confirm('Czy na pewno chcesz anulować tę rezerwację?'))return;
+  document.getElementById('myres-msg').innerHTML='<div class="msg info">Anulowanie rezerwacji...</div>';
+  const{error}=await sb.from('reservations').update({status:'cancelled'}).eq('id',resId);
+  if(error){document.getElementById('myres-msg').innerHTML='<div class="msg err">Błąd: '+error.message+'</div>';return}
+  document.getElementById('myres-msg').innerHTML='<div class="msg ok">Rezerwacja została anulowana.</div>';
+  await loadMyReservations();
 }
 
 function switchAdminTab(tab,btn){
