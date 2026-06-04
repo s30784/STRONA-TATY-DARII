@@ -1,0 +1,1119 @@
+:root {
+  --paper: #F6F6F6;
+  --surface: #FFFFFF;
+  --ink: #2C2E3E;
+  --ink-soft: #34374C;
+  --muted: #666B7B;
+  --line: #DFE2E8;
+  --line-strong: #C9CDD8;
+  --accent: #EE2B47;
+  --accent-dark: #C91F38;
+  --success: #227A5D;
+  --success-bg: #EAF6F1;
+  --danger-bg: #FDECEF;
+  --shadow: 0 16px 40px rgba(44, 46, 62, 0.08);
+  --shadow-soft: 0 8px 24px rgba(44, 46, 62, 0.06);
+  --radius: 8px;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--ink);
+  background: var(--paper);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-width: 320px;
+  margin: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(246, 246, 246, 0) 260px),
+    var(--paper);
+  color: var(--ink);
+  letter-spacing: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  letter-spacing: 0;
+}
+
+button {
+  border: 0;
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.58;
+}
+
+a {
+  color: inherit;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+.site {
+  min-height: 100vh;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 14px 24px;
+  border-bottom: 1px solid rgba(223, 226, 232, 0.86);
+  background: rgba(246, 246, 246, 0.92);
+  backdrop-filter: blur(18px);
+}
+
+.nav-logo {
+  flex: 0 0 auto;
+  min-width: 170px;
+  color: var(--ink);
+  font-weight: 800;
+  line-height: 1.05;
+}
+
+.nav-logo span {
+  display: block;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.nav-tabs {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+  width: 100%;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.nav-tabs::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-btn,
+.small-btn,
+.hero-btn,
+.service-link,
+.btn-primary,
+.btn-outline,
+.route-switch button,
+.month-btn,
+.stop-item,
+.route-actions button,
+.atab,
+.cancel-btn,
+.restore-btn {
+  min-height: 40px;
+  border-radius: var(--radius);
+  font-weight: 750;
+  transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.tab-btn {
+  flex: 0 0 auto;
+  padding: 0 13px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.tab-btn:hover,
+.tab-btn.active {
+  border-color: var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  box-shadow: var(--shadow-soft);
+}
+
+.user-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 10px 24px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.small-btn {
+  padding: 0 14px;
+  background: var(--ink);
+  color: #FFFFFF;
+}
+
+.page {
+  width: 100%;
+}
+
+.home-hero {
+  position: relative;
+  min-height: 470px;
+  display: flex;
+  align-items: center;
+  padding: 76px 24px;
+  overflow: hidden;
+  background-image:
+    linear-gradient(90deg, rgba(44, 46, 62, 0.94), rgba(44, 46, 62, 0.72) 48%, rgba(44, 46, 62, 0.28)),
+    url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
+  background-position: center;
+  background-size: cover;
+}
+
+.home-hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 6px;
+  background: var(--accent);
+}
+
+.home-hero-inner,
+.section,
+.hero {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.home-hero-inner {
+  position: relative;
+  z-index: 1;
+}
+
+.home-hero h1,
+.hero h1 {
+  max-width: 820px;
+  margin: 0;
+  color: #FFFFFF;
+  font-size: 46px;
+  line-height: 1.08;
+  font-weight: 850;
+}
+
+.home-hero p {
+  max-width: 650px;
+  margin: 20px 0 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 18px;
+  line-height: 1.65;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 30px;
+}
+
+.hero-btn,
+.btn-primary,
+.btn-outline,
+.service-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 150px;
+  padding: 0 18px;
+}
+
+.hero-btn.primary,
+.btn-primary,
+.service-link {
+  background: var(--accent);
+  color: #FFFFFF;
+  box-shadow: 0 12px 24px rgba(238, 43, 71, 0.22);
+}
+
+.hero-btn.secondary {
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  background: rgba(255, 255, 255, 0.1);
+  color: #FFFFFF;
+}
+
+.hero-btn:hover,
+.btn-primary:hover,
+.service-link:hover {
+  background: var(--accent-dark);
+  transform: translateY(-1px);
+}
+
+.hero-btn.secondary:hover {
+  border-color: rgba(255, 255, 255, 0.48);
+  background: rgba(255, 255, 255, 0.18);
+}
+
+.section {
+  padding: 52px 0;
+}
+
+.hero {
+  margin-top: 34px;
+  padding: 46px 36px;
+  border-radius: var(--radius);
+  background: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.hero h1 {
+  color: #FFFFFF;
+  font-size: 34px;
+}
+
+.hero p {
+  max-width: 720px;
+  margin: 14px 0 0;
+  color: rgba(255, 255, 255, 0.78);
+  line-height: 1.6;
+}
+
+.service-grid,
+.fleet-grid,
+.contact-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.service-card,
+.fleet-card,
+.card,
+.res-card,
+.admin-trip {
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.service-card {
+  position: relative;
+  min-height: 220px;
+  overflow: hidden;
+}
+
+.service-card::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto;
+  height: 5px;
+  background: var(--accent);
+}
+
+.service-body {
+  display: flex;
+  min-height: 220px;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 28px;
+}
+
+.service-body h3,
+.card h3,
+.fleet-card h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 20px;
+  line-height: 1.25;
+}
+
+.service-body p {
+  margin: 0 0 22px;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.service-link {
+  margin-top: auto;
+}
+
+.split-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.34fr) minmax(320px, 0.76fr);
+  gap: 22px;
+  align-items: start;
+}
+
+aside {
+  display: grid;
+  gap: 16px;
+}
+
+.fleet-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.fleet-card {
+  overflow: hidden;
+}
+
+.fleet-card.selected {
+  border-color: rgba(238, 43, 71, 0.48);
+  box-shadow: 0 0 0 3px rgba(238, 43, 71, 0.1), var(--shadow-soft);
+}
+
+.fleet-card img {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  background: var(--line);
+}
+
+.fleet-card-body,
+.card {
+  padding: 22px;
+}
+
+.card {
+  margin-bottom: 16px;
+}
+
+.card:last-child,
+aside .card:last-child {
+  margin-bottom: 0;
+}
+
+.muted,
+.form-help,
+.no-trips {
+  color: var(--muted);
+  line-height: 1.58;
+}
+
+.mt {
+  margin-top: 16px;
+}
+
+.mt-sm {
+  margin-top: 10px;
+}
+
+.mb {
+  margin-bottom: 22px;
+}
+
+.fleet-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.pill,
+.badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.pill {
+  background: var(--paper);
+  color: var(--ink-soft);
+}
+
+.btn-outline {
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.btn-outline:hover {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #FFFFFF;
+}
+
+.price-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.price-table th,
+.price-table td {
+  padding: 13px 0;
+  border-bottom: 1px solid var(--line);
+  text-align: left;
+}
+
+.price-table th {
+  color: var(--muted);
+  font-size: 13px;
+  text-transform: uppercase;
+}
+
+.price-table td:last-child,
+.price-table th:last-child {
+  text-align: right;
+  font-weight: 800;
+}
+
+.mini-list {
+  display: grid;
+  gap: 10px;
+  margin: 16px 0 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.calendar-controls,
+.admin-month-ctrl {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.month-title,
+.admin-month-ctrl span,
+.step-label,
+.admin-route-title {
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.month-btn {
+  min-width: 42px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 20px;
+}
+
+.month-btn:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.calendar-weekdays {
+  margin-bottom: 8px;
+}
+
+.weekday {
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+  text-align: center;
+  text-transform: uppercase;
+}
+
+.calendar-day {
+  min-height: 82px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  text-align: left;
+}
+
+.calendar-day header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.day-number {
+  font-size: 18px;
+  font-weight: 850;
+}
+
+.day-meta {
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 750;
+  line-height: 1.25;
+}
+
+.calendar-day.available {
+  border-color: rgba(34, 122, 93, 0.38);
+  background: var(--success-bg);
+}
+
+.calendar-day.available .day-meta {
+  color: var(--success);
+}
+
+.calendar-day.confirmed {
+  border-color: var(--accent);
+  background: var(--danger-bg);
+  box-shadow: inset 0 0 0 2px rgba(238, 43, 71, 0.16);
+}
+
+.calendar-day.cancelled,
+.calendar-day.unavailable {
+  border-color: rgba(238, 43, 71, 0.22);
+  background: var(--danger-bg);
+}
+
+.calendar-day.disabled {
+  background: #F0F1F4;
+  color: #9AA0AE;
+}
+
+.calendar-day.disabled .day-meta,
+.calendar-day.cancelled .day-meta,
+.calendar-day.unavailable .day-meta {
+  color: #8F4350;
+}
+
+.calendar-day:not(.disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-soft);
+}
+
+.route-switch,
+.atabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.route-switch button,
+.atab {
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--muted);
+}
+
+.route-switch button.active,
+.atab.active {
+  border-color: var(--ink);
+  background: var(--ink);
+  color: #FFFFFF;
+}
+
+.route-diagram {
+  position: relative;
+  display: grid;
+  gap: 14px;
+  padding-left: 8px;
+}
+
+.route-line {
+  position: absolute;
+  top: 24px;
+  bottom: 56px;
+  left: 24px;
+  width: 2px;
+  background: var(--line-strong);
+}
+
+.route-stop-wrap {
+  position: relative;
+  display: grid;
+  gap: 8px;
+}
+
+.route-stop {
+  position: relative;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr);
+  gap: 12px;
+  width: 100%;
+  min-height: 54px;
+  padding: 0;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+.route-dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 2px solid var(--surface);
+  border-radius: 999px;
+  background: var(--ink);
+  color: #FFFFFF;
+  font-weight: 850;
+  box-shadow: 0 0 0 2px var(--line-strong);
+}
+
+.route-stop.end .route-dot {
+  background: var(--accent);
+}
+
+.route-stop strong,
+.route-stop span span {
+  display: block;
+}
+
+.route-stop span span {
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.route-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-left: 48px;
+}
+
+.route-actions button,
+.map-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.map-link {
+  width: fit-content;
+  margin-left: 48px;
+}
+
+.stops-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.stop-item {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink);
+  text-align: left;
+}
+
+.stop-item span {
+  display: block;
+  margin-top: 4px;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.fg,
+.fg2,
+.tow-form-grid {
+  margin-bottom: 14px;
+}
+
+.fg2,
+.tow-form-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.fg label {
+  display: block;
+  margin-bottom: 7px;
+  color: var(--ink-soft);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+input,
+select,
+textarea {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  background: #FFFFFF;
+  color: var(--ink);
+  outline: none;
+}
+
+textarea {
+  min-height: 96px;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(238, 43, 71, 0.13);
+}
+
+.card .btn-primary,
+form .btn-primary,
+.auth-shell .btn-primary {
+  width: 100%;
+}
+
+.divider {
+  height: 1px;
+  margin: 18px 0;
+  border: 0;
+  background: var(--line);
+}
+
+.msg {
+  margin-bottom: 16px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+  font-weight: 700;
+  line-height: 1.45;
+}
+
+.msg.ok {
+  border-color: rgba(34, 122, 93, 0.28);
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.msg.err {
+  border-color: rgba(238, 43, 71, 0.24);
+  background: var(--danger-bg);
+  color: #9E1830;
+}
+
+.msg.info {
+  background: #EEF0F4;
+  color: var(--ink-soft);
+}
+
+.auth-shell {
+  width: min(520px, calc(100% - 48px));
+  margin: 52px auto;
+}
+
+.booking-form {
+  margin-top: 22px;
+}
+
+.map-frame {
+  width: 100%;
+  height: 380px;
+  border: 0;
+  border-radius: var(--radius);
+}
+
+.summary-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.summary-item {
+  min-height: 92px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.summary-item span,
+.res-head span,
+.at-sub {
+  display: block;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.summary-item strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 30px;
+}
+
+.res-card,
+.admin-trip {
+  margin-bottom: 12px;
+  padding: 18px;
+}
+
+.res-head,
+.admin-trip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.res-head strong,
+.at-date {
+  display: block;
+  color: var(--ink);
+  font-weight: 850;
+}
+
+.badge-ok {
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.badge-cancel,
+.badge-none {
+  background: var(--danger-bg);
+  color: #9E1830;
+}
+
+.badge-few {
+  background: #FFF3D8;
+  color: #8B5F00;
+}
+
+.cancel-btn,
+.restore-btn {
+  min-width: 110px;
+  padding: 0 14px;
+}
+
+.cancel-btn {
+  border: 1px solid rgba(238, 43, 71, 0.28);
+  background: var(--danger-bg);
+  color: #9E1830;
+}
+
+.restore-btn {
+  border: 1px solid rgba(34, 122, 93, 0.28);
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 18px;
+}
+
+.panel-head h2 {
+  margin: 0;
+  color: var(--ink);
+  font-size: 28px;
+}
+
+.admin-calendar-section {
+  margin-bottom: 22px;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.admin-list-block {
+  margin-top: 24px;
+}
+
+.admin-trip.cancelled {
+  background: var(--danger-bg);
+}
+
+.contact-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.eyebrow {
+  margin-bottom: 12px;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.footer {
+  padding: 32px 24px;
+  border-top: 1px solid var(--line);
+  color: var(--muted);
+  text-align: center;
+  font-size: 14px;
+}
+
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border: 2px solid rgba(255, 255, 255, 0.45);
+  border-top-color: #FFFFFF;
+  border-radius: 999px;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (min-width: 1220px) {
+  .nav {
+    padding-right: calc((100vw - 1180px) / 2);
+    padding-left: calc((100vw - 1180px) / 2);
+  }
+}
+
+@media (max-width: 920px) {
+  .nav {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .nav-tabs {
+    justify-content: flex-start;
+  }
+
+  .home-hero {
+    min-height: 430px;
+    padding: 60px 20px;
+    background-image:
+      linear-gradient(90deg, rgba(44, 46, 62, 0.94), rgba(44, 46, 62, 0.76)),
+      url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
+  }
+
+  .home-hero-inner,
+  .section,
+  .hero {
+    width: min(100% - 32px, 1180px);
+  }
+
+  .home-hero h1 {
+    font-size: 34px;
+  }
+
+  .hero h1 {
+    font-size: 28px;
+  }
+
+  .service-grid,
+  .fleet-grid,
+  .contact-grid,
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .split-layout {
+    gap: 16px;
+  }
+}
+
+@media (max-width: 640px) {
+  .nav {
+    padding: 12px 16px;
+  }
+
+  .tab-btn {
+    min-height: 38px;
+    padding: 0 11px;
+    font-size: 13px;
+  }
+
+  .user-bar {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 10px 16px;
+  }
+
+  .home-hero h1 {
+    font-size: 29px;
+  }
+
+  .home-hero p {
+    font-size: 16px;
+  }
+
+  .hero {
+    margin-top: 20px;
+    padding: 30px 20px;
+  }
+
+  .section {
+    padding: 34px 0;
+  }
+
+  .service-body,
+  .fleet-card-body,
+  .card {
+    padding: 18px;
+  }
+
+  .calendar-weekdays,
+  .calendar-grid {
+    gap: 5px;
+  }
+
+  .calendar-day {
+    min-height: 66px;
+    padding: 7px;
+  }
+
+  .day-number {
+    font-size: 15px;
+  }
+
+  .day-meta {
+    margin-top: 7px;
+    font-size: 10px;
+  }
+
+  .fg2,
+  .tow-form-grid,
+  .summary-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .res-head,
+  .admin-trip {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .route-actions {
+    padding-left: 48px;
+  }
+}
