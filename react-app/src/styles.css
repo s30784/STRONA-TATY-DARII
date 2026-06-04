@@ -88,6 +88,7 @@ img {
   color: var(--ink);
   font-weight: 800;
   line-height: 1.05;
+  text-decoration: none;
 }
 
 .nav-logo span {
@@ -131,11 +132,15 @@ img {
 }
 
 .tab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex: 0 0 auto;
   padding: 0 13px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--muted);
+  text-decoration: none;
   white-space: nowrap;
 }
 
@@ -157,6 +162,10 @@ img {
   background: var(--surface);
   color: var(--muted);
   font-size: 14px;
+}
+
+.user-bar.err {
+  color: #9E1830;
 }
 
 .small-btn {
@@ -269,6 +278,16 @@ img {
 
 .section {
   padding: 52px 0;
+}
+
+.loading-box {
+  margin-bottom: 14px;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #EEF0F4;
+  color: var(--ink-soft);
+  font-weight: 800;
 }
 
 .hero {
@@ -826,6 +845,43 @@ form .btn-primary,
 .auth-shell {
   width: min(520px, calc(100% - 48px));
   margin: 52px auto;
+}
+
+.auth-redirect,
+.error-boundary {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--paper);
+}
+
+.auth-redirect .card,
+.error-boundary .card {
+  width: min(460px, 100%);
+  text-align: center;
+}
+
+.auth-redirect .icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 14px;
+  border-radius: 999px;
+  background: var(--ink);
+  color: #FFFFFF;
+  font-weight: 900;
+}
+
+.auth-redirect h1,
+.error-boundary h1 {
+  margin-top: 0;
+}
+
+.admin-guard {
+  max-width: 640px;
 }
 
 .booking-form {
