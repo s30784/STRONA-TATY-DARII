@@ -589,27 +589,34 @@ export function App() {
   return (
     <div className="site">
       <nav className="nav">
-        <NavLink className="nav-logo" to="/">Wynajem Busów<span>Jarosław</span></NavLink>
+        <NavLink className="nav-logo" to="/">
+          <span className="nav-logo-main">Wynajem Busów</span>
+          <span>Jarosław - Polska/Austria</span>
+        </NavLink>
         <div className="nav-tabs">
           {navItems.map(([to, label]) => (
             <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `tab-btn ${isActive ? 'active' : ''}`}>{label}</NavLink>
           ))}
           {currentProfile?.role === 'admin' ? (
-            <NavLink to="/admin" className={({ isActive }) => `tab-btn ${isActive ? 'active' : ''}`}>Panel</NavLink>
+            <NavLink to="/admin" className={({ isActive }) => `tab-btn admin-link ${isActive ? 'active' : ''}`}>Panel</NavLink>
           ) : null}
+        </div>
+        <div className="nav-account">
+          {currentUser ? (
+            <details className="user-menu">
+              <summary>{currentUser.email}</summary>
+              <button onClick={signOut} type="button">Wyloguj</button>
+            </details>
+          ) : (
+            <NavLink to="/auth" className="account-link">Logowanie</NavLink>
+          )}
         </div>
       </nav>
 
       {profileError ? <div className="user-bar err">Nie udało się pobrać profilu: {profileError}</div> : null}
-      {currentUser ? (
-        <div className="user-bar">
-          <span>Zalogowany jako: <strong>{currentUser.email}</strong></span>
-          <button className="small-btn" onClick={signOut} type="button">Wyloguj</button>
-        </div>
-      ) : null}
 
       <Routes>
-        <Route path="/" element={<HomePage showPage={showPage} currentUser={currentUser} />} />
+        <Route path="/" element={<HomePage showPage={showPage} currentUser={currentUser} contactEmail={CONTACT_EMAIL} />} />
         <Route path="/rental" element={<RentalPage selectedBus={selectedBus} setSelectedBus={setSelectedBus} rentalViewMonth={rentalViewMonth} setRentalViewMonth={setRentalViewMonth} busAvailability={busAvailability} selectedRentalDate={selectedRentalDate} setSelectedRentalDate={setSelectedRentalDate} busAvailabilityFallback={busAvailabilityFallback} submitRentalRequest={submitRentalRequest} rentalMsg={rentalMsg} rentalSubmitting={rentalSubmitting} rentalLoading={rentalLoading} />} />
         <Route path="/auth" element={<AuthPage authForm={authForm} setAuthForm={setAuthForm} authMsg={authMsg} authLoading={authLoading} doLogin={doLogin} doRegister={doRegister} doReset={doReset} />} />
         <Route path="/booking" element={<BookingPage selectedRoute={selectedRoute} setSelectedRoute={setSelectedRoute} routeDetails={routeDetails} bookingViewMonth={bookingViewMonth} setBookingViewMonth={setBookingViewMonth} cachedTrips={cachedTrips} selectedTripId={selectedTripId} selectedBookingDate={selectedBookingDate} selectBookingDay={selectBookingDay} pickupStop={pickupStop} dropoffStop={dropoffStop} setPickupStop={setPickupStop} setDropoffStop={setDropoffStop} chooseStop={chooseStop} submitBooking={submitBooking} bookingMsg={bookingMsg} bookingSubmitting={bookingSubmitting} bookingLoading={bookingLoading} currentUser={currentUser} currentProfile={currentProfile} />} />
@@ -622,7 +629,30 @@ export function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
 
-      <div className="footer">© 2026 Wynajem Busów Jarosław · Wszelkie prawa zastrzeżone</div>
+      <footer className="footer">
+        <div className="footer-inner">
+          <div className="footer-brand">
+            <strong>Wynajem Busów Jarosław</strong>
+            <span>Przejazdy Jarosław-Wiedeń, wynajem busów i transport lawetą na trasie Polska-Austria.</span>
+          </div>
+          <div className="footer-col">
+            <span>Trasa</span>
+            <NavLink to="/booking">Jarosław-Wiedeń</NavLink>
+            <NavLink to="/tow">Polska-Austria</NavLink>
+          </div>
+          <div className="footer-col">
+            <span>Usługi</span>
+            <NavLink to="/rental">Wynajem busów</NavLink>
+            <NavLink to="/tow">Transport lawetą</NavLink>
+          </div>
+          <div className="footer-col">
+            <span>Kontakt</span>
+            <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+            <NavLink to="/contact">Zapytania i informacje</NavLink>
+          </div>
+        </div>
+        <div className="footer-bottom">© 2026 Wynajem Busów Jarosław. Wszelkie prawa zastrzeżone.</div>
+      </footer>
     </div>
   );
 }

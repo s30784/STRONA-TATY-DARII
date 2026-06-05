@@ -4,6 +4,7 @@
   --ink: #2C2E3E;
   --ink-soft: #34374C;
   --muted: #666B7B;
+  --muted-strong: #4F5565;
   --line: #DFE2E8;
   --line-strong: #C9CDD8;
   --accent: #EE2B47;
@@ -11,8 +12,9 @@
   --success: #227A5D;
   --success-bg: #EAF6F1;
   --danger-bg: #FDECEF;
-  --shadow: 0 16px 40px rgba(44, 46, 62, 0.08);
-  --shadow-soft: 0 8px 24px rgba(44, 46, 62, 0.06);
+  --shadow: 0 24px 60px rgba(44, 46, 62, 0.12);
+  --shadow-soft: 0 12px 30px rgba(44, 46, 62, 0.08);
+  --shadow-premium: 0 26px 70px rgba(17, 24, 39, 0.22);
   --radius: 8px;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--ink);
@@ -31,10 +33,11 @@ body {
   min-width: 320px;
   margin: 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(246, 246, 246, 0) 260px),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 246, 246, 0) 320px),
     var(--paper);
   color: var(--ink);
   letter-spacing: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
 button,
@@ -75,33 +78,42 @@ img {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 22px;
+  min-height: 74px;
   padding: 14px 24px;
-  border-bottom: 1px solid rgba(223, 226, 232, 0.86);
-  background: rgba(246, 246, 246, 0.92);
+  border-bottom: 1px solid rgba(223, 226, 232, 0.78);
+  background: rgba(255, 255, 255, 0.88);
   backdrop-filter: blur(18px);
 }
 
 .nav-logo {
   flex: 0 0 auto;
-  min-width: 170px;
+  min-width: 190px;
   color: var(--ink);
   font-weight: 800;
   line-height: 1.05;
   text-decoration: none;
 }
 
+.nav-logo .nav-logo-main {
+  display: block;
+  color: var(--ink);
+  font-size: 17px;
+  letter-spacing: 0;
+}
+
 .nav-logo span {
   display: block;
-  color: var(--accent);
-  font-size: 13px;
-  font-weight: 800;
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 750;
   text-transform: uppercase;
 }
 
 .nav-tabs {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   gap: 6px;
   width: 100%;
   overflow-x: auto;
@@ -136,19 +148,99 @@ img {
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  padding: 0 13px;
+  position: relative;
+  padding: 0 12px;
   border: 1px solid transparent;
   background: transparent;
-  color: var(--muted);
+  color: var(--muted-strong);
+  font-size: 14px;
+  font-weight: 780;
   text-decoration: none;
   white-space: nowrap;
 }
 
-.tab-btn:hover,
+.tab-btn::after {
+  content: "";
+  position: absolute;
+  right: 12px;
+  bottom: 2px;
+  left: 12px;
+  height: 2px;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.tab-btn:hover {
+  color: var(--ink);
+}
+
 .tab-btn.active {
-  border-color: var(--line);
+  border-color: transparent;
+  background: transparent;
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.tab-btn.active::after {
+  background: rgba(238, 43, 71, 0.72);
+}
+
+.tab-btn.admin-link {
+  color: #8B90A0;
+  font-size: 13px;
+}
+
+.nav-account {
+  flex: 0 0 auto;
+  display: flex;
+  justify-content: flex-end;
+  min-width: 132px;
+}
+
+.account-link,
+.user-menu summary,
+.user-menu button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 38px;
+  padding: 0 13px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink);
+  font-size: 13px;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-menu summary {
+  max-width: 180px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  list-style: none;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.user-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.user-menu[open] summary {
+  border-color: var(--ink);
+}
+
+.user-menu button {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 30;
+  min-width: 128px;
   box-shadow: var(--shadow-soft);
 }
 
@@ -180,15 +272,16 @@ img {
 
 .home-hero {
   position: relative;
-  min-height: 470px;
+  min-height: 520px;
   display: flex;
   align-items: center;
-  padding: 76px 24px;
+  padding: 72px 24px 78px;
   overflow: hidden;
   background-image:
-    linear-gradient(90deg, rgba(44, 46, 62, 0.94), rgba(44, 46, 62, 0.72) 48%, rgba(44, 46, 62, 0.28)),
+    radial-gradient(circle at 76% 24%, rgba(238, 43, 71, 0.28), transparent 27%),
+    linear-gradient(105deg, rgba(17, 24, 39, 0.96) 0%, rgba(44, 46, 62, 0.88) 44%, rgba(44, 46, 62, 0.48) 68%, rgba(17, 24, 39, 0.2) 100%),
     url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
-  background-position: center;
+  background-position: center right;
   background-size: cover;
 }
 
@@ -198,8 +291,8 @@ img {
   left: 0;
   right: 0;
   bottom: 0;
-  height: 6px;
-  background: var(--accent);
+  height: 1px;
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .home-hero-inner,
@@ -214,29 +307,65 @@ img {
   z-index: 1;
 }
 
+.hero-kicker {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  margin-bottom: 18px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.86);
+  font-size: 12px;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
 .home-hero h1,
 .hero h1 {
-  max-width: 820px;
+  max-width: 760px;
   margin: 0;
   color: #FFFFFF;
-  font-size: 46px;
-  line-height: 1.08;
+  font-size: clamp(38px, 5vw, 64px);
+  line-height: 1.02;
   font-weight: 850;
+  text-wrap: balance;
 }
 
 .home-hero p {
-  max-width: 650px;
-  margin: 20px 0 0;
-  color: rgba(255, 255, 255, 0.86);
+  max-width: 680px;
+  margin: 22px 0 0;
+  color: rgba(255, 255, 255, 0.9);
   font-size: 18px;
-  line-height: 1.65;
+  line-height: 1.72;
+}
+
+.trust-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.trust-badges span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 34px;
+  padding: 0 12px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 13px;
+  font-weight: 760;
 }
 
 .hero-actions {
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 30px;
+  margin-top: 32px;
 }
 
 .hero-btn,
@@ -246,8 +375,9 @@ img {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 150px;
-  padding: 0 18px;
+  min-width: 164px;
+  min-height: 46px;
+  padding: 0 20px;
 }
 
 .hero-btn.primary,
@@ -255,13 +385,14 @@ img {
 .service-link {
   background: var(--accent);
   color: #FFFFFF;
-  box-shadow: 0 12px 24px rgba(238, 43, 71, 0.22);
+  box-shadow: 0 14px 34px rgba(238, 43, 71, 0.26);
 }
 
 .hero-btn.secondary {
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  background: rgba(255, 255, 255, 0.12);
   color: #FFFFFF;
+  box-shadow: none;
 }
 
 .hero-btn:hover,
@@ -276,8 +407,70 @@ img {
   background: rgba(255, 255, 255, 0.18);
 }
 
+.hero-contact {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+  color: rgba(255, 255, 255, 0.76);
+  font-size: 14px;
+}
+
+.hero-contact a {
+  color: #FFFFFF;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.hero-contact button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .section {
-  padding: 52px 0;
+  padding: 64px 0;
+}
+
+.trust-strip {
+  border-bottom: 1px solid var(--line);
+  background: #FFFFFF;
+}
+
+.trust-strip-inner {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px;
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  background: var(--line);
+}
+
+.trust-item {
+  min-height: 128px;
+  padding: 26px 24px;
+  background: #FFFFFF;
+}
+
+.trust-item strong {
+  display: block;
+  color: var(--ink);
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+.trust-item span {
+  display: block;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
 }
 
 .loading-box {
@@ -315,7 +508,7 @@ img {
 .contact-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 18px;
+  gap: 22px;
 }
 
 .service-card,
@@ -331,24 +524,50 @@ img {
 
 .service-card {
   position: relative;
-  min-height: 220px;
+  min-height: 280px;
   overflow: hidden;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
 }
 
 .service-card::before {
   content: "";
   position: absolute;
-  inset: 0 0 auto;
-  height: 5px;
-  background: var(--accent);
+  inset: 0;
+  background:
+    linear-gradient(180deg, rgba(238, 43, 71, 0.08), rgba(238, 43, 71, 0) 34%),
+    linear-gradient(135deg, rgba(44, 46, 62, 0.05), rgba(44, 46, 62, 0));
+  pointer-events: none;
+}
+
+.service-card:hover {
+  border-color: rgba(44, 46, 62, 0.18);
+  box-shadow: var(--shadow);
+  transform: translateY(-4px);
 }
 
 .service-body {
+  position: relative;
   display: flex;
-  min-height: 220px;
+  min-height: 280px;
   flex-direction: column;
   align-items: flex-start;
-  padding: 28px;
+  padding: 30px;
+}
+
+.service-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 42px;
+  height: 42px;
+  margin-bottom: 26px;
+  border: 1px solid rgba(44, 46, 62, 0.12);
+  border-radius: 999px;
+  background: #FFFFFF;
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 900;
+  box-shadow: 0 10px 24px rgba(44, 46, 62, 0.08);
 }
 
 .service-body h3,
@@ -356,14 +575,14 @@ img {
 .fleet-card h3 {
   margin: 0 0 10px;
   color: var(--ink);
-  font-size: 20px;
+  font-size: 21px;
   line-height: 1.25;
 }
 
 .service-body p {
   margin: 0 0 22px;
   color: var(--muted);
-  line-height: 1.65;
+  line-height: 1.7;
 }
 
 .service-link {
@@ -1022,11 +1241,62 @@ form .btn-primary,
 }
 
 .footer {
-  padding: 32px 24px;
-  border-top: 1px solid var(--line);
-  color: var(--muted);
-  text-align: center;
+  padding: 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--ink);
+  color: rgba(255, 255, 255, 0.76);
+  text-align: left;
   font-size: 14px;
+}
+
+.footer-inner {
+  display: grid;
+  grid-template-columns: minmax(260px, 1.4fr) repeat(3, minmax(150px, 0.6fr));
+  gap: 30px;
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 44px 0 34px;
+}
+
+.footer-brand strong {
+  display: block;
+  color: #FFFFFF;
+  font-size: 20px;
+}
+
+.footer-brand span {
+  display: block;
+  max-width: 420px;
+  margin-top: 12px;
+  line-height: 1.65;
+}
+
+.footer-col {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.footer-col span {
+  color: #FFFFFF;
+  font-weight: 850;
+}
+
+.footer-col a {
+  color: rgba(255, 255, 255, 0.72);
+  text-decoration: none;
+}
+
+.footer-col a:hover {
+  color: #FFFFFF;
+}
+
+.footer-bottom {
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+  padding: 18px 0 26px;
+  border-top: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.56);
 }
 
 .spinner {
@@ -1058,17 +1328,30 @@ form .btn-primary,
     align-items: flex-start;
     flex-direction: column;
     gap: 12px;
+    min-height: auto;
   }
 
   .nav-tabs {
     justify-content: flex-start;
   }
 
+  .nav-account {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    min-width: 0;
+  }
+
+  .user-menu summary {
+    max-width: 150px;
+  }
+
   .home-hero {
-    min-height: 430px;
-    padding: 60px 20px;
+    min-height: 500px;
+    padding: 54px 20px 58px;
     background-image:
-      linear-gradient(90deg, rgba(44, 46, 62, 0.94), rgba(44, 46, 62, 0.76)),
+      radial-gradient(circle at 74% 16%, rgba(238, 43, 71, 0.2), transparent 30%),
+      linear-gradient(90deg, rgba(17, 24, 39, 0.96), rgba(44, 46, 62, 0.84)),
       url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
   }
 
@@ -1093,14 +1376,60 @@ form .btn-primary,
     grid-template-columns: 1fr;
   }
 
+  .trust-strip-inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    width: min(100% - 32px, 1180px);
+  }
+
   .split-layout {
     gap: 16px;
+  }
+
+  .footer-inner {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .footer-brand {
+    grid-column: 1 / -1;
   }
 }
 
 @media (max-width: 640px) {
   .nav {
     padding: 12px 16px;
+  }
+
+  .nav-logo {
+    min-width: 0;
+    padding-right: 116px;
+  }
+
+  .nav-logo .nav-logo-main {
+    font-size: 16px;
+  }
+
+  .nav-logo span {
+    font-size: 10px;
+  }
+
+  .nav-tabs {
+    width: 100%;
+    padding-bottom: 2px;
+  }
+
+  .nav-account {
+    top: 12px;
+  }
+
+  .account-link,
+  .user-menu summary {
+    min-height: 34px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .user-menu summary {
+    max-width: 108px;
   }
 
   .tab-btn {
@@ -1115,12 +1444,53 @@ form .btn-primary,
     padding: 10px 16px;
   }
 
+  .home-hero {
+    min-height: auto;
+    padding: 42px 16px 46px;
+  }
+
   .home-hero h1 {
-    font-size: 29px;
+    font-size: 31px;
+    line-height: 1.08;
   }
 
   .home-hero p {
     font-size: 16px;
+    line-height: 1.62;
+  }
+
+  .hero-kicker {
+    min-height: 28px;
+    margin-bottom: 14px;
+    font-size: 11px;
+  }
+
+  .trust-badges {
+    gap: 6px;
+    margin-top: 18px;
+  }
+
+  .trust-badges span {
+    min-height: 30px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+
+  .hero-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    margin-top: 24px;
+  }
+
+  .hero-btn {
+    width: 100%;
+  }
+
+  .hero-contact {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
   }
 
   .hero {
@@ -1132,10 +1502,29 @@ form .btn-primary,
     padding: 34px 0;
   }
 
+  .trust-strip-inner {
+    grid-template-columns: 1fr;
+    width: 100%;
+  }
+
+  .trust-item {
+    min-height: auto;
+    padding: 20px 18px;
+  }
+
   .service-body,
   .fleet-card-body,
   .card {
     padding: 18px;
+  }
+
+  .service-card,
+  .service-body {
+    min-height: 0;
+  }
+
+  .service-mark {
+    margin-bottom: 18px;
   }
 
   .calendar-weekdays,
@@ -1171,5 +1560,16 @@ form .btn-primary,
 
   .route-actions {
     padding-left: 48px;
+  }
+
+  .footer-inner,
+  .footer-bottom {
+    width: min(100% - 32px, 1180px);
+  }
+
+  .footer-inner {
+    grid-template-columns: 1fr;
+    gap: 22px;
+    padding: 34px 0 28px;
   }
 }
