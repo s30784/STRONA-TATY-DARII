@@ -569,6 +569,7 @@ img {
 .card,
 .res-card,
 .admin-trip {
+  min-width: 0;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -652,6 +653,7 @@ img {
 aside {
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
 
 .fleet-grid {
@@ -808,10 +810,10 @@ aside .card:last-child {
 .calendar-weekdays,
 .calendar-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(82px, 1fr));
-  gap: 8px;
-  overflow-x: auto;
-  scrollbar-width: thin;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 6px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .calendar-weekdays {
@@ -827,8 +829,9 @@ aside .card:last-child {
 }
 
 .calendar-day {
-  min-height: 100px;
-  padding: 12px;
+  min-width: 0;
+  min-height: 82px;
+  padding: 9px 7px;
   border: 1px solid var(--line);
   border-radius: var(--radius);
   background: var(--surface);
@@ -846,21 +849,27 @@ aside .card:last-child {
 .day-number {
   display: block;
   min-width: 0;
-  font-size: 18px;
+  font-size: clamp(16px, 2.2vw, 18px);
   font-weight: 850;
 }
 
 .day-meta {
-  display: block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 22px;
   max-width: 100%;
-  margin-top: 16px;
-  overflow: visible;
+  margin-top: 12px;
+  padding: 0 4px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: rgba(255, 255, 255, 0.42);
   color: var(--muted);
-  font-size: 12px;
+  font-size: clamp(9px, 1.15vw, 11px);
   font-weight: 800;
-  line-height: 1.25;
-  overflow-wrap: normal;
-  white-space: normal;
+  line-height: 1;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .calendar-day.available {
@@ -1633,23 +1642,29 @@ form .btn-primary,
 
   .calendar-weekdays,
   .calendar-grid {
-    grid-template-columns: repeat(7, minmax(74px, 1fr));
-    gap: 6px;
+    grid-template-columns: repeat(7, minmax(0, 1fr));
+    gap: 4px;
   }
 
   .calendar-day {
-    min-height: 86px;
-    padding: 9px;
+    min-height: 68px;
+    padding: 6px 3px;
+  }
+
+  .weekday {
+    font-size: 10px;
   }
 
   .day-number {
-    font-size: 17px;
+    font-size: 15px;
   }
 
   .day-meta {
-    margin-top: 12px;
-    font-size: 11px;
-    line-height: 1.2;
+    min-height: 18px;
+    margin-top: 8px;
+    padding: 0 2px;
+    font-size: 8px;
+    line-height: 1;
   }
 
   .fg2,
