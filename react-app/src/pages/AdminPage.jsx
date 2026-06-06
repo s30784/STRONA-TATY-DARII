@@ -4,7 +4,7 @@ import { Weekdays } from '../components/Weekdays.jsx';
 import { MONTHS } from '../data/constants.js';
 import { BUS_DETAILS } from '../data/vehicles.js';
 import { formatDate, monthRange } from '../lib/date.js';
-import { defaultBusAvailable, tripDate, tripMaxSeats, tripUsedSeats } from '../lib/trips.js';
+import { defaultBusAvailable, tripDate, tripFreeSeats, tripMaxSeats, tripUsedSeats } from '../lib/trips.js';
 
 export function AdminPage(props) {
   const {
@@ -60,8 +60,9 @@ function AdminTrips({ adminViewMonth, setAdminViewMonth, selectedAdminRoute, set
   for (let day = 1; day <= range.days; day += 1) {
     const dateStr = `${range.year}-${String(range.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const trip = cachedAdminTrips.find((item) => item.route === selectedAdminRoute && tripDate(item) === dateStr);
-    const label = trip ? trip.cancelled ? 'Anulowany' : 'Aktywny' : 'Dodaj';
-    cells.push(<button key={dateStr} className={`calendar-day ${trip?.cancelled ? 'cancelled' : trip ? 'confirmed' : ''}`} onClick={() => toggleAdminTripDate(dateStr)} type="button" title={label} aria-label={`${day} ${MONTHS[range.month]} ${range.year}: ${label}`}><header><span className="day-number">{day}</span></header></button>);
+    const freeSeats = trip && !trip.cancelled ? tripFreeSeats(trip) : null;
+    const label = trip ? trip.cancelled ? 'Anulowany' : `Aktywny, wolne miejsca: ${freeSeats}` : 'Dodaj';
+    cells.push(<button key={dateStr} className={`calendar-day ${trip?.cancelled ? 'cancelled' : trip ? 'confirmed' : ''}`} onClick={() => toggleAdminTripDate(dateStr)} type="button" title={label} aria-label={`${day} ${MONTHS[range.month]} ${range.year}: ${label}`}><header><span className="day-number">{day}</span>{freeSeats !== null ? <span className="seat-count" aria-label={`${freeSeats} wolnych miejsc`}>{freeSeats}</span> : null}</header></button>);
   }
 
   return (
@@ -72,7 +73,7 @@ function AdminTrips({ adminViewMonth, setAdminViewMonth, selectedAdminRoute, set
         {adminTripsLoading ? <div className="loading-box">Ładuję terminy kursów...</div> : null}
         <Weekdays />
         <div className="calendar-grid">{cells}</div>
-        <CalendarLegend items={[{ type: 'available', label: 'Aktywny' }, { type: 'blocked', label: 'Anulowany' }, { type: 'empty', label: 'Brak kursu' }]} />
+        <CalendarLegend items={[{ type: 'available', label: 'Aktywny' }, { type: 'seats', label: 'Liczba = wolne miejsca' }, { type: 'blocked', label: 'Anulowany' }, { type: 'empty', label: 'Brak kursu' }]} />
         <div className="no-trips mt-sm">Kliknij datę, aby dodać, odwołać lub przywrócić kurs.</div>
       </div>
       <button className="btn-primary" onClick={generateMonth} type="button">Wystaw terminy na ten miesiąc</button>

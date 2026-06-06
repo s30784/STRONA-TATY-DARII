@@ -47,22 +47,29 @@ export function BookingPage(props) {
     let statusLabel = 'Brak kursu';
     let classes = 'calendar-day disabled';
     let disabled = true;
+    let freeSeats = null;
     if (trip) {
       if (trip.cancelled) {
         statusLabel = 'Odwołany';
         classes = 'calendar-day cancelled';
-      } else if (tripFreeSeats(trip) <= 0) {
-        statusLabel = 'Brak miejsc';
       } else {
+        freeSeats = tripFreeSeats(trip);
+      }
+      if (!trip.cancelled && freeSeats <= 0) {
+        statusLabel = 'Brak miejsc';
+      } else if (!trip.cancelled && freeSeats > 0) {
         availableCount += 1;
-        statusLabel = `Dostępny, wolne miejsca: ${tripFreeSeats(trip)}`;
+        statusLabel = `Dostępny, wolne miejsca: ${freeSeats}`;
         classes = `calendar-day available ${selectedTripId === trip.id ? 'confirmed' : ''}`;
         disabled = false;
       }
     }
     cells.push(
       <button key={dateStr} className={classes} disabled={disabled} onClick={() => selectBookingDay(dateStr)} type="button" title={statusLabel} aria-label={`${day} ${MONTHS[range.month]} ${range.year}: ${statusLabel}`}>
-        <header><span className="day-number">{day}</span></header>
+        <header>
+          <span className="day-number">{day}</span>
+          {freeSeats > 0 ? <span className="seat-count" aria-label={`${freeSeats} wolnych miejsc`}>{freeSeats}</span> : null}
+        </header>
       </button>
     );
   }
@@ -101,7 +108,7 @@ export function BookingPage(props) {
         {bookingLoading ? <div className="loading-box">Ładuję terminy i wolne miejsca...</div> : null}
         <Weekdays />
         <div className="calendar-grid">{cells}</div>
-        <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'selected', label: 'Wybrany' }, { type: 'blocked', label: 'Niedostępny' }]} />
+        <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'selected', label: 'Wybrany' }, { type: 'seats', label: 'Liczba = wolne miejsca' }, { type: 'blocked', label: 'Niedostępny' }]} />
         <div className="no-trips mt-sm">{availableCount ? 'Kliknij dostępny dzień, aby wybrać termin.' : 'Brak dostępnych terminów w tym miesiącu dla wybranej trasy.'}</div>
         {selectedBookingDate ? (
           <form className="booking-form" onSubmit={submitBooking}>
