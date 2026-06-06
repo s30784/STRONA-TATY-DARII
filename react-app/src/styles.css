@@ -115,7 +115,8 @@ img {
   display: flex;
   justify-content: center;
   gap: 6px;
-  width: 100%;
+  flex: 1 1 auto;
+  min-width: 0;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -191,10 +192,39 @@ img {
 }
 
 .nav-account {
-  flex: 0 0 auto;
+  flex: 0 1 190px;
   display: flex;
   justify-content: flex-end;
-  min-width: 132px;
+  min-width: 118px;
+}
+
+.nav-contact {
+  flex: 0 0 auto;
+  display: grid;
+  gap: 4px;
+  min-width: 150px;
+  max-width: 190px;
+  padding-left: 16px;
+  border-left: 1px solid var(--line);
+}
+
+.nav-contact a {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 820;
+  line-height: 1.15;
+  text-decoration: none;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.nav-contact a:first-child {
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 760;
 }
 
 .account-link,
@@ -216,15 +246,40 @@ img {
 
 .user-menu {
   position: relative;
+  max-width: 100%;
 }
 
 .user-menu summary {
-  max-width: 180px;
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  max-width: 100%;
+  min-width: 0;
+  min-height: 42px;
+  padding: 6px 12px;
   overflow: hidden;
-  text-overflow: ellipsis;
   list-style: none;
-  white-space: nowrap;
   cursor: pointer;
+}
+
+.user-menu summary span {
+  max-width: 100%;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.user-menu summary strong {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 12px;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .user-menu summary::-webkit-details-marker {
@@ -778,6 +833,7 @@ aside .card:last-child {
   border-radius: var(--radius);
   background: var(--surface);
   color: var(--ink);
+  overflow: hidden;
   text-align: left;
 }
 
@@ -788,16 +844,23 @@ aside .card:last-child {
 }
 
 .day-number {
+  display: block;
+  min-width: 0;
   font-size: 18px;
   font-weight: 850;
 }
 
 .day-meta {
+  display: block;
+  max-width: 100%;
   margin-top: 12px;
+  overflow: hidden;
   color: var(--muted);
   font-size: 12px;
   font-weight: 750;
   line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .calendar-day.available {
@@ -1333,17 +1396,29 @@ form .btn-primary,
 
   .nav-tabs {
     justify-content: flex-start;
+    width: 100%;
+  }
+
+  .nav-contact {
+    position: absolute;
+    top: 16px;
+    right: 154px;
+    min-width: 0;
+    padding-left: 0;
+    border-left: 0;
+    text-align: right;
   }
 
   .nav-account {
     position: absolute;
     top: 14px;
     right: 16px;
+    width: 132px;
     min-width: 0;
   }
 
   .user-menu summary {
-    max-width: 150px;
+    max-width: 132px;
   }
 
   .home-hero {
@@ -1401,7 +1476,7 @@ form .btn-primary,
 
   .nav-logo {
     min-width: 0;
-    padding-right: 116px;
+    padding-right: 126px;
   }
 
   .nav-logo .nav-logo-main {
@@ -1417,8 +1492,24 @@ form .btn-primary,
     padding-bottom: 2px;
   }
 
+  .nav-contact {
+    position: static;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    width: 100%;
+    order: 3;
+    text-align: left;
+  }
+
+  .nav-contact a,
+  .nav-contact a:first-child {
+    font-size: 11px;
+  }
+
   .nav-account {
     top: 12px;
+    width: 116px;
   }
 
   .account-link,
@@ -1429,7 +1520,15 @@ form .btn-primary,
   }
 
   .user-menu summary {
-    max-width: 108px;
+    max-width: 116px;
+  }
+
+  .user-menu summary span {
+    font-size: 9px;
+  }
+
+  .user-menu summary strong {
+    font-size: 11px;
   }
 
   .tab-btn {
@@ -1533,8 +1632,8 @@ form .btn-primary,
   }
 
   .calendar-day {
-    min-height: 66px;
-    padding: 7px;
+    min-height: 58px;
+    padding: 6px;
   }
 
   .day-number {
@@ -1542,8 +1641,9 @@ form .btn-primary,
   }
 
   .day-meta {
-    margin-top: 7px;
-    font-size: 10px;
+    margin-top: 6px;
+    font-size: 9px;
+    line-height: 1.1;
   }
 
   .fg2,

@@ -601,10 +601,17 @@ export function App() {
             <NavLink to="/admin" className={({ isActive }) => `tab-btn admin-link ${isActive ? 'active' : ''}`}>Panel</NavLink>
           ) : null}
         </div>
+        <div className="nav-contact">
+          <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+          <a href="tel:+48123456789">+48 123 456 789</a>
+        </div>
         <div className="nav-account">
           {currentUser ? (
             <details className="user-menu">
-              <summary>{currentUser.email}</summary>
+              <summary>
+                <span>Zalogowany jako</span>
+                <strong>{currentUser.email}</strong>
+              </summary>
               <button onClick={signOut} type="button">Wyloguj</button>
             </details>
           ) : (
