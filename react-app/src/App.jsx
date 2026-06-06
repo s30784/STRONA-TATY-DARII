@@ -609,13 +609,13 @@ export function App() {
           {currentUser ? (
             <details className="user-menu">
               <summary>
-                <span>Zalogowany jako</span>
-                <strong>{currentUser.email}</strong>
+                <span>Status konta</span>
+                <strong>Zalogowany</strong>
               </summary>
               <button onClick={signOut} type="button">Wyloguj</button>
             </details>
           ) : (
-            <NavLink to="/auth" className="account-link">Logowanie</NavLink>
+            <NavLink to="/auth" className="account-link">Niezalogowany</NavLink>
           )}
         </div>
       </nav>
