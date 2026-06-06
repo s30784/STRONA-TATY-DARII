@@ -579,10 +579,10 @@ export function App() {
 
   const navItems = [
     ['/', 'Start'],
-    ['/rental', 'Wynajem busów'],
-    ['/booking', 'Jarosław-Wiedeń'],
+    ['/rental', 'Busy'],
+    ['/booking', 'Przejazdy'],
     ['/tow', 'Laweta'],
-    ['/my-reservations', 'Moje rezerwacje'],
+    ['/my-reservations', 'Rezerwacje'],
     ['/contact', 'Kontakt']
   ];
 

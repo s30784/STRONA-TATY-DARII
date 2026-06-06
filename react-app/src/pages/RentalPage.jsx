@@ -1,4 +1,5 @@
 import { Card } from '../components/Card.jsx';
+import { CalendarLegend } from '../components/CalendarLegend.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { Message } from '../components/Message.jsx';
 import { Weekdays } from '../components/Weekdays.jsx';
@@ -104,10 +105,10 @@ function RentalCalendar({ viewDate, setViewDate, availability, selectedBus, sele
     const isPast = dateStr < todayStr();
     const selected = selectedDate === dateStr;
     const classes = `calendar-day ${isPast ? 'disabled' : isAvailable ? 'available' : 'disabled'} ${selected ? 'confirmed' : ''}`;
+    const statusLabel = isPast ? 'Minął' : isAvailable ? 'Dostępny' : 'Niedostępny';
     cells.push(
-      <button key={dateStr} className={classes} onClick={() => !isPast && isAvailable && setSelectedDate(dateStr)} type="button">
+      <button key={dateStr} className={classes} onClick={() => !isPast && isAvailable && setSelectedDate(dateStr)} type="button" title={statusLabel} aria-label={`${day} ${MONTHS[range.month]} ${range.year}: ${statusLabel}`}>
         <header><span className="day-number">{day}</span></header>
-        <div className="day-meta">{isPast ? 'Minął' : isAvailable ? 'Dostępny' : 'Niedostępny'}</div>
       </button>
     );
   }
@@ -123,6 +124,7 @@ function RentalCalendar({ viewDate, setViewDate, availability, selectedBus, sele
       </div>
       <Weekdays />
       <div className="calendar-grid">{cells}</div>
+      <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'selected', label: 'Wybrany' }, { type: 'muted', label: 'Minął / niedostępny' }]} />
       <div className="no-trips mt-sm">{busAvailabilityFallback ? 'Nie udało się pobrać dostępności z systemu. Spróbuj odświeżyć stronę.' : selectedDate ? `Wybrano: ${formatDate(selectedDate)}` : 'Kliknij dostępny dzień, aby wybrać termin.'}</div>
     </>
   );

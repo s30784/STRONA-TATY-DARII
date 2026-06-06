@@ -1,4 +1,5 @@
 import { Card } from '../components/Card.jsx';
+import { CalendarLegend } from '../components/CalendarLegend.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { Message } from '../components/Message.jsx';
 import { Weekdays } from '../components/Weekdays.jsx';
@@ -43,26 +44,25 @@ export function BookingPage(props) {
   for (let day = 1; day <= range.days; day += 1) {
     const dateStr = `${range.year}-${String(range.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
     const trip = cachedTrips.find((item) => item.route === selectedRoute && tripDate(item) === dateStr);
-    let meta = 'Brak kursu';
+    let statusLabel = 'Brak kursu';
     let classes = 'calendar-day disabled';
     let disabled = true;
     if (trip) {
       if (trip.cancelled) {
-        meta = 'Odwołany';
+        statusLabel = 'Odwołany';
         classes = 'calendar-day cancelled';
       } else if (tripFreeSeats(trip) <= 0) {
-        meta = 'Brak miejsc';
+        statusLabel = 'Brak miejsc';
       } else {
         availableCount += 1;
-        meta = `Miejsc: ${tripFreeSeats(trip)}`;
+        statusLabel = `Dostępny, wolne miejsca: ${tripFreeSeats(trip)}`;
         classes = `calendar-day available ${selectedTripId === trip.id ? 'confirmed' : ''}`;
         disabled = false;
       }
     }
     cells.push(
-      <button key={dateStr} className={classes} disabled={disabled} onClick={() => selectBookingDay(dateStr)} type="button">
+      <button key={dateStr} className={classes} disabled={disabled} onClick={() => selectBookingDay(dateStr)} type="button" title={statusLabel} aria-label={`${day} ${MONTHS[range.month]} ${range.year}: ${statusLabel}`}>
         <header><span className="day-number">{day}</span></header>
-        <div className="day-meta">{meta}</div>
       </button>
     );
   }
@@ -101,6 +101,7 @@ export function BookingPage(props) {
         {bookingLoading ? <div className="loading-box">Ładuję terminy i wolne miejsca...</div> : null}
         <Weekdays />
         <div className="calendar-grid">{cells}</div>
+        <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'selected', label: 'Wybrany' }, { type: 'blocked', label: 'Niedostępny' }]} />
         <div className="no-trips mt-sm">{availableCount ? 'Kliknij dostępny dzień, aby wybrać termin.' : 'Brak dostępnych terminów w tym miesiącu dla wybranej trasy.'}</div>
         {selectedBookingDate ? (
           <form className="booking-form" onSubmit={submitBooking}>
