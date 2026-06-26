@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ProtectedAdminRoute } from './components/ProtectedAdminRoute.jsx';
-import { MONTHS, MAX_SEATS } from './data/constants.js';
+import { BLOCKING_RESERVATION_STATUSES, MONTHS, MAX_SEATS, TERMS_VERSION } from './data/constants.js';
 import { ROUTE_DETAILS } from './data/routeDetails.js';
 import { BUS_DETAILS } from './data/vehicles.js';
 import { useAuth } from './hooks/useAuth.js';
@@ -20,6 +20,14 @@ import { RentalPage } from './pages/RentalPage.jsx';
 import { ResetPasswordPage } from './pages/ResetPasswordPage.jsx';
 import { TowPage } from './pages/TowPage.jsx';
 import { VerifyEmailPage } from './pages/VerifyEmailPage.jsx';
+
+function isEmailConfirmed(user) {
+  return Boolean(user?.email_confirmed_at || user?.confirmed_at);
+}
+
+function reservationBlocksSeat(status) {
+  return BLOCKING_RESERVATION_STATUSES.includes(status);
+}
 
 export function App() {
   const navigate = useNavigate();
@@ -160,7 +168,7 @@ export function App() {
     if (resError) return { data: [], error: resError };
 
     const usedByTrip = (reservations || []).reduce((acc, res) => {
-      if (res.status === 'cancelled') return acc;
+      if (!reservationBlocksSeat(res.status)) return acc;
       acc[res.trip_id] = (acc[res.trip_id] || 0) + (Number(res.seats) || 0);
       return acc;
     }, {});
@@ -400,10 +408,15 @@ export function App() {
     const phone = field(form, 'phone');
     const seats = parseInt(form.get('seats'), 10) || 0;
     const notes = field(form, 'notes');
-    const validationError = validateRequired(name, 'Imię i nazwisko')
+    const termsAccepted = form.get('terms') === 'on';
+    const validationError = (!currentUser ? 'Zaloguj się, aby wysłać zgłoszenie rezerwacji.' : null)
+      || (!isEmailConfirmed(currentUser) ? 'Potwierdź adres email przed wysłaniem zgłoszenia rezerwacji.' : null)
+      || validateRequired(name, 'Imię i nazwisko')
       || validateEmail(email)
       || validatePhone(phone)
       || validateSeats(seats)
+      || (seats === 1 ? null : 'Przez formularz online możesz zgłosić rezerwację tylko jednego miejsca.')
+      || (termsAccepted ? null : 'Akceptacja regulaminu i zasad anulowania jest wymagana.')
       || (selectedBookingDate ? null : 'Wybierz termin przejazdu.');
     if (validationError) {
       setBookingMsg({ type: 'err', text: validationError });
@@ -433,14 +446,15 @@ export function App() {
 
     setBookingSubmitting(true);
     const stopNotes = `Wsiadanie: ${pickupStop} | Wysiadanie: ${dropoffStop}${notes ? ` | Uwagi: ${notes}` : ''}`;
-    const { data, error } = await sb.rpc('create_reservation_atomic', {
+    const { data, error } = await sb.rpc('create_reservation_request', {
       p_trip_id: selectedTripId,
       p_passenger_name: name,
       p_passenger_email: email,
       p_passenger_phone: phone,
       p_seats: seats,
       p_notes: stopNotes,
-      p_user_id: currentUser?.id || null
+      p_terms_accepted: termsAccepted,
+      p_terms_version: TERMS_VERSION
     });
     setBookingSubmitting(false);
     if (error) {
@@ -452,7 +466,7 @@ export function App() {
     setSelectedBookingDate(null);
     event.currentTarget.reset();
     await loadTrips();
-    setBookingMsg({ type: 'ok', text: `Rezerwacja potwierdzona. Nr: ${data?.id || 'nadany w systemie'}` });
+    setBookingMsg({ type: 'ok', text: `Zgłoszenie rezerwacji wysłane. Admin potwierdzi dostępność. Nr: ${data?.id || 'nadany w systemie'}` });
   }
 
   async function loadMyReservations() {
@@ -477,7 +491,7 @@ export function App() {
   async function cancelReservation(resId) {
     if (!window.confirm('Czy na pewno chcesz anulować tę rezerwację?')) return;
     setMyResMsg({ type: 'info', text: 'Anulowanie rezerwacji...' });
-    const { error } = await sb.from('reservations').update({ status: 'cancelled' }).eq('id', resId);
+    const { error } = await sb.rpc('cancel_own_reservation', { p_reservation_id: resId });
     if (error) {
       setMyResMsg({ type: 'err', text: `Błąd: ${error.message}` });
       return;
@@ -554,7 +568,7 @@ export function App() {
 
   async function loadAdminReservations() {
     setAdminReservationsLoading(true);
-    const { data, error } = await sb.from('reservations').select('*,trips(route,date)').order('created_at', { ascending: false });
+    const { data, error } = await sb.from('reservations').select('*,trips(route,date,cancelled)').order('created_at', { ascending: false });
     setAdminReservationsLoading(false);
     if (error) {
       setAdminReservations([]);
@@ -562,6 +576,20 @@ export function App() {
       return;
     }
     setAdminReservations(data || []);
+  }
+
+  async function adminSetReservationStatus(resId, status) {
+    const { error } = await sb.rpc('admin_set_reservation_status', {
+      p_reservation_id: resId,
+      p_status: status
+    });
+    if (error) {
+      setAdminGenMsg({ type: 'err', text: `Błąd zmiany statusu: ${error.message}` });
+      return;
+    }
+    setAdminGenMsg({ type: 'ok', text: 'Status rezerwacji został zmieniony.' });
+    await loadAdminReservations();
+    await loadAdminTrips();
   }
 
   async function toggleAdminBusDate(dateStr) {
@@ -630,7 +658,7 @@ export function App() {
         <Route path="/tow" element={<TowPage towMsg={towMsg} submitTowRequest={submitTowRequest} />} />
         <Route path="/my-reservations" element={<MyReservationsPage currentUser={currentUser} showPage={showPage} myReservations={myReservations} myResMsg={myResMsg} myReservationsLoading={myReservationsLoading} cancelReservation={cancelReservation} />} />
         <Route path="/contact" element={<ContactPage />} />
-        <Route path="/admin" element={<ProtectedAdminRoute authReady={authReady} currentProfile={currentProfile}><AdminPage adminTab={adminTab} setAdminTab={setAdminTab} adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminBusViewMonth={adminBusViewMonth} setAdminBusViewMonth={setAdminBusViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} cachedAdminBusAvailability={cachedAdminBusAvailability} toggleAdminBusDate={toggleAdminBusDate} adminBusNote={adminBusNote} adminBusLoading={adminBusLoading} /></ProtectedAdminRoute>} />
+        <Route path="/admin" element={<ProtectedAdminRoute authReady={authReady} currentProfile={currentProfile}><AdminPage adminTab={adminTab} setAdminTab={setAdminTab} adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminSetReservationStatus={adminSetReservationStatus} adminBusViewMonth={adminBusViewMonth} setAdminBusViewMonth={setAdminBusViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} cachedAdminBusAvailability={cachedAdminBusAvailability} toggleAdminBusDate={toggleAdminBusDate} adminBusNote={adminBusNote} adminBusLoading={adminBusLoading} /></ProtectedAdminRoute>} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

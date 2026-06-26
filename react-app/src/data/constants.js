@@ -1,4 +1,6 @@
 export const MAX_SEATS = 7;
+export const TERMS_VERSION = '2026-06-26';
+export const BLOCKING_RESERVATION_STATUSES = ['accepted', 'payment_pending', 'paid', 'confirmed'];
 
 export const MONTHS = [
   'Styczeń',

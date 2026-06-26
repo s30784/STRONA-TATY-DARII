@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Card } from '../components/Card.jsx';
 import { CalendarLegend } from '../components/CalendarLegend.jsx';
 import { Hero } from '../components/Hero.jsx';
@@ -31,6 +32,7 @@ export function BookingPage(props) {
     currentProfile
   } = props;
 
+  const emailConfirmed = Boolean(currentUser?.email_confirmed_at || currentUser?.confirmed_at);
   const range = monthRange(bookingViewMonth);
   const firstDay = new Date(range.year, range.month, 1).getDay();
   const startOffset = (firstDay + 6) % 7;
@@ -110,15 +112,28 @@ export function BookingPage(props) {
         <div className="calendar-grid">{cells}</div>
         <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'selected', label: 'Wybrany' }, { type: 'seats', label: 'Liczba = wolne miejsca' }, { type: 'blocked', label: 'Niedostępny' }]} />
         <div className="no-trips mt-sm">{availableCount ? 'Kliknij dostępny dzień, aby wybrać termin.' : 'Brak dostępnych terminów w tym miesiącu dla wybranej trasy.'}</div>
-        {selectedBookingDate ? (
+        {selectedBookingDate && !currentUser ? (
+          <Card>
+            <p className="form-help">Zaloguj się i potwierdź adres email, aby wysłać zgłoszenie rezerwacji.</p>
+            <Link className="btn-primary" to="/auth">Zaloguj się</Link>
+          </Card>
+        ) : null}
+        {selectedBookingDate && currentUser && !emailConfirmed ? (
+          <Card>
+            <p className="form-help">Potwierdź adres email przed wysłaniem zgłoszenia rezerwacji. Link potwierdzający znajdziesz w wiadomości z Supabase.</p>
+          </Card>
+        ) : null}
+        {selectedBookingDate && currentUser && emailConfirmed ? (
           <form className="booking-form" onSubmit={submitBooking}>
             <p className="step-label">2. Dane pasażera</p>
             <Card>
               <div className="fg2"><div className="fg"><label>Imię i nazwisko</label><input name="name" defaultValue={meta.full_name || ''} autoComplete="name" /></div><div className="fg"><label>Email</label><input type="email" name="email" defaultValue={currentUser?.email || ''} autoComplete="email" /></div></div>
-              <div className="fg2"><div className="fg"><label>Telefon</label><input type="tel" name="phone" defaultValue={currentProfile?.phone || ''} autoComplete="tel" /></div><div className="fg"><label>Liczba miejsc</label><input type="number" name="seats" min="1" max="7" defaultValue="1" /></div></div>
+              <div className="fg2"><div className="fg"><label>Telefon</label><input type="tel" name="phone" defaultValue={currentProfile?.phone || ''} autoComplete="tel" /></div><div className="fg"><label>Liczba miejsc</label><input type="hidden" name="seats" value="1" /><input type="text" value="1" readOnly /></div></div>
+              <p className="form-help">Chcesz zarezerwować więcej miejsc? Skontaktuj się z nami bezpośrednio.</p>
               <div className="fg2"><div className="fg"><label>Przystanek wsiadania</label><select value={pickupStop} onChange={(e) => setPickupStop(e.target.value)}>{routeDetails.stops.map((stop, index) => <option key={stop.name} value={stop.name}>{index + 1}. {stop.name}</option>)}</select></div><div className="fg"><label>Przystanek wysiadania</label><select value={dropoffStop} onChange={(e) => setDropoffStop(e.target.value)}>{routeDetails.stops.map((stop, index) => <option key={stop.name} value={stop.name}>{index + 1}. {stop.name}</option>)}</select></div></div>
               <div className="fg"><label>Uwagi</label><input name="notes" placeholder="np. bagaż ponadgabarytowy" /></div>
-              <button className="btn-primary" disabled={bookingSubmitting} type="submit">{bookingSubmitting ? 'Rezerwuję...' : 'Zarezerwuj miejsce'}</button>
+              <label className="check-row"><input type="checkbox" name="terms" required /> Akceptuję regulamin i zasady anulowania.</label>
+              <button className="btn-primary" disabled={bookingSubmitting} type="submit">{bookingSubmitting ? 'Wysyłam zgłoszenie...' : 'Wyślij zgłoszenie rezerwacji'}</button>
             </Card>
           </form>
         ) : null}

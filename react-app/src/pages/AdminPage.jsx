@@ -22,6 +22,7 @@ export function AdminPage(props) {
     adminTripsLoading,
     adminReservations,
     adminReservationsLoading,
+    adminSetReservationStatus,
     adminBusViewMonth,
     setAdminBusViewMonth,
     selectedAdminBus,
@@ -43,7 +44,7 @@ export function AdminPage(props) {
         </div>
         {adminTab === 'trips' ? <AdminTrips adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} /> : null}
         {adminTab === 'buses' ? <AdminBuses adminBusViewMonth={adminBusViewMonth} setAdminBusViewMonth={setAdminBusViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} cachedAdminBusAvailability={cachedAdminBusAvailability} toggleAdminBusDate={toggleAdminBusDate} adminBusNote={adminBusNote} adminBusLoading={adminBusLoading} /> : null}
-        {adminTab === 'res' ? <AdminReservations adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} /> : null}
+        {adminTab === 'res' ? <AdminReservations adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminSetReservationStatus={adminSetReservationStatus} /> : null}
       </section>
     </div>
   );
@@ -124,8 +125,35 @@ function AdminBuses({ adminBusViewMonth, setAdminBusViewMonth, selectedAdminBus,
   );
 }
 
-function AdminReservations({ adminReservations, adminReservationsLoading }) {
+const ADMIN_RESERVATION_ACTIONS = [
+  ['accepted', 'Akceptuj', 'restore-btn'],
+  ['payment_pending', 'Oczekuje na płatność', 'status-btn'],
+  ['confirmed', 'Potwierdź', 'restore-btn'],
+  ['rejected', 'Odrzuć', 'cancel-btn'],
+  ['cancelled_admin', 'Anuluj', 'cancel-btn']
+];
+
+function adminStatusLabel(status) {
+  if (status === 'requested') return 'Zgłoszenie';
+  if (status === 'accepted') return 'Zaakceptowana';
+  if (status === 'payment_pending') return 'Oczekuje na płatność';
+  if (status === 'paid') return 'Opłacona';
+  if (status === 'confirmed') return 'Potwierdzona';
+  if (status === 'rejected') return 'Odrzucona';
+  if (status === 'cancelled_user') return 'Anulowana przez klienta';
+  if (status === 'cancelled_admin') return 'Anulowana przez admina';
+  if (status === 'expired') return 'Wygasła';
+  return status || '-';
+}
+
+function adminStatusBadgeClass(status) {
+  if (['accepted', 'payment_pending', 'paid', 'confirmed'].includes(status)) return 'badge-ok';
+  if (status === 'requested') return 'badge-few';
+  return 'badge-cancel';
+}
+
+function AdminReservations({ adminReservations, adminReservationsLoading, adminSetReservationStatus }) {
   if (adminReservationsLoading) return <div className="loading-box">Ładuję rezerwacje...</div>;
   if (!adminReservations.length) return <div className="no-trips">Brak rezerwacji.</div>;
-  return adminReservations.map((res) => <div className="res-card" key={res.id}><div className="res-head"><div><strong>{res.passenger_name}</strong><span>{res.passenger_email}{res.passenger_phone ? ` · ${res.passenger_phone}` : ''}</span></div><span className={`badge ${res.status === 'confirmed' ? 'badge-ok' : 'badge-cancel'}`}>{res.seats} miejsce(a)</span></div><p className="muted">{res.trips?.route === 'JW' ? 'Jarosław -> Wiedeń' : 'Wiedeń -> Jarosław'} · {res.trips?.date ? formatDate(res.trips.date) : '-'}</p>{res.notes ? <p className="muted">Uwagi: {res.notes}</p> : null}</div>);
+  return adminReservations.map((res) => <div className="res-card" key={res.id}><div className="res-head"><div><strong>{res.passenger_name}</strong><span>{res.passenger_email}{res.passenger_phone ? ` · ${res.passenger_phone}` : ''}</span></div><span className={`badge ${adminStatusBadgeClass(res.status)}`}>{adminStatusLabel(res.status)} · {res.seats} miejsce(a)</span></div><p className="muted">{res.trips?.route === 'JW' ? 'Jarosław -> Wiedeń' : 'Wiedeń -> Jarosław'} · {res.trips?.date ? formatDate(res.trips.date) : '-'}</p>{res.notes ? <p className="muted">Uwagi: {res.notes}</p> : null}<div className="res-actions">{ADMIN_RESERVATION_ACTIONS.map(([status, label, className]) => <button key={status} className={className} onClick={() => adminSetReservationStatus(res.id, status)} type="button" disabled={res.status === status}>{label}</button>)}</div></div>);
 }
