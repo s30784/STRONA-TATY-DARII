@@ -104,6 +104,7 @@ export function App() {
   const [rentalMsg, setRentalMsg] = React.useState(null);
   const [rentalSubmitting, setRentalSubmitting] = React.useState(false);
   const [rentalLoading, setRentalLoading] = React.useState(false);
+  const rentalSubmittingRef = React.useRef(false);
 
   const [selectedRoute, setSelectedRoute] = React.useState('JW');
   const [bookingViewMonth, setBookingViewMonth] = React.useState(new Date());
@@ -288,6 +289,7 @@ export function App() {
       if (error && !silent) setRentalMsg({ type: 'err', text: error });
     } catch (error) {
       if (!silent) setRentalMsg({ type: 'err', text: `Nie udało się pobrać blokad kalendarza: ${error.message}` });
+      else console.warn('rental calendar refetch failed', error);
       setRentalBlocks([]);
     } finally {
       if (!silent) setRentalLoading(false);
@@ -438,7 +440,9 @@ export function App() {
 
   async function submitRentalRequest(event) {
     event.preventDefault();
-    const form = new FormData(event.currentTarget);
+    if (rentalSubmittingRef.current) return;
+    const formEl = event.currentTarget;
+    const form = new FormData(formEl);
     const phone = field(form, 'phone');
     const email = field(form, 'email');
     const notes = field(form, 'notes');
@@ -451,6 +455,7 @@ export function App() {
       setRentalMsg({ type: 'err', text: validationError });
       return;
     }
+    rentalSubmittingRef.current = true;
     setRentalSubmitting(true);
     try {
       const { data: available, error: availabilityError } = await sb.rpc('rental_is_range_available', {
@@ -468,7 +473,7 @@ export function App() {
         await loadRentalCalendarBlocks(true);
         return;
       }
-      const { error } = await sb.rpc('create_rental_request', {
+      const { data: requestId, error } = await sb.rpc('create_rental_request', {
         p_bus_id: selectedBus,
         p_start_date: rentalRangeStart,
         p_end_date: rentalRangeEnd,
@@ -477,18 +482,26 @@ export function App() {
         p_message: notes || null
       });
       if (error) {
+        console.error('create_rental_request failed', error);
         setRentalMsg({ type: 'err', text: `Nie udało się zapisać zapytania: ${error.message}` });
         return;
       }
-      event.currentTarget.reset();
+      if (!requestId) console.warn('create_rental_request returned empty request id');
+      try {
+        formEl.reset();
+      } catch (resetError) {
+        console.warn('rental request form reset failed after request submit', resetError);
+      }
       setRentalRangeStart(null);
       setRentalRangeEnd(null);
       setRentalRangeError(null);
       setRentalMsg({ type: 'ok', text: 'Zapytanie zostało wysłane. Skontaktujemy się z Tobą w celu potwierdzenia ceny.' });
       await loadRentalCalendarBlocks(true);
-    } catch (_error) {
-      setRentalMsg({ type: 'err', text: 'Nie udało się wysłać zapytania. Odśwież stronę i spróbuj ponownie.' });
+    } catch (error) {
+      console.error('rental request submit failed', error);
+      setRentalMsg({ type: 'err', text: 'Wystąpił błąd podczas wysyłania zapytania. Spróbuj ponownie.' });
     } finally {
+      rentalSubmittingRef.current = false;
       setRentalSubmitting(false);
     }
   }
