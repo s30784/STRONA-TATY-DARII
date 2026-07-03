@@ -8,6 +8,12 @@ import { MONTHS } from '../data/constants.js';
 import { formatDate, monthRange } from '../lib/date.js';
 import { tripDate, tripFreeSeats } from '../lib/trips.js';
 
+function formatPrice(price) {
+  const amount = Number(price?.price_per_seat);
+  if (!Number.isFinite(amount) || amount <= 0) return 'Cena do ustalenia';
+  return `${amount.toFixed(2)} ${price.currency || 'PLN'}`;
+}
+
 export function BookingPage(props) {
   const {
     selectedRoute,
@@ -29,7 +35,8 @@ export function BookingPage(props) {
     bookingSubmitting,
     bookingLoading,
     currentUser,
-    currentProfile
+    currentProfile,
+    tripPrice
   } = props;
 
   const emailConfirmed = Boolean(currentUser?.email_confirmed_at || currentUser?.confirmed_at);
@@ -87,6 +94,7 @@ export function BookingPage(props) {
           <button className={selectedRoute === 'JW' ? 'active' : ''} onClick={() => setSelectedRoute('JW')} type="button">{'Jarosław -> Wiedeń'}</button>
           <button className={selectedRoute === 'WJ' ? 'active' : ''} onClick={() => setSelectedRoute('WJ')} type="button">{'Wiedeń -> Jarosław'}</button>
         </div>
+        <div className="price-callout"><span>Cena miejsca</span><strong>{formatPrice(tripPrice)}</strong></div>
         <div className="split-layout mb">
           <Card title={routeDetails.title}>
             <RouteDiagram routeDetails={routeDetails} chooseStop={chooseStop} />

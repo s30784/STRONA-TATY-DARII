@@ -20,7 +20,8 @@ export function RentalPage(props) {
     submitRentalRequest,
     rentalMsg,
     rentalSubmitting,
-    rentalLoading
+    rentalLoading,
+    currentUser
   } = props;
   const bus = BUS_DETAILS[selectedBus];
 
@@ -77,9 +78,10 @@ export function RentalPage(props) {
               <form onSubmit={submitRentalRequest}>
                 <div className="fg"><label>Wybrany bus</label><select value={BUS_DETAILS[selectedBus].selectLabel} onChange={(e) => setSelectedBus(busIdFromLabel(e.target.value))}>{Object.values(BUS_DETAILS).map((item) => <option key={item.name}>{item.selectLabel}</option>)}</select></div>
                 <div className="fg"><label>Wybrany termin</label><input type="text" value={selectedRentalDate ? formatDate(selectedRentalDate) : ''} placeholder="Wybierz dostępny dzień w kalendarzu" readOnly /></div>
+                <div className="fg"><label>Email</label><input type="email" name="email" defaultValue={currentUser?.email || ''} placeholder="jan@example.com" autoComplete="email" /></div>
                 <div className="fg"><label>Telefon</label><input type="tel" name="phone" placeholder="+48 000 000 000" autoComplete="tel" /></div>
                 <div className="fg"><label>Opis wyjazdu</label><textarea name="notes" rows="3" placeholder="np. wesele, lotnisko, wyjazd firmowy"></textarea></div>
-                <button className="btn-primary" type="submit" disabled={rentalSubmitting}>{rentalSubmitting ? 'Sprawdzam termin...' : 'Wyślij zapytanie'}</button>
+                <button className="btn-primary" type="submit" disabled={rentalSubmitting}>{rentalSubmitting ? 'Zapisuję zapytanie...' : 'Wyślij zapytanie'}</button>
               </form>
             </Card>
           </aside>

@@ -2,7 +2,7 @@ import { Card } from '../components/Card.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { Message } from '../components/Message.jsx';
 
-export function TowPage({ towMsg, submitTowRequest }) {
+export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser }) {
   return (
     <div className="page active">
       <Hero title="Transport lawetą Polska-Austria" text="Przewóz samochodów, motocykli i pojazdów niesprawnych na trasie Jarosław-Wiedeń oraz w miejscowościach po drodze." />
@@ -17,12 +17,12 @@ export function TowPage({ towMsg, submitTowRequest }) {
               <p className="form-help">Podaj dane pojazdu i miejsca odbioru. Formularz przygotuje zapytanie, które możesz od razu wysłać do firmy.</p>
               <Message message={towMsg} />
               <form onSubmit={submitTowRequest}>
-                <div className="tow-form-grid"><div className="fg"><label>Imię i nazwisko</label><input name="name" autoComplete="name" /></div><div className="fg"><label>Telefon</label><input name="phone" type="tel" autoComplete="tel" /></div><div className="fg"><label>Marka i model</label><input name="car" /></div><div className="fg"><label>Stan pojazdu</label><select name="state"><option>Sprawny</option><option>Niesprawny, odpala</option><option>Niesprawny, nie odpala</option><option>Powypadkowy</option></select></div></div>
+                <div className="tow-form-grid"><div className="fg"><label>Imię i nazwisko</label><input name="name" autoComplete="name" /></div><div className="fg"><label>Telefon</label><input name="phone" type="tel" autoComplete="tel" /></div><div className="fg"><label>Email</label><input name="email" type="email" defaultValue={currentUser?.email || ''} autoComplete="email" /></div><div className="fg"><label>Marka i model</label><input name="car" /></div><div className="fg"><label>Stan pojazdu</label><select name="state"><option>Sprawny</option><option>Niesprawny, odpala</option><option>Niesprawny, nie odpala</option><option>Powypadkowy</option></select></div></div>
                 <div className="fg"><label>Miejsce odbioru</label><input name="from" /></div>
                 <div className="fg"><label>Miejsce dostawy</label><input name="to" /></div>
                 <div className="fg2"><div className="fg"><label>Preferowana data</label><input type="date" name="date" /></div><div className="fg"><label>Kierunek</label><select name="direction"><option>{'Polska -> Austria'}</option><option>{'Austria -> Polska'}</option></select></div></div>
                 <div className="fg"><label>Dodatkowe informacje</label><textarea name="notes" rows="3"></textarea></div>
-                <button className="btn-primary" type="submit">Przygotuj zapytanie</button>
+                <button className="btn-primary" type="submit" disabled={towSubmitting}>{towSubmitting ? 'Zapisuję zapytanie...' : 'Przygotuj zapytanie'}</button>
               </form>
             </Card>
           </aside>

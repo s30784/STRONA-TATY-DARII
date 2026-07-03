@@ -705,6 +705,29 @@ aside .card:last-child {
   margin-bottom: 22px;
 }
 
+.price-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 0 18px;
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.price-callout span {
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.price-callout strong {
+  color: var(--ink);
+  font-size: 18px;
+}
+
 .fleet-meta {
   display: flex;
   flex-wrap: wrap;
@@ -1330,6 +1353,20 @@ form .btn-primary,
   margin-top: 12px;
 }
 
+.admin-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.admin-inline-form {
+  display: grid;
+  grid-template-columns: minmax(110px, 0.75fr) minmax(120px, 0.8fr) minmax(160px, 1.2fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
 .res-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -1752,7 +1789,9 @@ form .btn-primary,
 
   .fg2,
   .tow-form-grid,
-  .summary-grid {
+  .summary-grid,
+  .admin-grid,
+  .admin-inline-form {
     grid-template-columns: 1fr;
   }
 
