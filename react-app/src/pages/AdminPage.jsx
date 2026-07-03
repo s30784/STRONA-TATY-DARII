@@ -160,6 +160,28 @@ function formatMoney(amount, currency = 'PLN') {
   return `${value.toFixed(2)} ${currency}`;
 }
 
+function asArray(value) {
+  if (Array.isArray(value)) return value;
+  if (value == null) return [];
+  return [value];
+}
+
+function dateMs(value) {
+  const parsed = Date.parse(value || '');
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function currentRoutePrice(prices, route) {
+  const now = Date.now();
+  const routePrices = (prices || []).filter((price) => price?.route === route);
+  const currentPrices = routePrices
+    .filter((price) => price.active !== false)
+    .filter((price) => !price.valid_from || dateMs(price.valid_from) <= now)
+    .filter((price) => !price.valid_to || dateMs(price.valid_to) > now)
+    .sort((a, b) => dateMs(b.valid_from || b.updated_at || b.created_at) - dateMs(a.valid_from || a.updated_at || a.created_at));
+  return currentPrices[0] || routePrices[0];
+}
+
 function adminStatusLabel(status) {
   if (status === 'requested') return 'Zgłoszenie';
   if (status === 'accepted') return 'Zaakceptowana';
@@ -203,7 +225,8 @@ function AdminReservationGroup({ title, reservations, adminSetReservationStatus,
 }
 
 function AdminReservationCard({ res, adminSetReservationStatus, adminSetPaymentStatus }) {
-  const payment = (res.payments || []).slice().sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+  const payment = asArray(res.payments).slice().sort((a, b) => dateMs(b.created_at) - dateMs(a.created_at))[0];
+  const paymentCurrency = payment?.currency || res.currency || 'PLN';
   function onPaymentSubmit(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
@@ -213,6 +236,7 @@ function AdminReservationCard({ res, adminSetReservationStatus, adminSetPaymentS
       submitter?.value || 'paid',
       String(form.get('method') || 'cash'),
       Number(form.get('amount') || 0),
+      paymentCurrency,
       String(form.get('note') || '')
     );
   }
@@ -250,7 +274,7 @@ function AdminPrices({ tripPrices, adminSetTripPrice }) {
   return (
     <div className="admin-grid">
       {routes.map(([route, label]) => {
-        const price = tripPrices.find((item) => item.route === route);
+        const price = currentRoutePrice(tripPrices, route);
         return (
           <form className="card" key={route} onSubmit={(event) => onSubmit(event, route)}>
             <h3>{label}</h3>

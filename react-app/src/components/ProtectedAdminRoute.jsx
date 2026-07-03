@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { ADMIN_ROLES } from '../data/constants.js';
 import { Message } from './Message.jsx';
 
 export function ProtectedAdminRoute({ authReady, currentProfile, children }) {
@@ -12,7 +13,7 @@ export function ProtectedAdminRoute({ authReady, currentProfile, children }) {
     );
   }
 
-  if (currentProfile?.role !== 'admin') {
+  if (!ADMIN_ROLES.includes(currentProfile?.role)) {
     return (
       <div className="page active">
         <section className="section admin-guard">

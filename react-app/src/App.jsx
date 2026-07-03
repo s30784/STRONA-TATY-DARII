@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ProtectedAdminRoute } from './components/ProtectedAdminRoute.jsx';
-import { BLOCKING_RESERVATION_STATUSES, MONTHS, MAX_SEATS, TERMS_VERSION } from './data/constants.js';
+import { ADMIN_ROLES, BLOCKING_RESERVATION_STATUSES, MONTHS, MAX_SEATS, TERMS_VERSION } from './data/constants.js';
 import { ROUTE_DETAILS } from './data/routeDetails.js';
 import { BUS_DETAILS } from './data/vehicles.js';
 import { useAuth } from './hooks/useAuth.js';
@@ -26,6 +26,22 @@ function isEmailConfirmed(user) {
 
 function reservationBlocksSeat(status) {
   return BLOCKING_RESERVATION_STATUSES.includes(status);
+}
+
+function dateMs(value) {
+  const parsed = Date.parse(value || '');
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function currentRoutePrice(prices, route) {
+  const now = Date.now();
+  const routePrices = (prices || []).filter((price) => price?.route === route);
+  const currentPrices = routePrices
+    .filter((price) => price.active !== false)
+    .filter((price) => !price.valid_from || dateMs(price.valid_from) <= now)
+    .filter((price) => !price.valid_to || dateMs(price.valid_to) > now)
+    .sort((a, b) => dateMs(b.valid_from || b.updated_at || b.created_at) - dateMs(a.valid_from || a.updated_at || a.created_at));
+  return currentPrices[0] || routePrices[0];
 }
 
 export function App() {
@@ -96,7 +112,7 @@ export function App() {
 
   const routeDetails = ROUTE_DETAILS[selectedRoute];
   const selectedTrip = cachedTrips.find((trip) => trip.id === selectedTripId);
-  const selectedRoutePrice = tripPrices.find((price) => price.route === selectedRoute);
+  const selectedRoutePrice = currentRoutePrice(tripPrices, selectedRoute);
 
   React.useEffect(() => {
     const stops = ROUTE_DETAILS[selectedRoute].stops;
@@ -495,9 +511,7 @@ export function App() {
     const { data, error } = await sb.rpc('create_reservation_request', {
       p_trip_id: selectedTripId,
       p_passenger_name: name,
-      p_passenger_email: email,
       p_passenger_phone: phone,
-      p_seats: seats,
       p_notes: stopNotes,
       p_terms_accepted: termsAccepted,
       p_terms_version: TERMS_VERSION
@@ -638,12 +652,13 @@ export function App() {
     await loadTripPrices();
   }
 
-  async function adminSetPaymentStatus(resId, status, method, amount, note) {
+  async function adminSetPaymentStatus(resId, status, method, amount, currency, note) {
     const { error } = await sb.rpc('admin_set_payment_status', {
       p_reservation_id: resId,
       p_status: status,
       p_method: method,
       p_amount: amount,
+      p_currency: currency,
       p_note: note
     });
     if (error) {
@@ -657,7 +672,7 @@ export function App() {
   async function adminSetReservationStatus(resId, status) {
     const { error } = await sb.rpc('admin_set_reservation_status', {
       p_reservation_id: resId,
-      p_status: status
+      p_new_status: status
     });
     if (error) {
       setAdminGenMsg({ type: 'err', text: `Błąd zmiany statusu: ${error.message}` });
@@ -745,7 +760,7 @@ export function App() {
           {navItems.map(([to, label]) => (
             <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `tab-btn ${isActive ? 'active' : ''}`}>{label}</NavLink>
           ))}
-          {currentProfile?.role === 'admin' ? (
+          {ADMIN_ROLES.includes(currentProfile?.role) ? (
             <NavLink to="/admin" className={({ isActive }) => `tab-btn admin-link ${isActive ? 'active' : ''}`}>Panel</NavLink>
           ) : null}
         </div>
