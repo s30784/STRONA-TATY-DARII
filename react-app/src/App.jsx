@@ -5,9 +5,9 @@ import { ADMIN_ROLES, BLOCKING_RESERVATION_STATUSES, MONTHS, MAX_SEATS, TERMS_VE
 import { ROUTE_DETAILS } from './data/routeDetails.js';
 import { BUS_DETAILS } from './data/vehicles.js';
 import { useAuth } from './hooks/useAuth.js';
-import { formatDate, monthRange, todayStr } from './lib/date.js';
+import { dateOnly, formatDate, monthRange, todayStr } from './lib/date.js';
 import { AUTH_REDIRECTS, CONTACT_EMAIL, ENV_ERROR, sb } from './lib/supabase.js';
-import { defaultBusAvailable, lastStop, normalizeTrips, tripDate, tripFreeSeats, tripMaxSeats, tripUsedSeats } from './lib/trips.js';
+import { lastStop, normalizeTrips, tripDate, tripFreeSeats, tripMaxSeats, tripUsedSeats } from './lib/trips.js';
 import { field, validateEmail, validatePhone, validateRequired, validateSeats } from './lib/validation.js';
 import { AdminPage } from './pages/AdminPage.jsx';
 import { AuthPage } from './pages/AuthPage.jsx';
@@ -44,6 +44,35 @@ function currentRoutePrice(prices, route) {
   return currentPrices[0] || routePrices[0];
 }
 
+function blockStart(block) {
+  return dateOnly(block?.start_date);
+}
+
+function blockEnd(block) {
+  return dateOnly(block?.end_date || block?.start_date);
+}
+
+function normalizeRentalBlocks(blocks) {
+  return (blocks || [])
+    .filter((block) => block?.active !== false)
+    .map((block) => ({ ...block, start_date: blockStart(block), end_date: blockEnd(block) }))
+    .filter((block) => block.start_date && block.end_date);
+}
+
+function rangeOverlapsRentalBlock(blocks, startDate, endDate) {
+  if (!startDate || !endDate) return false;
+  return (blocks || []).some((block) => startDate <= blockEnd(block) && endDate >= blockStart(block));
+}
+
+function validateRentalRange(startDate, endDate, blocks) {
+  if (!startDate) return 'Wybierz datę początkową wynajmu.';
+  if (!endDate) return 'Wybierz datę końcową wynajmu.';
+  if (endDate < startDate) return 'Data końcowa nie może być wcześniejsza niż data początkowa.';
+  if (startDate < todayStr()) return 'Data początkowa nie może być w przeszłości.';
+  if (rangeOverlapsRentalBlock(blocks, startDate, endDate)) return 'Wybrany zakres zawiera niedostępny termin. Wybierz inny zakres dat.';
+  return null;
+}
+
 export function App() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -68,9 +97,10 @@ export function App() {
 
   const [selectedBus, setSelectedBus] = React.useState('bus9');
   const [rentalViewMonth, setRentalViewMonth] = React.useState(new Date());
-  const [selectedRentalDate, setSelectedRentalDate] = React.useState(null);
-  const [busAvailability, setBusAvailability] = React.useState([]);
-  const [busAvailabilityFallback, setBusAvailabilityFallback] = React.useState(false);
+  const [rentalRangeStart, setRentalRangeStart] = React.useState(null);
+  const [rentalRangeEnd, setRentalRangeEnd] = React.useState(null);
+  const [rentalBlocks, setRentalBlocks] = React.useState([]);
+  const [rentalRangeError, setRentalRangeError] = React.useState(null);
   const [rentalMsg, setRentalMsg] = React.useState(null);
   const [rentalSubmitting, setRentalSubmitting] = React.useState(false);
   const [rentalLoading, setRentalLoading] = React.useState(false);
@@ -104,11 +134,11 @@ export function App() {
   const [adminRentalRequests, setAdminRentalRequests] = React.useState([]);
   const [adminTowRequests, setAdminTowRequests] = React.useState([]);
   const [adminRequestsLoading, setAdminRequestsLoading] = React.useState(false);
-  const [adminBusViewMonth, setAdminBusViewMonth] = React.useState(new Date());
+  const [adminBlockViewMonth, setAdminBlockViewMonth] = React.useState(new Date());
   const [selectedAdminBus, setSelectedAdminBus] = React.useState('bus9');
-  const [cachedAdminBusAvailability, setCachedAdminBusAvailability] = React.useState([]);
-  const [adminBusNote, setAdminBusNote] = React.useState('Kliknij dzień, aby przełączyć dostępność busa.');
-  const [adminBusLoading, setAdminBusLoading] = React.useState(false);
+  const [adminRentalBlocks, setAdminRentalBlocks] = React.useState([]);
+  const [adminBlockMsg, setAdminBlockMsg] = React.useState(null);
+  const [adminBlocksLoading, setAdminBlocksLoading] = React.useState(false);
 
   const routeDetails = ROUTE_DETAILS[selectedRoute];
   const selectedTrip = cachedTrips.find((trip) => trip.id === selectedTripId);
@@ -124,19 +154,26 @@ export function App() {
   }, [selectedRoute]);
 
   React.useEffect(() => {
-    if (pathname === '/rental') loadRentalBusAvailability();
+    if (pathname === '/rental') loadRentalCalendarBlocks();
     if (pathname === '/booking') loadTrips();
     if (pathname === '/booking' || pathname === '/admin') loadTripPrices();
     if (pathname === '/my-reservations') loadMyReservations();
     if (pathname === '/admin') loadAdminTrips();
-    if (pathname === '/admin' && adminTab === 'buses') loadAdminBusAvailability();
+    if (pathname === '/admin' && adminTab === 'buses') loadAdminRentalBlocks();
     if (pathname === '/admin' && adminTab === 'res') loadAdminReservations();
     if (pathname === '/admin' && adminTab === 'requests') loadAdminRequests();
   }, [pathname, currentUser?.id]);
 
   React.useEffect(() => {
-    if (pathname === '/rental') loadRentalBusAvailability();
-  }, [selectedBus, rentalViewMonth]);
+    setRentalRangeStart(null);
+    setRentalRangeEnd(null);
+    setRentalRangeError(null);
+    if (pathname === '/rental') loadRentalCalendarBlocks();
+  }, [selectedBus]);
+
+  React.useEffect(() => {
+    if (pathname === '/rental') loadRentalCalendarBlocks();
+  }, [rentalViewMonth]);
 
   React.useEffect(() => {
     if (pathname === '/booking') loadTrips();
@@ -147,18 +184,18 @@ export function App() {
   }, [adminViewMonth, selectedAdminRoute]);
 
   React.useEffect(() => {
-    if (pathname === '/admin' && adminTab === 'buses') loadAdminBusAvailability();
+    if (pathname === '/admin' && adminTab === 'buses') loadAdminRentalBlocks();
     if (pathname === '/admin' && adminTab === 'res') loadAdminReservations();
     if (pathname === '/admin' && adminTab === 'prices') loadTripPrices();
     if (pathname === '/admin' && adminTab === 'requests') loadAdminRequests();
-  }, [adminTab, adminBusViewMonth, selectedAdminBus]);
+  }, [adminTab, adminBlockViewMonth, selectedAdminBus]);
 
   React.useEffect(() => {
     const interval = window.setInterval(() => {
-      if (pathname === '/rental') loadRentalBusAvailability(true);
+      if (pathname === '/rental') loadRentalCalendarBlocks(true);
     }, 15000);
     const onVisibility = () => {
-      if (!document.hidden && pathname === '/rental') loadRentalBusAvailability(true);
+      if (!document.hidden && pathname === '/rental') loadRentalCalendarBlocks(true);
     };
     document.addEventListener('visibilitychange', onVisibility);
     return () => {
@@ -220,67 +257,104 @@ export function App() {
     setTripPrices(data || []);
   }
 
-  function getCachedBusAvailability(cache, busId, dateStr) {
-    const row = (cache || []).find((item) => item.bus_id === busId && item.date === dateStr);
-    if (row) return row.available !== false;
-    return defaultBusAvailable(dateStr);
+  function setRentalRange(startDate, endDate) {
+    const error = validateRentalRange(startDate, endDate, rentalBlocks);
+    setRentalRangeStart(startDate);
+    setRentalRangeEnd(endDate);
+    setRentalRangeError(error);
+    if (error) setRentalMsg({ type: 'err', text: error });
+    else if (rentalMsg?.type === 'err') setRentalMsg(null);
   }
 
-  async function fetchBusAvailability(busId, viewDate) {
+  async function fetchRentalCalendarBlocks(busId, viewDate) {
     const range = monthRange(viewDate);
     const { data, error } = await sb
-      .from('bus_availability')
-      .select('*')
-      .eq('bus_id', busId)
-      .gte('date', range.from)
-      .lte('date', range.to);
-    if (error) {
-      setBusAvailabilityFallback(true);
-      return [];
-    }
-    setBusAvailabilityFallback(false);
-    return data || [];
-  }
-
-  async function fetchBusAvailabilityForDate(busId, dateStr) {
-    const { data, error } = await sb
-      .from('bus_availability')
-      .select('available')
-      .eq('bus_id', busId)
-      .eq('date', dateStr)
-      .maybeSingle();
+      .rpc('get_rental_calendar_blocks', {
+        p_bus_id: busId,
+        p_from: range.from,
+        p_to: range.to
+      });
     if (error) throw error;
-    return data ? data.available !== false : defaultBusAvailable(dateStr);
+    return normalizeRentalBlocks(data);
   }
 
-  async function loadRentalBusAvailability(silent = false) {
+  async function loadRentalCalendarBlocks(silent = false) {
     if (!silent) setRentalLoading(true);
-    const data = await fetchBusAvailability(selectedBus, rentalViewMonth);
-    if (!silent) setRentalLoading(false);
-    setBusAvailability(data);
-    if (selectedRentalDate && (!getCachedBusAvailability(data, selectedBus, selectedRentalDate) || selectedRentalDate < todayStr())) {
-      setSelectedRentalDate(null);
-      if (!silent) setRentalMsg({ type: 'err', text: 'Wybrany termin jest już niedostępny. Wybierz inny dzień.' });
+    try {
+      const data = await fetchRentalCalendarBlocks(selectedBus, rentalViewMonth);
+      setRentalBlocks(data);
+      const error = rentalRangeStart && rentalRangeEnd ? validateRentalRange(rentalRangeStart, rentalRangeEnd, data) : null;
+      setRentalRangeError(error);
+      if (error && !silent) setRentalMsg({ type: 'err', text: error });
+    } catch (error) {
+      if (!silent) setRentalMsg({ type: 'err', text: `Nie udało się pobrać blokad kalendarza: ${error.message}` });
+      setRentalBlocks([]);
+    } finally {
+      if (!silent) setRentalLoading(false);
     }
   }
 
-  async function saveBusAvailability(busId, dateStr, available) {
-    const payload = { bus_id: busId, date: dateStr, available };
-    const { error } = await sb.from('bus_availability').upsert(payload, { onConflict: 'bus_id,date' });
+  async function loadAdminRentalBlocks() {
+    setAdminBlocksLoading(true);
+    const range = monthRange(adminBlockViewMonth);
+    const { data, error } = await sb
+      .from('rental_calendar_blocks')
+      .select('*')
+      .eq('bus_id', selectedAdminBus)
+      .eq('active', true)
+      .lte('start_date', range.to)
+      .gte('end_date', range.from)
+      .order('start_date', { ascending: false });
+    setAdminBlocksLoading(false);
     if (error) {
-      setBusAvailabilityFallback(true);
-      return error;
+      setAdminBlockMsg({ type: 'err', text: `Nie udało się pobrać blokad: ${error.message}` });
+      setAdminRentalBlocks([]);
+      return;
     }
-    setBusAvailabilityFallback(false);
-    return null;
+    setAdminRentalBlocks(normalizeRentalBlocks(data));
+    if (adminBlockMsg?.type === 'err') setAdminBlockMsg(null);
   }
 
-  async function loadAdminBusAvailability() {
-    setAdminBusLoading(true);
-    const data = await fetchBusAvailability(selectedAdminBus, adminBusViewMonth);
-    setAdminBusLoading(false);
-    setCachedAdminBusAvailability(data);
-    setAdminBusNote(`Edytujesz: ${BUS_DETAILS[selectedAdminBus].name}. Kliknięcie dnia przełącza status dostępny/niedostępny.`);
+  async function addAdminRentalBlock(event) {
+    event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const startDate = String(form.get('start_date') || '');
+    const endDate = String(form.get('end_date') || '');
+    const status = String(form.get('status') || 'unavailable');
+    const publicNote = String(form.get('public_note') || '').trim();
+    const validationError = !startDate ? 'Wybierz początek blokady.' : !endDate ? 'Wybierz koniec blokady.' : endDate < startDate ? 'Koniec blokady nie może być przed początkiem.' : null;
+    if (validationError) {
+      setAdminBlockMsg({ type: 'err', text: validationError });
+      return;
+    }
+    const { error } = await sb.from('rental_calendar_blocks').insert({
+      id: `RB${Date.now()}${Math.random().toString(36).slice(2, 8)}`,
+      bus_id: selectedAdminBus,
+      start_date: startDate,
+      end_date: endDate,
+      status,
+      public_note: publicNote || null,
+      active: true
+    });
+    if (error) {
+      setAdminBlockMsg({ type: 'err', text: `Nie udało się dodać blokady: ${error.message}` });
+      return;
+    }
+    event.currentTarget.reset();
+    setAdminBlockMsg({ type: 'ok', text: 'Blokada kalendarza została dodana.' });
+    await loadAdminRentalBlocks();
+    if (selectedBus === selectedAdminBus) await loadRentalCalendarBlocks(true);
+  }
+
+  async function deactivateAdminRentalBlock(blockId) {
+    const { error } = await sb.from('rental_calendar_blocks').update({ active: false }).eq('id', blockId);
+    if (error) {
+      setAdminBlockMsg({ type: 'err', text: `Nie udało się usunąć blokady: ${error.message}` });
+      return;
+    }
+    setAdminBlockMsg({ type: 'ok', text: 'Blokada została usunięta z aktywnego kalendarza.' });
+    await loadAdminRentalBlocks();
+    if (selectedBus === selectedAdminBus) await loadRentalCalendarBlocks(true);
   }
 
   async function doLogin(event) {
@@ -365,41 +439,55 @@ export function App() {
   async function submitRentalRequest(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    const bus = BUS_DETAILS[selectedBus].name;
     const phone = field(form, 'phone');
     const email = field(form, 'email');
     const notes = field(form, 'notes');
-    const validationError = selectedRentalDate ? validatePhone(phone) || validateEmail(email) : 'Wybierz dostępny termin w kalendarzu.';
+    const validationError = validateRequired(selectedBus, 'Bus')
+      || validateRentalRange(rentalRangeStart, rentalRangeEnd, rentalBlocks)
+      || validatePhone(phone)
+      || validateEmail(email);
     if (validationError) {
+      setRentalRangeError(validateRentalRange(rentalRangeStart, rentalRangeEnd, rentalBlocks));
       setRentalMsg({ type: 'err', text: validationError });
       return;
     }
     setRentalSubmitting(true);
     try {
-      const stillAvailable = await fetchBusAvailabilityForDate(selectedBus, selectedRentalDate);
-      if (!stillAvailable || selectedRentalDate < todayStr()) {
-        setSelectedRentalDate(null);
-        await loadRentalBusAvailability();
-        setRentalMsg({ type: 'err', text: 'Ten termin jest już niedostępny. Wybierz inny dzień w kalendarzu.' });
+      const { data: available, error: availabilityError } = await sb.rpc('rental_is_range_available', {
+        p_bus_id: selectedBus,
+        p_start_date: rentalRangeStart,
+        p_end_date: rentalRangeEnd
+      });
+      if (availabilityError) {
+        setRentalMsg({ type: 'err', text: `Nie udało się sprawdzić zakresu wynajmu: ${availabilityError.message}` });
         return;
       }
-      const { data, error } = await sb.rpc('create_rental_request', {
+      if (!available) {
+        setRentalRangeError('Wybrany termin jest niedostępny. Wybierz inny zakres dat.');
+        setRentalMsg({ type: 'err', text: 'Wybrany termin jest niedostępny. Wybierz inny zakres dat.' });
+        await loadRentalCalendarBlocks(true);
+        return;
+      }
+      const { error } = await sb.rpc('create_rental_request', {
         p_bus_id: selectedBus,
-        p_start_date: selectedRentalDate,
-        p_end_date: selectedRentalDate,
+        p_start_date: rentalRangeStart,
+        p_end_date: rentalRangeEnd,
         p_phone: phone,
         p_email: email,
-        p_message: `Bus: ${bus}${notes ? ` | ${notes}` : ''}`
+        p_message: notes || null
       });
       if (error) {
         setRentalMsg({ type: 'err', text: `Nie udało się zapisać zapytania: ${error.message}` });
         return;
       }
       event.currentTarget.reset();
-      setSelectedRentalDate(null);
-      setRentalMsg({ type: 'ok', text: `Zapytanie zapisane. Nr: ${data?.id || 'nadany w systemie'}` });
+      setRentalRangeStart(null);
+      setRentalRangeEnd(null);
+      setRentalRangeError(null);
+      setRentalMsg({ type: 'ok', text: 'Zapytanie zostało wysłane. Skontaktujemy się z Tobą w celu potwierdzenia ceny.' });
+      await loadRentalCalendarBlocks(true);
     } catch (_error) {
-      setRentalMsg({ type: 'err', text: 'Nie udało się potwierdzić dostępności terminu. Odśwież stronę i spróbuj ponownie.' });
+      setRentalMsg({ type: 'err', text: 'Nie udało się wysłać zapytania. Odśwież stronę i spróbuj ponownie.' });
     } finally {
       setRentalSubmitting(false);
     }
@@ -727,19 +815,6 @@ export function App() {
     await loadAdminRequests();
   }
 
-  async function toggleAdminBusDate(dateStr) {
-    const current = getCachedBusAvailability(cachedAdminBusAvailability, selectedAdminBus, dateStr);
-    const error = await saveBusAvailability(selectedAdminBus, dateStr, !current);
-    if (error) {
-      setAdminBusNote(`Nie udało się zapisać dostępności w Supabase: ${error.message}`);
-      return;
-    }
-    await loadAdminBusAvailability();
-    if (selectedBus === selectedAdminBus && rentalViewMonth.getMonth() === adminBusViewMonth.getMonth() && rentalViewMonth.getFullYear() === adminBusViewMonth.getFullYear()) {
-      await loadRentalBusAvailability(true);
-    }
-  }
-
   const navItems = [
     ['/', 'Start'],
     ['/rental', 'Busy'],
@@ -787,13 +862,13 @@ export function App() {
 
       <Routes>
         <Route path="/" element={<HomePage showPage={showPage} currentUser={currentUser} contactEmail={CONTACT_EMAIL} />} />
-        <Route path="/rental" element={<RentalPage selectedBus={selectedBus} setSelectedBus={setSelectedBus} rentalViewMonth={rentalViewMonth} setRentalViewMonth={setRentalViewMonth} busAvailability={busAvailability} selectedRentalDate={selectedRentalDate} setSelectedRentalDate={setSelectedRentalDate} busAvailabilityFallback={busAvailabilityFallback} submitRentalRequest={submitRentalRequest} rentalMsg={rentalMsg} rentalSubmitting={rentalSubmitting} rentalLoading={rentalLoading} currentUser={currentUser} />} />
+        <Route path="/rental" element={<RentalPage selectedBus={selectedBus} setSelectedBus={setSelectedBus} rentalViewMonth={rentalViewMonth} setRentalViewMonth={setRentalViewMonth} rentalBlocks={rentalBlocks} rentalRangeStart={rentalRangeStart} rentalRangeEnd={rentalRangeEnd} setRentalRange={setRentalRange} rentalRangeError={rentalRangeError} submitRentalRequest={submitRentalRequest} rentalMsg={rentalMsg} rentalSubmitting={rentalSubmitting} rentalLoading={rentalLoading} currentUser={currentUser} />} />
         <Route path="/auth" element={<AuthPage authForm={authForm} setAuthForm={setAuthForm} authMsg={authMsg} authLoading={authLoading} doLogin={doLogin} doRegister={doRegister} doReset={doReset} />} />
         <Route path="/booking" element={<BookingPage selectedRoute={selectedRoute} setSelectedRoute={setSelectedRoute} routeDetails={routeDetails} bookingViewMonth={bookingViewMonth} setBookingViewMonth={setBookingViewMonth} cachedTrips={cachedTrips} selectedTripId={selectedTripId} selectedBookingDate={selectedBookingDate} selectBookingDay={selectBookingDay} pickupStop={pickupStop} dropoffStop={dropoffStop} setPickupStop={setPickupStop} setDropoffStop={setDropoffStop} chooseStop={chooseStop} submitBooking={submitBooking} bookingMsg={bookingMsg} bookingSubmitting={bookingSubmitting} bookingLoading={bookingLoading} currentUser={currentUser} currentProfile={currentProfile} tripPrice={selectedRoutePrice} />} />
         <Route path="/tow" element={<TowPage towMsg={towMsg} submitTowRequest={submitTowRequest} towSubmitting={towSubmitting} currentUser={currentUser} />} />
         <Route path="/my-reservations" element={<MyReservationsPage currentUser={currentUser} showPage={showPage} myReservations={myReservations} myResMsg={myResMsg} myReservationsLoading={myReservationsLoading} cancelReservation={cancelReservation} />} />
         <Route path="/contact" element={<ContactPage />} />
-        <Route path="/admin" element={<ProtectedAdminRoute authReady={authReady} currentProfile={currentProfile}><AdminPage adminTab={adminTab} setAdminTab={setAdminTab} adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} tripPrices={tripPrices} adminSetTripPrice={adminSetTripPrice} adminRentalRequests={adminRentalRequests} adminTowRequests={adminTowRequests} adminRequestsLoading={adminRequestsLoading} adminUpdateRentalRequest={adminUpdateRentalRequest} adminUpdateTowRequest={adminUpdateTowRequest} adminBusViewMonth={adminBusViewMonth} setAdminBusViewMonth={setAdminBusViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} cachedAdminBusAvailability={cachedAdminBusAvailability} toggleAdminBusDate={toggleAdminBusDate} adminBusNote={adminBusNote} adminBusLoading={adminBusLoading} /></ProtectedAdminRoute>} />
+        <Route path="/admin" element={<ProtectedAdminRoute authReady={authReady} currentProfile={currentProfile}><AdminPage adminTab={adminTab} setAdminTab={setAdminTab} adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} tripPrices={tripPrices} adminSetTripPrice={adminSetTripPrice} adminRentalRequests={adminRentalRequests} adminTowRequests={adminTowRequests} adminRequestsLoading={adminRequestsLoading} adminUpdateRentalRequest={adminUpdateRentalRequest} adminUpdateTowRequest={adminUpdateTowRequest} adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} adminRentalBlocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} adminBlocksLoading={adminBlocksLoading} addAdminRentalBlock={addAdminRentalBlock} deactivateAdminRentalBlock={deactivateAdminRentalBlock} /></ProtectedAdminRoute>} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />

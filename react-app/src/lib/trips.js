@@ -1,5 +1,5 @@
 import { MAX_SEATS } from '../data/constants.js';
-import { dateOnly, todayStr } from './date.js';
+import { dateOnly } from './date.js';
 
 export function tripDate(trip) {
   return dateOnly(trip?.date);
@@ -29,10 +29,6 @@ export function normalizeTrips(trips) {
     used_seats: tripUsedSeats(trip),
     free_seats: tripFreeSeats(trip)
   }));
-}
-
-export function defaultBusAvailable(dateStr) {
-  return dateStr >= todayStr();
 }
 
 export function lastStop(stops) {

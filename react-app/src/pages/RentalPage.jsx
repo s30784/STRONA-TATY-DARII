@@ -5,7 +5,34 @@ import { Message } from '../components/Message.jsx';
 import { Weekdays } from '../components/Weekdays.jsx';
 import { MONTHS } from '../data/constants.js';
 import { BUS_DETAILS, busIdFromLabel } from '../data/vehicles.js';
-import { formatDate, monthRange, todayStr } from '../lib/date.js';
+import { addDays, daysInclusive, formatDate, monthRange, todayStr } from '../lib/date.js';
+
+const QUICK_RANGES = [1, 2, 3, 7];
+
+function blockStart(block) {
+  return String(block?.start_date || '').slice(0, 10);
+}
+
+function blockEnd(block) {
+  return String(block?.end_date || block?.start_date || '').slice(0, 10);
+}
+
+function blockCoversDate(block, dateStr) {
+  return blockStart(block) <= dateStr && dateStr <= blockEnd(block);
+}
+
+function blockStatusLabel(status) {
+  if (status === 'reserved') return 'Zarezerwowany';
+  if (status === 'maintenance') return 'Serwis';
+  if (status === 'private_use') return 'Użytek prywatny';
+  return 'Niedostępny';
+}
+
+function selectedRangeText(startDate, endDate) {
+  if (!startDate || !endDate) return '';
+  if (startDate === endDate) return formatDate(startDate);
+  return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+}
 
 export function RentalPage(props) {
   const {
@@ -13,10 +40,11 @@ export function RentalPage(props) {
     setSelectedBus,
     rentalViewMonth,
     setRentalViewMonth,
-    busAvailability,
-    selectedRentalDate,
-    setSelectedRentalDate,
-    busAvailabilityFallback,
+    rentalBlocks,
+    rentalRangeStart,
+    rentalRangeEnd,
+    setRentalRange,
+    rentalRangeError,
     submitRentalRequest,
     rentalMsg,
     rentalSubmitting,
@@ -24,10 +52,18 @@ export function RentalPage(props) {
     currentUser
   } = props;
   const bus = BUS_DETAILS[selectedBus];
+  const rangeText = selectedRangeText(rentalRangeStart, rentalRangeEnd);
+  const rentalDays = daysInclusive(rentalRangeStart, rentalRangeEnd);
+  const submitDisabled = rentalSubmitting || !rentalRangeStart || !rentalRangeEnd || Boolean(rentalRangeError);
+
+  function applyQuickRange(days) {
+    if (!rentalRangeStart) return;
+    setRentalRange(rentalRangeStart, addDays(rentalRangeStart, days - 1));
+  }
 
   return (
     <div className="page active">
-      <Hero title="Wynajem busów w okolicach Rzeszowa" text="Wybierz pojazd, sprawdź orientacyjny cennik i wyślij zapytanie o dostępność konkretnego terminu." />
+      <Hero title="Wynajem busów w okolicach Rzeszowa" text="Wybierz pojazd, zakres dat i wyślij zapytanie o wynajem bez logowania." />
       <section className="section">
         <div className="split-layout">
           <div>
@@ -61,27 +97,31 @@ export function RentalPage(props) {
               <p className="muted">{bus.description}</p>
               <ul className="mini-list">{bus.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
             </Card>
-            <Card title="Kalendarz dostępności">
-              {rentalLoading ? <div className="loading-box">Ładuję dostępność busa...</div> : null}
+            <Card title="Kalendarz wynajmu">
+              {rentalLoading ? <div className="loading-box">Ładuję blokady kalendarza...</div> : null}
               <RentalCalendar
                 viewDate={rentalViewMonth}
                 setViewDate={setRentalViewMonth}
-                availability={busAvailability}
-                selectedBus={selectedBus}
-                selectedDate={selectedRentalDate}
-                setSelectedDate={setSelectedRentalDate}
-                busAvailabilityFallback={busAvailabilityFallback}
+                blocks={rentalBlocks}
+                rangeStart={rentalRangeStart}
+                rangeEnd={rentalRangeEnd}
+                setRentalRange={setRentalRange}
+                rangeError={rentalRangeError}
               />
+              <div className="range-presets">
+                {QUICK_RANGES.map((days) => <button key={days} className="btn-outline" onClick={() => applyQuickRange(days)} type="button" disabled={!rentalRangeStart}>{days} {days === 1 ? 'dzień' : 'dni'}</button>)}
+              </div>
             </Card>
             <Card title="Zapytanie o wynajem">
               <Message message={rentalMsg} />
               <form onSubmit={submitRentalRequest}>
                 <div className="fg"><label>Wybrany bus</label><select value={BUS_DETAILS[selectedBus].selectLabel} onChange={(e) => setSelectedBus(busIdFromLabel(e.target.value))}>{Object.values(BUS_DETAILS).map((item) => <option key={item.name}>{item.selectLabel}</option>)}</select></div>
-                <div className="fg"><label>Wybrany termin</label><input type="text" value={selectedRentalDate ? formatDate(selectedRentalDate) : ''} placeholder="Wybierz dostępny dzień w kalendarzu" readOnly /></div>
+                <div className="fg"><label>Wybrany termin</label><input type="text" value={rangeText ? `Wybrany termin: ${rangeText}` : ''} placeholder="Wybierz początek i koniec w kalendarzu" readOnly /></div>
+                <div className="fg"><label>Liczba dni</label><input type="text" value={rentalDays ? `${rentalDays} ${rentalDays === 1 ? 'dzień' : 'dni'}` : ''} placeholder="-" readOnly /></div>
                 <div className="fg"><label>Email</label><input type="email" name="email" defaultValue={currentUser?.email || ''} placeholder="jan@example.com" autoComplete="email" /></div>
                 <div className="fg"><label>Telefon</label><input type="tel" name="phone" placeholder="+48 000 000 000" autoComplete="tel" /></div>
                 <div className="fg"><label>Opis wyjazdu</label><textarea name="notes" rows="3" placeholder="np. wesele, lotnisko, wyjazd firmowy"></textarea></div>
-                <button className="btn-primary" type="submit" disabled={rentalSubmitting}>{rentalSubmitting ? 'Zapisuję zapytanie...' : 'Wyślij zapytanie'}</button>
+                <button className="btn-primary" type="submit" disabled={submitDisabled}>{rentalSubmitting ? 'Zapisuję zapytanie...' : 'Wyślij zapytanie'}</button>
               </form>
             </Card>
           </aside>
@@ -91,11 +131,23 @@ export function RentalPage(props) {
   );
 }
 
-function RentalCalendar({ viewDate, setViewDate, availability, selectedBus, selectedDate, setSelectedDate, busAvailabilityFallback }) {
+function RentalCalendar({ viewDate, setViewDate, blocks, rangeStart, rangeEnd, setRentalRange, rangeError }) {
   const range = monthRange(viewDate);
   const firstDay = new Date(range.year, range.month, 1).getDay();
   const startOffset = (firstDay + 6) % 7;
   const cells = [];
+
+  function selectDate(dateStr) {
+    if (!rangeStart || (rangeStart && rangeEnd && rangeStart !== rangeEnd)) {
+      setRentalRange(dateStr, dateStr);
+      return;
+    }
+    if (dateStr < rangeStart) {
+      setRentalRange(dateStr, dateStr);
+      return;
+    }
+    setRentalRange(rangeStart, dateStr);
+  }
 
   for (let i = 0; i < startOffset; i += 1) {
     cells.push(<div className="calendar-day disabled" key={`empty-${i}`}></div>);
@@ -103,18 +155,22 @@ function RentalCalendar({ viewDate, setViewDate, availability, selectedBus, sele
 
   for (let day = 1; day <= range.days; day += 1) {
     const dateStr = `${range.year}-${String(range.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const isAvailable = availability.find((item) => item.bus_id === selectedBus && item.date === dateStr)?.available !== false && dateStr >= todayStr();
+    const block = (blocks || []).find((item) => blockCoversDate(item, dateStr));
+    const isBlocked = Boolean(block);
     const isPast = dateStr < todayStr();
-    const selected = selectedDate === dateStr;
-    const classes = `calendar-day ${isPast ? 'disabled' : isAvailable ? 'available' : 'disabled'} ${selected ? 'confirmed' : ''}`;
-    const statusLabel = isPast ? 'Minął' : isAvailable ? 'Dostępny' : 'Niedostępny';
+    const isSelected = rangeStart && rangeEnd && rangeStart <= dateStr && dateStr <= rangeEnd;
+    const disabled = isPast || isBlocked;
+    const invalidSelected = isSelected && Boolean(rangeError);
+    const classes = `calendar-day ${disabled ? isBlocked ? 'unavailable' : 'disabled' : 'available'} ${isSelected ? 'confirmed range-selected' : ''} ${invalidSelected ? 'range-invalid' : ''}`;
+    const statusLabel = isPast ? 'Minął' : isBlocked ? `${blockStatusLabel(block.status)}${block.public_note ? ` - ${block.public_note}` : ''}` : 'Dostępny';
     cells.push(
-      <button key={dateStr} className={classes} onClick={() => !isPast && isAvailable && setSelectedDate(dateStr)} type="button" title={statusLabel} aria-label={`${day} ${MONTHS[range.month]} ${range.year}: ${statusLabel}`}>
+      <button key={dateStr} className={classes} onClick={() => !disabled && selectDate(dateStr)} type="button" disabled={disabled} title={statusLabel} aria-label={`${day} ${MONTHS[range.month]} ${range.year}: ${statusLabel}`}>
         <header><span className="day-number">{day}</span></header>
       </button>
     );
   }
 
+  const rangeText = selectedRangeText(rangeStart, rangeEnd);
   return (
     <>
       <div className="calendar-controls">
@@ -126,8 +182,8 @@ function RentalCalendar({ viewDate, setViewDate, availability, selectedBus, sele
       </div>
       <Weekdays />
       <div className="calendar-grid">{cells}</div>
-      <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'selected', label: 'Wybrany' }, { type: 'muted', label: 'Minął / niedostępny' }]} />
-      <div className="no-trips mt-sm">{busAvailabilityFallback ? 'Nie udało się pobrać dostępności z systemu. Spróbuj odświeżyć stronę.' : selectedDate ? `Wybrano: ${formatDate(selectedDate)}` : 'Kliknij dostępny dzień, aby wybrać termin.'}</div>
+      <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'selected', label: 'Wybrany zakres' }, { type: 'blocked', label: 'Niedostępny' }, { type: 'muted', label: 'Minął' }]} />
+      <div className="no-trips mt-sm">{rangeError || (rangeText ? `Wybrany termin: ${rangeText}` : 'Kliknij datę początkową, a potem końcową albo wybierz liczbę dni.')}</div>
     </>
   );
 }

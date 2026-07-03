@@ -913,6 +913,17 @@ aside .card:last-child {
   box-shadow: inset 0 0 0 2px rgba(238, 43, 71, 0.2), var(--shadow-soft);
 }
 
+.calendar-day.range-selected {
+  border-color: var(--accent);
+  background: #fff4f6;
+  box-shadow: inset 0 0 0 2px rgba(238, 43, 71, 0.18);
+}
+
+.calendar-day.range-invalid {
+  border-color: rgba(238, 43, 71, 0.56);
+  background: var(--danger-bg);
+}
+
 .calendar-day.cancelled,
 .calendar-day.unavailable {
   border-color: rgba(238, 43, 71, 0.22);
@@ -937,6 +948,17 @@ aside .card:last-child {
   color: var(--muted);
   font-size: 12px;
   font-weight: 760;
+}
+
+.range-presets {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.range-presets button {
+  min-width: 0;
 }
 
 .calendar-legend span {
@@ -1367,6 +1389,14 @@ form .btn-primary,
   margin-top: 12px;
 }
 
+.admin-block-form {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  gap: 10px;
+  align-items: end;
+  margin: 16px 0;
+}
+
 .res-actions button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
@@ -1791,8 +1821,13 @@ form .btn-primary,
   .tow-form-grid,
   .summary-grid,
   .admin-grid,
-  .admin-inline-form {
+  .admin-inline-form,
+  .admin-block-form {
     grid-template-columns: 1fr;
+  }
+
+  .range-presets {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .res-head,

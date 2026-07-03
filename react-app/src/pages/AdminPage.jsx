@@ -4,7 +4,7 @@ import { Weekdays } from '../components/Weekdays.jsx';
 import { MONTHS } from '../data/constants.js';
 import { BUS_DETAILS } from '../data/vehicles.js';
 import { formatDate, monthRange } from '../lib/date.js';
-import { defaultBusAvailable, tripDate, tripFreeSeats, tripMaxSeats, tripUsedSeats } from '../lib/trips.js';
+import { tripDate, tripFreeSeats, tripMaxSeats, tripUsedSeats } from '../lib/trips.js';
 
 export function AdminPage(props) {
   const {
@@ -31,14 +31,15 @@ export function AdminPage(props) {
     adminRequestsLoading,
     adminUpdateRentalRequest,
     adminUpdateTowRequest,
-    adminBusViewMonth,
-    setAdminBusViewMonth,
+    adminBlockViewMonth,
+    setAdminBlockViewMonth,
     selectedAdminBus,
     setSelectedAdminBus,
-    cachedAdminBusAvailability,
-    toggleAdminBusDate,
-    adminBusNote,
-    adminBusLoading
+    adminRentalBlocks,
+    adminBlockMsg,
+    adminBlocksLoading,
+    addAdminRentalBlock,
+    deactivateAdminRentalBlock
   } = props;
 
   return (
@@ -47,13 +48,13 @@ export function AdminPage(props) {
         <div className="panel-head"><h2>Panel właściciela</h2></div>
         <div className="atabs">
           <button className={`atab ${adminTab === 'trips' ? 'active' : ''}`} onClick={() => setAdminTab('trips')} type="button">Terminy kursów</button>
-          <button className={`atab ${adminTab === 'buses' ? 'active' : ''}`} onClick={() => setAdminTab('buses')} type="button">Dostępność busów</button>
+          <button className={`atab ${adminTab === 'buses' ? 'active' : ''}`} onClick={() => setAdminTab('buses')} type="button">Blokady wynajmu</button>
           <button className={`atab ${adminTab === 'res' ? 'active' : ''}`} onClick={() => setAdminTab('res')} type="button">Rezerwacje</button>
           <button className={`atab ${adminTab === 'prices' ? 'active' : ''}`} onClick={() => setAdminTab('prices')} type="button">Ceny</button>
           <button className={`atab ${adminTab === 'requests' ? 'active' : ''}`} onClick={() => setAdminTab('requests')} type="button">Zapytania</button>
         </div>
         {adminTab === 'trips' ? <AdminTrips adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} /> : null}
-        {adminTab === 'buses' ? <AdminBuses adminBusViewMonth={adminBusViewMonth} setAdminBusViewMonth={setAdminBusViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} cachedAdminBusAvailability={cachedAdminBusAvailability} toggleAdminBusDate={toggleAdminBusDate} adminBusNote={adminBusNote} adminBusLoading={adminBusLoading} /> : null}
+        {adminTab === 'buses' ? <AdminRentalBlocks adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} blocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} loading={adminBlocksLoading} addBlock={addAdminRentalBlock} deactivateBlock={deactivateAdminRentalBlock} /> : null}
         {adminTab === 'res' ? <AdminReservations adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} /> : null}
         {adminTab === 'prices' ? <AdminPrices tripPrices={tripPrices} adminSetTripPrice={adminSetTripPrice} /> : null}
         {adminTab === 'requests' ? <AdminRequests rentalRequests={adminRentalRequests} towRequests={adminTowRequests} loading={adminRequestsLoading} updateRentalRequest={adminUpdateRentalRequest} updateTowRequest={adminUpdateTowRequest} /> : null}
@@ -108,8 +109,39 @@ function AdminTripList({ route, trips, toggleTrip }) {
   );
 }
 
-function AdminBuses({ adminBusViewMonth, setAdminBusViewMonth, selectedAdminBus, setSelectedAdminBus, cachedAdminBusAvailability, toggleAdminBusDate, adminBusNote, adminBusLoading }) {
-  const range = monthRange(adminBusViewMonth);
+const BLOCK_STATUSES = [
+  ['unavailable', 'Niedostępny'],
+  ['reserved', 'Zarezerwowany'],
+  ['maintenance', 'Serwis'],
+  ['private_use', 'Użytek prywatny']
+];
+
+function blockStart(block) {
+  return String(block?.start_date || '').slice(0, 10);
+}
+
+function blockEnd(block) {
+  return String(block?.end_date || block?.start_date || '').slice(0, 10);
+}
+
+function blockCoversDate(block, dateStr) {
+  return blockStart(block) <= dateStr && dateStr <= blockEnd(block);
+}
+
+function blockStatusLabel(status) {
+  return BLOCK_STATUSES.find(([value]) => value === status)?.[1] || status || 'Niedostępny';
+}
+
+function blockRangeLabel(block) {
+  const start = blockStart(block);
+  const end = blockEnd(block);
+  if (!start) return '-';
+  if (start === end) return formatDate(start);
+  return `${formatDate(start)} - ${formatDate(end)}`;
+}
+
+function AdminRentalBlocks({ adminBlockViewMonth, setAdminBlockViewMonth, selectedAdminBus, setSelectedAdminBus, blocks, adminBlockMsg, loading, addBlock, deactivateBlock }) {
+  const range = monthRange(adminBlockViewMonth);
   const firstDay = new Date(range.year, range.month, 1).getDay();
   const startOffset = (firstDay + 6) % 7;
   const cells = [];
@@ -118,22 +150,42 @@ function AdminBuses({ adminBusViewMonth, setAdminBusViewMonth, selectedAdminBus,
 
   for (let day = 1; day <= range.days; day += 1) {
     const dateStr = `${range.year}-${String(range.month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-    const row = cachedAdminBusAvailability.find((item) => item.bus_id === selectedAdminBus && item.date === dateStr);
-    const isAvailable = row ? row.available !== false : defaultBusAvailable(dateStr);
-    const label = isAvailable ? 'Dostępny' : 'Niedostępny';
-    cells.push(<button key={dateStr} className={`calendar-day ${isAvailable ? 'available' : 'unavailable'}`} onClick={() => toggleAdminBusDate(dateStr)} type="button" title={label} aria-label={`${day} ${MONTHS[range.month]} ${range.year}: ${label}`}><header><span className="day-number">{day}</span></header></button>);
+    const block = (blocks || []).find((item) => blockCoversDate(item, dateStr));
+    const label = block ? `${blockStatusLabel(block.status)}${block.public_note ? ` - ${block.public_note}` : ''}` : 'Brak blokady';
+    cells.push(<div key={dateStr} className={`calendar-day ${block ? 'unavailable' : ''}`} title={label} aria-label={`${day} ${MONTHS[range.month]} ${range.year}: ${label}`}><header><span className="day-number">{day}</span></header></div>);
   }
 
   return (
-    <div className="admin-calendar-section">
-      <div className="admin-month-ctrl"><button className="month-btn" onClick={() => setAdminBusViewMonth(new Date(range.year, range.month - 1, 1))} type="button">‹</button><span>{MONTHS[range.month]} {range.year}</span><button className="month-btn" onClick={() => setAdminBusViewMonth(new Date(range.year, range.month + 1, 1))} type="button">›</button></div>
+    <>
+      <div className="admin-calendar-section">
+      <div className="admin-month-ctrl"><button className="month-btn" onClick={() => setAdminBlockViewMonth(new Date(range.year, range.month - 1, 1))} type="button">‹</button><span>{MONTHS[range.month]} {range.year}</span><button className="month-btn" onClick={() => setAdminBlockViewMonth(new Date(range.year, range.month + 1, 1))} type="button">›</button></div>
       <div className="route-switch"><button className={selectedAdminBus === 'bus9' ? 'active' : ''} onClick={() => setSelectedAdminBus('bus9')} type="button">{BUS_DETAILS.bus9.name}</button><button className={selectedAdminBus === 'bus8' ? 'active' : ''} onClick={() => setSelectedAdminBus('bus8')} type="button">{BUS_DETAILS.bus8.name}</button></div>
-      {adminBusLoading ? <div className="loading-box">Ładuję dostępność busów...</div> : null}
+      {loading ? <div className="loading-box">Ładuję blokady wynajmu...</div> : null}
       <Weekdays />
       <div className="calendar-grid">{cells}</div>
-      <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'blocked', label: 'Niedostępny' }]} />
-      <div className="no-trips mt-sm">{adminBusNote}</div>
-    </div>
+      <CalendarLegend items={[{ type: 'blocked', label: 'Blokada' }, { type: 'empty', label: 'Brak blokady' }]} />
+      <div className="no-trips mt-sm">Dodawaj zakresy niedostępności dla wybranego busa.</div>
+      </div>
+      <Message message={adminBlockMsg} />
+      <form className="admin-block-form" onSubmit={addBlock}>
+        <div className="fg"><label>Początek</label><input type="date" name="start_date" required /></div>
+        <div className="fg"><label>Koniec</label><input type="date" name="end_date" required /></div>
+        <div className="fg"><label>Status</label><select name="status" defaultValue="unavailable">{BLOCK_STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
+        <div className="fg"><label>Notatka publiczna</label><input name="public_note" placeholder="np. zajęty termin" /></div>
+        <button className="btn-primary" type="submit">Dodaj blokadę</button>
+      </form>
+      <div className="admin-list-block">
+        <p className="admin-route-title">Aktywne blokady: {BUS_DETAILS[selectedAdminBus].name}</p>
+        {!blocks.length ? <p className="muted">Brak blokad w tym miesiącu.</p> : null}
+        {blocks.map((block) => (
+          <div className="res-card" key={block.id}>
+            <div className="res-head"><div><strong>{blockStatusLabel(block.status)}</strong><span>{blockRangeLabel(block)}</span></div><span className="badge badge-few">{block.status}</span></div>
+            {block.public_note ? <p className="muted">Notatka: {block.public_note}</p> : null}
+            <div className="res-actions"><button className="cancel-btn" onClick={() => deactivateBlock(block.id)} type="button">Usuń blokadę</button></div>
+          </div>
+        ))}
+      </div>
+    </>
   );
 }
 
