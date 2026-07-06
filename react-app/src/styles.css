@@ -1680,6 +1680,45 @@ form .btn-primary,
   text-decoration: none;
 }
 
+.contact-service-card {
+  position: relative;
+  display: block;
+  min-height: 156px;
+  padding-right: 54px;
+  color: var(--ink);
+  text-decoration: none;
+  transition: transform 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease;
+}
+
+.contact-service-card:hover,
+.contact-service-card:focus-visible {
+  border-color: rgba(238, 43, 71, 0.42);
+  box-shadow: var(--shadow);
+  transform: translateY(-2px);
+}
+
+.contact-service-card:focus-visible {
+  outline: 3px solid rgba(238, 43, 71, 0.2);
+  outline-offset: 3px;
+}
+
+.contact-service-arrow {
+  position: absolute;
+  right: 20px;
+  bottom: 18px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: #FFFFFF;
+  font-size: 24px;
+  font-weight: 850;
+  line-height: 1;
+}
+
 .eyebrow {
   margin-bottom: 12px;
   color: var(--accent);
