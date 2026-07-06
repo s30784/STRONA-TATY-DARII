@@ -1,12 +1,12 @@
 # Dokumentacja Techniczna Do Audytu Produkcyjnego
 
-Stan dokumentacji: aktualizacja po migracji `202606260001_secure_reservations_mvp.sql` oraz po aktualnym stanie repozytorium z migracjami `202606280001_trip_prices_manual_payments.sql` i `202606280002_offer_requests_notifications.sql`. Ten etap dotyczy tylko dokumentacji; kod aplikacji nie byl zmieniany. `npm run build` przechodzil poprawnie przy ostatniej weryfikacji. Poprzedni `npm audit` wykazal 2 podatnosci w zaleznosciach deweloperskich zwiazanych z `vite/esbuild`.
+Stan dokumentacji: aktualizacja po testach produkcyjnych MVP wykonanych 2026-07-05. Zakres MVP obejmuje bezpieczne rezerwacje, ceny, reczna ewidencje platnosci, zapytania rental/tow oraz zapis `notification_events`. Ten etap dotyczy tylko dokumentacji; kod aplikacji nie byl zmieniany. Poprzedni `npm audit` wykazal 2 podatnosci w zaleznosciach deweloperskich zwiazanych z `vite/esbuild`.
 
 Wazne rozroznienie:
-- Secure reservations sa wdrozone w kodzie i migracjach, ale wymagaja testow produkcyjnych.
+- Secure reservations sa wdrozone i potwierdzone testami produkcyjnymi MVP.
 - Stare RPC `create_reservation_atomic` zostalo usuniete przez migracje secure reservations i frontend nie powinien go uzywac.
-- W repo nie znaleziono osobnego RPC `expire_requested_reservations`.
-- W repo nie znaleziono migracji rozszerzajacej `profiles.role` o `owner`, `tech_admin`, `operator` ani pol `is_blocked`, `blocked_reason`, `blocked_at`. Aktualny kod RLS nadal traktuje admina przez `public.is_admin()` sprawdzajace `profiles.role = 'admin'`.
+- `notification_events` sa tworzone po rezerwacji, anulowaniu oraz zapytaniach rental/tow, ale realna wysylka powiadomien jest nadal do zrobienia.
+- Rzeczy zrobione i przetestowane sa rozdzielone od listy TODO w sekcjach 6, 8 i 11.
 
 ## 1. Architektura Projektu
 
@@ -21,11 +21,11 @@ Frontend:
 Backend / Supabase:
 - Klient Supabase: `react-app/src/lib/supabase.js`.
 - Migracje SQL: `supabase/migrations/`.
-- Tabele podstawowe: `profiles`, `trips`, `reservations`, `bus_availability`.
-- Tabele po nowszych migracjach: `reservation_audit_log`, `trip_prices`, `payments`, `rental_requests`, `tow_requests`, `notification_events`.
+- Tabele podstawowe: `profiles`, `trips`, `reservations`.
+- Tabele operacyjne: `reservation_audit_log`, `trip_prices`, `payments`, `rental_requests`, `rental_calendar_blocks`, `tow_requests`, `notification_events`.
 - Widok: `trips_with_seats`.
 - Aktywne RPC rezerwacyjne: `create_reservation_request`, `cancel_own_reservation`, `admin_set_reservation_status`.
-- Aktywne RPC administracyjne i ofertowe: `admin_set_trip_price`, `admin_set_payment_status`, `create_rental_request`, `create_tow_request`, `admin_update_rental_request`, `admin_update_tow_request`.
+- Aktywne RPC administracyjne i ofertowe: `admin_set_trip_price`, `admin_set_payment_status`, `get_rental_calendar_blocks`, `rental_is_range_available`, `create_rental_request`, `create_tow_request`, `admin_update_rental_request`, `admin_update_tow_request`.
 
 Routing:
 - `/` strona glowna.
@@ -42,7 +42,7 @@ Panel administratora:
 - Chroniony w UI przez `react-app/src/components/ProtectedAdminRoute.jsx`.
 - Dostep zalezy od profilu uzytkownika i roli admina.
 - Aktualna funkcja `public.is_admin()` sprawdza `profiles.role = 'admin'`.
-- Panel ma zakladki: terminy kursow, dostepnosc busow, rezerwacje, ceny, zapytania.
+- Panel ma zakladki: terminy kursow, blokady wynajmu, rezerwacje, ceny, zapytania.
 - Operacje admina sa dodatkowo chronione przez RLS i RPC typu `security definer`.
 
 Integracje zewnetrzne:
@@ -121,14 +121,14 @@ Wazne: w Vite kazda zmienna `VITE_*` trafia do bundla frontendowego, wiec jest p
 ## 4. Supabase
 
 Tabele:
-- `profiles`: `id`, `role`, `phone`, `created_at`, `updated_at`; relacja 1:1 do `auth.users`. W aktualnych migracjach check pozwala na role `user` i `admin`.
+- `profiles`: `id`, `full_name`, `email`, `phone`, `role`, pola blokady konta, timestamps; relacja 1:1 do `auth.users`. Produkcyjne role: `user`, `admin`, `owner`, `tech_admin`, `operator`.
 - `trips`: `id`, `route`, `date`, `cancelled`, `max_seats`, timestamps; unikalne `(route, date)`.
 - `reservations`: `id`, `trip_id`, `user_id`, dane pasazera, `seats`, `notes`, `status`, timestamps oraz pola procesu: `expires_at`, `cancelled_at`, `cancelled_by`, `cancelled_less_than_24h_before_trip`, `terms_accepted_at`, `terms_version`, `price_per_seat_snapshot`, `total_price_snapshot`, `currency`.
 - `reservation_audit_log`: zapis zmian statusow rezerwacji wykonywanych przez admina przez RPC; pola `actor_id`, `action_type`, `reservation_id`, `previous_status`, `new_status`, `created_at`.
-- `bus_availability`: `bus_id`, `date`, `available`, timestamps; PK `(bus_id, date)`.
 - `trip_prices`: cena miejsca per trasa (`JW`, `WJ`), waluta, admin aktualizujacy, timestamps.
 - `payments`: reczna ewidencja platnosci powiazana z rezerwacja, kwota, waluta, metoda, status, admin potwierdzajacy, notatka.
 - `rental_requests`: zapytania o wynajem busa zapisywane w bazie.
+- `rental_calendar_blocks`: zakresy niedostepnosci busow dla wynajmu; `bus_id`, `start_date`, `end_date`, `status`, `public_note`, `admin_note`, `source_request_id`, `active`, timestamps.
 - `tow_requests`: zapytania o transport laweta zapisywane w bazie.
 - `notification_events`: kolejka zdarzen powiadomien, np. nowe zgloszenie rezerwacji, rental/tow request albo anulowanie. Repo nie zawiera jeszcze mechanizmu wysylki tych powiadomien.
 
@@ -137,7 +137,8 @@ Relacje:
 - `trips -> reservations`: 1:N.
 - `auth.users -> reservations`: 1:N.
 - `reservations -> payments`: 1:N.
-- `bus_availability` nie ma relacji do osobnej tabeli pojazdow; `bus_id` jest ograniczone checkiem do `bus9`/`bus8`.
+- `rental_requests -> rental_calendar_blocks`: opcjonalne powiazanie przez `source_request_id`.
+- `rental_calendar_blocks` nie ma relacji do osobnej tabeli pojazdow; `bus_id` odpowiada identyfikatorom z `react-app/src/data/vehicles.js`.
 
 Statusy rezerwacji:
 - `requested`: nowe zgloszenie od klienta, nie blokuje miejsca.
@@ -154,7 +155,7 @@ RLS:
 - `trips`: publiczny odczyt dla `anon` i `authenticated`; insert/update tylko admin.
 - `reservations`: brak bezposredniego dostepu dla `anon`; `authenticated` ma SELECT dla wlasnych rezerwacji, admin SELECT wszystkich. Stare polityki direct insert/update zostaly usuniete przez `202606260001_secure_reservations_mvp.sql`.
 - `reservation_audit_log`: SELECT tylko dla admina.
-- `bus_availability`: publiczny odczyt; insert/update tylko admin.
+- `rental_calendar_blocks`: publiczny odczyt przez RPC `get_rental_calendar_blocks`; administracyjne zarzadzanie blokadami w panelu.
 - `trip_prices`: publiczny SELECT; zapis przez RPC `admin_set_trip_price`.
 - `payments`: SELECT/INSERT/UPDATE tylko dla admina.
 - `rental_requests` i `tow_requests`: admin SELECT/UPDATE; tworzenie zapytan odbywa sie przez publiczne RPC `create_rental_request` i `create_tow_request`.
@@ -170,6 +171,8 @@ RPC rezerwacji:
 RPC cen, platnosci i zapytan:
 - `admin_set_trip_price(...)`: admin ustawia cene miejsca i walute dla trasy.
 - `admin_set_payment_status(...)`: admin ustawia status, metode, kwote i notatke platnosci dla rezerwacji.
+- `get_rental_calendar_blocks(...)`: publicznie zwraca aktywne blokady kalendarza wynajmu dla busa i zakresu dat.
+- `rental_is_range_available(...)`: sprawdza dostepnosc zakresu wynajmu przed wyslaniem zapytania.
 - `create_rental_request(...)`: zapisuje zapytanie o wynajem busa; dostepne dla `anon` i `authenticated`.
 - `create_tow_request(...)`: zapisuje zapytanie o lawete; dostepne dla `anon` i `authenticated`.
 - `admin_update_rental_request(...)`, `admin_update_tow_request(...)`: admin aktualizuje statusy i notatki zapytan.
@@ -190,7 +193,7 @@ Storage/buckety:
 
 Publiczne:
 - Strona glowna z uslugami i CTA.
-- Wynajem busow: wybor pojazdu, kalendarz dostepnosci, zapis zapytania do `rental_requests`.
+- Wynajem busow: wybor pojazdu, wybor zakresu dat, blokady z `rental_calendar_blocks`, zapis zapytania do `rental_requests`.
 - Rezerwacja przejazdu Jaroslaw-Wieden / Wieden-Jaroslaw: anonim moze ogladac trasy, ceny i terminy, ale nie moze wyslac zgloszenia.
 - Transport laweta: formularz wyceny zapisuje zapytanie do `tow_requests`.
 - Rejestracja, logowanie, reset hasla, weryfikacja emaila.
@@ -208,7 +211,7 @@ Rezerwacje przejazdow:
 Admin:
 - Generowanie kursow miesiecznych: niedziele `JW`, piatki `WJ`.
 - Dodawanie/odwolywanie/przywracanie kursow.
-- Zarzadzanie dostepnoscia busow w kalendarzu.
+- Zarzadzanie blokadami wynajmu busow w kalendarzu.
 - Podglad rezerwacji z podzialem na nowe zgloszenia i pozostale rezerwacje.
 - Zmiana statusow rezerwacji przez `admin_set_reservation_status`.
 - Ustawianie cen tras przez `admin_set_trip_price`.
@@ -222,7 +225,48 @@ Formularze:
 - Rental/tow zapisuja leady do Supabase przez RPC.
 - Contact nie ma osobnego formularza wysylkowego.
 
-## 6. Scenariusze Uzytkownikow
+## 6. Wyniki Testow Produkcyjnych MVP
+
+Rezerwacje - przetestowane i dzialaja:
+- Anonim widzi kursy, ale nie moze rezerwowac.
+- Uzytkownik bez potwierdzonego maila nie moze rezerwowac.
+- Uzytkownik z potwierdzonym mailem tworzy rezerwacje ze statusem `requested`.
+- `requested` nie blokuje miejsca.
+- Admin zmienia `requested` na `accepted`.
+- `accepted` blokuje miejsce.
+- Admin zmienia statusy `payment_pending`, `confirmed`, `rejected`, `cancelled_admin`.
+- Uzytkownik anuluje wlasna rezerwacje.
+- `reservation_audit_log` zapisuje akcje admina.
+
+Ceny - przetestowane i dzialaja:
+- Admin zmienia cene `JW`.
+- Admin zmienia cene `WJ`.
+- Uzytkownik widzi cene w `/booking`.
+- Nowa rezerwacja zapisuje `price_per_seat_snapshot`.
+- Zmiana ceny nie zmienia starych rezerwacji.
+
+Platnosci reczne - przetestowane i dzialaja:
+- Admin oznacza platnosc jako `unpaid`, `pending`, `paid`, `refunded`, `cancelled`.
+- Tabela `payments` aktualizuje sie poprawnie.
+- Uzytkownik nie widzi technicznego statusu platnosci.
+
+Wynajem busa - przetestowane i dziala:
+- Formularz zapisuje `rental_request`.
+- Admin widzi zapytanie.
+- Admin zmienia status zapytania.
+
+Laweta - przetestowane i dziala:
+- Formularz zapisuje `tow_request`.
+- Admin widzi zapytanie.
+- Admin zmienia status i `estimated_price`.
+
+Notification events - przetestowane i dzialaja jako zapis zdarzen:
+- Po rezerwacji powstaje event.
+- Po anulowaniu powstaje event.
+- Po rental/tow request powstaje event.
+- Realna wysylka powiadomien na podstawie `notification_events` pozostaje w TODO.
+
+## 7. Scenariusze Uzytkownikow
 
 Anonimowy odwiedzajacy:
 1. Wchodzi na strone glowna.
@@ -251,41 +295,40 @@ Administrator:
 1. Loguje sie przez `/auth`.
 2. `useAuth` pobiera `profiles.role`.
 3. `/admin` renderuje sie dla profilu admina.
-4. Admin generuje kursy, odwoluje je, zarzadza dostepnoscia busow.
+4. Admin generuje kursy, odwoluje je i zarzadza blokadami wynajmu busow.
 5. Admin widzi `requested` jako nowe zgloszenia.
 6. Admin ustawia status przez RPC: `accepted`, `payment_pending`, `confirmed`, `rejected`, `cancelled_admin`.
 7. Zmiany statusu rezerwacji zapisuja sie w `reservation_audit_log`.
 8. Admin ustawia ceny tras, recznie oznacza platnosci i obsluguje zapytania rental/tow.
 
-## 7. Ryzyka Przed Produkcja
+## 8. Ryzyka I TODO Po MVP
 
-Rozwiazane przez secure reservations:
+Zamkniete i potwierdzone testami produkcyjnymi MVP:
 - Stary model bezposredniego insert/update do `reservations` przez zwyklego uzytkownika zostal zamkniety w RLS.
 - Anonimowe tworzenie rezerwacji przejazdu przez stare RPC zostalo odciete.
 - `requested` nie blokuje juz miejsca w `trips_with_seats`.
 - Rezerwacja przejazdu wymaga zalogowanego uzytkownika i potwierdzonego emaila.
 - Tworzenie i anulowanie rezerwacji odbywa sie przez kontrolowane RPC.
+- Adminowe zmiany statusow rezerwacji dzialaja i zapisuja audit log.
+- Ceny tras i snapshoty cen w rezerwacjach dzialaja.
+- Reczna ewidencja platnosci dziala.
+- Zapytania rental/tow zapisuja sie i sa obslugiwane w panelu admina.
+- `notification_events` powstaja po rezerwacji, anulowaniu oraz rental/tow request.
 
-Krytyczne / wysokie nadal otwarte:
-- Brak CAPTCHA / Turnstile na publicznych formularzach i RPC zapytan rental/tow.
-- Brak rate limitingu po stronie Supabase/Edge/API dla formularzy i RPC.
-- Brak mechanizmu wysylki powiadomien admina; `notification_events` jest kolejka zdarzen, ale bez sendera.
-- Brak backupow/retencji opisanych w repo.
-- Brak pelnych testow produkcyjnych secure reservations, cen, platnosci i zapytan.
-- `expire_requested_reservations` nie istnieje w repo; automatyczne wygaszanie `requested` wymaga doprecyzowania.
+TODO po MVP:
+- Poprawki wizualne/UX.
+- Cloudflare Turnstile / antyspam.
+- Rate limiting.
+- Realna wysylka `notification_events`.
+- Regulamin i polityka prywatnosci.
+- SEO: `title`, `meta`, `sitemap`, `robots`, Open Graph, structured data.
+- Domena produkcyjna.
+- Backupy Supabase.
+- Monitoring bledow.
+- Aktualizacja zaleznosci / `npm audit`.
+- Uporzadkowanie testowych danych.
 
-Srednie:
-- Role `owner`, `tech_admin`, `operator` i blokada uzytkownika nie sa obecne w migracjach repo, mimo ze moga byc wymagane operacyjnie.
-- Twardo wpisany telefon `+48 123 456 789` w nawigacji wymaga zastapienia realnym numerem.
-- SEO/OG/sitemap/robots wskazuja domene `strona-taty-darii.onrender.com`; po custom domain trzeba zmienic.
-- Jedno globalne `title`/`description` dla SPA.
-- Brak structured data dla lokalnej firmy.
-- Zewnetrzne hotlinkowane zdjecia pojazdow moga zniknac, ladowac sie wolno albo miec ryzyka licencyjne.
-- Brak centralnego logowania bledow.
-- Zaleznosci wymagaja aktualizacji po `npm audit`.
-- Brak regulaminu i polityki prywatnosci jako formalnie przygotowanych dokumentow produkcyjnych.
-
-## 8. Uruchomienie Lokalne
+## 9. Uruchomienie Lokalne
 
 Wymagania:
 - Node.js `>=18`.
@@ -338,7 +381,7 @@ Kolejnosc istotnych migracji:
 - `202606280001_trip_prices_manual_payments.sql`
 - `202606280002_offer_requests_notifications.sql`
 
-## 9. Deploy Na Render
+## 10. Deploy Na Render
 
 Konfiguracja z repo:
 - Root Directory: `react-app`
@@ -368,9 +411,9 @@ Zrodla dla Render:
 - https://render.com/docs/static-sites
 - https://render.com/docs/custom-domains
 
-## 10. Production Readiness Checklist
+## 11. Production Readiness Checklist
 
-Gotowe w kodzie/repo:
+Gotowe i potwierdzone testami produkcyjnymi MVP:
 - React/Vite build dziala przy ostatniej weryfikacji.
 - Render static config istnieje.
 - SPA rewrite istnieje.
@@ -382,12 +425,6 @@ Gotowe w kodzie/repo:
 - `requested` nie blokuje miejsca.
 - `reservation_audit_log` istnieje.
 - Panel admina pokazuje nowe zgloszenia i pozwala zmieniac statusy przez RPC.
-- Ceny przejazdow i snapshot ceny rezerwacji sa dodane w repo.
-- Reczna ewidencja platnosci jest dodana w repo.
-- Zapytania rental/tow sa zapisywane do bazy w aktualnym repo.
-- `notification_events` zapisuje zdarzenia, ale nie wysyla jeszcze powiadomien.
-
-Do potwierdzenia testami produkcyjnymi:
 - Produkcja nie uzywa juz `create_reservation_atomic`.
 - Anonim nie moze rezerwowac przejazdu.
 - Uzytkownik bez potwierdzonego emaila nie moze rezerwowac przejazdu.
@@ -397,46 +434,52 @@ Do potwierdzenia testami produkcyjnymi:
 - Zmiana statusu blokujacego respektuje dostepne miejsca.
 - Anulowanie dziala przez `cancel_own_reservation`.
 - `reservation_audit_log` zapisuje akcje admina.
-- Ceny sa widoczne w booking i zapisywane przez admina.
-- Platnosci zapisuje admin przez RPC.
+- Ceny sa widoczne w `/booking` i zapisywane przez admina.
+- Nowe rezerwacje zapisuja `price_per_seat_snapshot`.
+- Zmiana ceny nie zmienia starych rezerwacji.
+- Platnosci zapisuje admin przez RPC i tabela `payments` aktualizuje sie poprawnie.
+- Uzytkownik nie widzi technicznego statusu platnosci.
 - Rental/tow requests zapisuja sie w bazie i sa widoczne w panelu admina.
+- Admin zmienia status rental/tow request oraz `estimated_price` dla lawety.
+- `notification_events` powstaja po rezerwacji, anulowaniu oraz rental/tow request.
+
+Do potwierdzenia / utrzymania operacyjnego:
 - Supabase Auth redirect URLs sa poprawne.
 - Pierwszy admin istnieje w `profiles`.
 - Migracje sa faktycznie wdrozone na produkcyjnej bazie.
 
 Nadal do zrobienia:
-- CAPTCHA / Turnstile.
+- Poprawki wizualne/UX.
+- Cloudflare Turnstile / antyspam.
 - Rate limiting.
-- Mechanizm wysylki powiadomien admina na podstawie `notification_events`.
-- Custom domain.
-- SEO: sitemap, robots, OG, structured data, tytuly/opisy.
-- Realny numer telefonu i finalny email.
+- Realna wysylka `notification_events`.
+- Domena produkcyjna.
+- SEO: `title`, `meta`, `sitemap`, `robots`, Open Graph, structured data.
 - Regulamin i polityka prywatnosci.
 - Backupy Supabase.
+- Monitoring bledow.
 - Aktualizacja zaleznosci po `npm audit`.
-- Docelowe zdjecia/storage zamiast hotlinkowanych URL-i.
-- Decyzja/migracja dla rol `owner`, `tech_admin`, `operator` i blokady uzytkownika, jesli to nadal wymaganie.
-- Osobne cykliczne wygaszanie `requested`, jesli ma dzialac niezaleznie od kolejnego zgloszenia uzytkownika.
+- Uporzadkowanie testowych danych.
 
-## 11. Dane Potrzebne Dla ChatGPT Do Przygotowania Listy Testow Systemu
+## 12. Dane Potrzebne Dla ChatGPT Do Przygotowania Listy Testow Systemu
 
 Projekt: React 18 + Vite 5 + Supabase + Render Static Site.
 
 Trasy: `/`, `/rental`, `/booking`, `/tow`, `/contact`, `/auth`, `/my-reservations`, `/admin`, `/verify-email`, `/reset-password`.
 
 Supabase:
-- Tabele: `profiles`, `trips`, `reservations`, `reservation_audit_log`, `bus_availability`, `trip_prices`, `payments`, `rental_requests`, `tow_requests`, `notification_events`.
+- Tabele: `profiles`, `trips`, `reservations`, `reservation_audit_log`, `trip_prices`, `payments`, `rental_requests`, `rental_calendar_blocks`, `tow_requests`, `notification_events`.
 - Widok: `trips_with_seats`.
 - Funkcja miejsc: `reservation_blocks_seat`.
 - RPC rezerwacji: `create_reservation_request`, `cancel_own_reservation`, `admin_set_reservation_status`.
 - RPC cen/platnosci: `admin_set_trip_price`, `admin_set_payment_status`.
-- RPC zapytan: `create_rental_request`, `create_tow_request`, `admin_update_rental_request`, `admin_update_tow_request`.
+- RPC zapytan i wynajmu: `get_rental_calendar_blocks`, `rental_is_range_available`, `create_rental_request`, `create_tow_request`, `admin_update_rental_request`, `admin_update_tow_request`.
 - Stare RPC `create_reservation_atomic` nie powinno istniec po migracji secure reservations ani byc uzywane przez frontend.
 
 Auth:
 - Email/password, rejestracja, potwierdzenie emaila, reset hasla.
-- Aktualne role w repo: `user`, `admin`.
-- Admin w UI i RPC zalezy od `public.is_admin()`.
+- Role produkcyjne: `user`, `admin`, `owner`, `tech_admin`, `operator`.
+- Dostep do panelu admina w UI obejmuje role administracyjne; operacje bazowe nadal musza byc zgodne z RLS/RPC Supabase.
 - Rezerwacja przejazdu wymaga `authenticated` i potwierdzonego emaila.
 
 Statusy rezerwacji:
@@ -446,7 +489,8 @@ Statusy rezerwacji:
 
 RLS aktualny:
 - `reservations`: brak direct insert/update/delete dla zwyklych uzytkownikow; `authenticated` SELECT swoich, admin SELECT wszystkich; zmiany przez RPC.
-- `trips`, `bus_availability`: publiczny odczyt, zapis admin.
+- `trips`: publiczny odczyt, zapis admin.
+- `rental_calendar_blocks`: publiczny odczyt przez RPC, zarzadzanie admin.
 - `trip_prices`: publiczny odczyt, zapis przez admin RPC.
 - `payments`, `reservation_audit_log`, `notification_events`: admin.
 - `rental_requests`, `tow_requests`: tworzenie przez RPC dla anon/auth, podglad/aktualizacja admin.
@@ -457,13 +501,14 @@ Publiczne funkcje do testow:
 - Zalogowany bez potwierdzonego emaila nie moze zarezerwowac przejazdu.
 - Zalogowany z potwierdzonym emailem moze wyslac `requested`.
 - Rental/tow zapisuja request do bazy.
+- Rental uzywa blokad `rental_calendar_blocks` i walidacji zakresu dat.
 - Moje rezerwacje pokazuja rezerwacje zalogowanego uzytkownika.
 - Anulowanie wlasnej rezerwacji dziala przez RPC.
 
 Admin do testow:
 - Generowanie kursow miesiecznych.
 - Dodawanie/odwolywanie/przywracanie kursow.
-- Dostepnosc busow.
+- Blokady wynajmu busow.
 - Lista rezerwacji z `requested`.
 - Zmiana statusow rezerwacji.
 - Audit log statusow.
@@ -471,22 +516,24 @@ Admin do testow:
 - Reczne platnosci.
 - Zapytania rental/tow.
 
-Ryzyka nadal otwarte do uwzglednienia w testach:
-- Brak CAPTCHA / Turnstile.
+Ryzyka i TODO nadal otwarte:
+- Poprawki wizualne/UX.
+- Brak Cloudflare Turnstile / antyspam.
 - Brak rate limitingu.
 - Brak faktycznej wysylki powiadomien admina.
 - Brak backupow opisanych w repo.
 - Redirecty Auth i custom domain/SSL.
 - SEO/sitemap/robots/OG.
-- Brak storage/uploadu zdjec.
+- Brak monitoringu bledow.
 - Podatnosci `vite/esbuild` z `npm audit`.
-- Brak rol `owner`, `tech_admin`, `operator` i blokady uzytkownika w repo, jezeli nadal sa wymagane.
-- Brak osobnego `expire_requested_reservations`.
+- Regulamin i polityka prywatnosci do finalizacji.
+- Uporzadkowanie testowych danych.
 
-## 12. Aktualny Status Etapow
+## 13. Aktualny Status Etapow
 
-- Etap 1/2: secure reservations - wdrozony w kodzie i migracjach, wymaga testow produkcyjnych.
-- Etap 3: ceny i reczne platnosci - wdrozone w repo przez `202606280001_trip_prices_manual_payments.sql` i UI admina, wymaga migracji/testow produkcyjnych.
-- Etap 4: rental/tow requests - wdrozone w repo przez `202606280002_offer_requests_notifications.sql` i UI admina, wymaga migracji/testow produkcyjnych.
-- Etap 5: powiadomienia admina - `notification_events` jest wdrozone jako kolejka zdarzen, ale realna wysylka powiadomien jest do zrobienia.
-- Etap 6: testy produkcyjne pelne - do zrobienia.
+- Etap 1/2: secure reservations - wdrozone i potwierdzone testami produkcyjnymi MVP.
+- Etap 3: ceny i reczne platnosci - wdrozone i potwierdzone testami produkcyjnymi MVP.
+- Etap 4: rental/tow requests - wdrozone i potwierdzone testami produkcyjnymi MVP.
+- Etap 5: notification events - zapis zdarzen wdrozony i potwierdzony testami; realna wysylka powiadomien do zrobienia.
+- Etap 6: testy produkcyjne MVP - wykonane dla zakresu opisanego w sekcji 6.
+- Etap 7: prace post-MVP - lista TODO w sekcji 8.

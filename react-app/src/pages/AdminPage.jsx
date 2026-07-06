@@ -1,3 +1,4 @@
+import React from 'react';
 import { Message } from '../components/Message.jsx';
 import { CalendarLegend } from '../components/CalendarLegend.jsx';
 import { Weekdays } from '../components/Weekdays.jsx';
@@ -22,13 +23,16 @@ export function AdminPage(props) {
     adminTripsLoading,
     adminReservations,
     adminReservationsLoading,
+    adminReservationsMsg,
     adminSetReservationStatus,
     adminSetPaymentStatus,
     tripPrices,
+    adminPricesMsg,
     adminSetTripPrice,
     adminRentalRequests,
     adminTowRequests,
     adminRequestsLoading,
+    adminRequestsMsg,
     adminUpdateRentalRequest,
     adminUpdateTowRequest,
     adminBlockViewMonth,
@@ -38,6 +42,8 @@ export function AdminPage(props) {
     adminRentalBlocks,
     adminBlockMsg,
     adminBlocksLoading,
+    adminBlockSubmitting,
+    adminBlockActionId,
     addAdminRentalBlock,
     deactivateAdminRentalBlock
   } = props;
@@ -54,10 +60,10 @@ export function AdminPage(props) {
           <button className={`atab ${adminTab === 'requests' ? 'active' : ''}`} onClick={() => setAdminTab('requests')} type="button">Zapytania</button>
         </div>
         {adminTab === 'trips' ? <AdminTrips adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} /> : null}
-        {adminTab === 'buses' ? <AdminRentalBlocks adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} blocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} loading={adminBlocksLoading} addBlock={addAdminRentalBlock} deactivateBlock={deactivateAdminRentalBlock} /> : null}
-        {adminTab === 'res' ? <AdminReservations adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} /> : null}
-        {adminTab === 'prices' ? <AdminPrices tripPrices={tripPrices} adminSetTripPrice={adminSetTripPrice} /> : null}
-        {adminTab === 'requests' ? <AdminRequests rentalRequests={adminRentalRequests} towRequests={adminTowRequests} loading={adminRequestsLoading} updateRentalRequest={adminUpdateRentalRequest} updateTowRequest={adminUpdateTowRequest} /> : null}
+        {adminTab === 'buses' ? <AdminRentalBlocks adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} blocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} loading={adminBlocksLoading} adminBlockSubmitting={adminBlockSubmitting} adminBlockActionId={adminBlockActionId} addBlock={addAdminRentalBlock} deactivateBlock={deactivateAdminRentalBlock} /> : null}
+        {adminTab === 'res' ? <AdminReservations adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} /> : null}
+        {adminTab === 'prices' ? <AdminPrices tripPrices={tripPrices} adminPricesMsg={adminPricesMsg} adminSetTripPrice={adminSetTripPrice} /> : null}
+        {adminTab === 'requests' ? <AdminRequests rentalRequests={adminRentalRequests} towRequests={adminTowRequests} loading={adminRequestsLoading} adminRequestsMsg={adminRequestsMsg} updateRentalRequest={adminUpdateRentalRequest} updateTowRequest={adminUpdateTowRequest} /> : null}
       </section>
     </div>
   );
@@ -140,7 +146,7 @@ function blockRangeLabel(block) {
   return `${formatDate(start)} - ${formatDate(end)}`;
 }
 
-function AdminRentalBlocks({ adminBlockViewMonth, setAdminBlockViewMonth, selectedAdminBus, setSelectedAdminBus, blocks, adminBlockMsg, loading, addBlock, deactivateBlock }) {
+function AdminRentalBlocks({ adminBlockViewMonth, setAdminBlockViewMonth, selectedAdminBus, setSelectedAdminBus, blocks, adminBlockMsg, loading, adminBlockSubmitting, adminBlockActionId, addBlock, deactivateBlock }) {
   const range = monthRange(adminBlockViewMonth);
   const firstDay = new Date(range.year, range.month, 1).getDay();
   const startOffset = (firstDay + 6) % 7;
@@ -172,7 +178,7 @@ function AdminRentalBlocks({ adminBlockViewMonth, setAdminBlockViewMonth, select
         <div className="fg"><label>Koniec</label><input type="date" name="end_date" required /></div>
         <div className="fg"><label>Status</label><select name="status" defaultValue="unavailable">{BLOCK_STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></div>
         <div className="fg"><label>Notatka publiczna</label><input name="public_note" placeholder="np. zajęty termin" /></div>
-        <button className="btn-primary" type="submit">Dodaj blokadę</button>
+        <button className="btn-primary" type="submit" disabled={adminBlockSubmitting}>{adminBlockSubmitting ? 'Zapisuję...' : 'Dodaj blokadę'}</button>
       </form>
       <div className="admin-list-block">
         <p className="admin-route-title">Aktywne blokady: {BUS_DETAILS[selectedAdminBus].name}</p>
@@ -181,7 +187,7 @@ function AdminRentalBlocks({ adminBlockViewMonth, setAdminBlockViewMonth, select
           <div className="res-card" key={block.id}>
             <div className="res-head"><div><strong>{blockStatusLabel(block.status)}</strong><span>{blockRangeLabel(block)}</span></div><span className="badge badge-few">{block.status}</span></div>
             {block.public_note ? <p className="muted">Notatka: {block.public_note}</p> : null}
-            <div className="res-actions"><button className="cancel-btn" onClick={() => deactivateBlock(block.id)} type="button">Usuń blokadę</button></div>
+            <div className="res-actions"><button className="cancel-btn" onClick={() => deactivateBlock(block.id)} type="button" disabled={Boolean(adminBlockActionId)}>{adminBlockActionId === block.id ? 'Usuwam...' : 'Usuń blokadę'}</button></div>
           </div>
         ))}
       </div>
@@ -206,6 +212,14 @@ const REQUEST_STATUSES = [
   ['closed', 'Zamknięte']
 ];
 
+const PAYMENT_STATUSES = [
+  ['unpaid', 'Nieopłacone', 'status-btn'],
+  ['pending', 'Oczekuje', 'status-btn'],
+  ['paid', 'Opłacono', 'restore-btn'],
+  ['refunded', 'Zwrot', 'status-btn'],
+  ['cancelled', 'Anulowana płatność', 'cancel-btn']
+];
+
 function formatMoney(amount, currency = 'PLN') {
   const value = Number(amount);
   if (!Number.isFinite(value) || value <= 0) return 'Do ustalenia';
@@ -221,6 +235,13 @@ function asArray(value) {
 function dateMs(value) {
   const parsed = Date.parse(value || '');
   return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function formatDateTime(value) {
+  if (!value) return '-';
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) return '-';
+  return parsed.toLocaleString('pl-PL', { dateStyle: 'short', timeStyle: 'short' });
 }
 
 function currentRoutePrice(prices, route) {
@@ -253,77 +274,136 @@ function adminStatusBadgeClass(status) {
   return 'badge-cancel';
 }
 
-function AdminReservations({ adminReservations, adminReservationsLoading, adminSetReservationStatus, adminSetPaymentStatus }) {
+function paymentStatusLabel(status) {
+  if (status === 'paid') return 'Opłacono';
+  if (status === 'pending') return 'Oczekuje';
+  if (status === 'refunded') return 'Zwrot';
+  if (status === 'cancelled') return 'Anulowana płatność';
+  return 'Nieopłacone';
+}
+
+function paymentBadgeClass(status) {
+  if (status === 'paid') return 'badge-ok';
+  if (status === 'pending') return 'badge-few';
+  if (status === 'refunded' || status === 'cancelled') return 'badge-cancel';
+  return 'badge-none';
+}
+
+function paymentMethodLabel(method) {
+  if (method === 'cash') return 'Gotówka';
+  if (method === 'blik') return 'BLIK';
+  if (method === 'bank_transfer') return 'Przelew';
+  if (method === 'other') return 'Inne';
+  return method || '-';
+}
+
+function AdminReservations({ adminReservations, adminReservationsLoading, adminReservationsMsg, adminSetReservationStatus, adminSetPaymentStatus }) {
   if (adminReservationsLoading) return <div className="loading-box">Ładuję rezerwacje...</div>;
-  if (!adminReservations.length) return <div className="no-trips">Brak rezerwacji.</div>;
+  if (!adminReservations.length) return <><Message message={!adminReservationsMsg?.resId ? adminReservationsMsg : null} /><div className="no-trips">Brak rezerwacji.</div></>;
   const requested = adminReservations.filter((res) => res.status === 'requested');
   const other = adminReservations.filter((res) => res.status !== 'requested');
   return (
     <>
-      <AdminReservationGroup title={`Nowe zgłoszenia (${requested.length})`} reservations={requested} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />
-      <AdminReservationGroup title="Pozostałe rezerwacje" reservations={other} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />
+      <Message message={!adminReservationsMsg?.resId ? adminReservationsMsg : null} />
+      <AdminReservationGroup title={`Nowe zgłoszenia (${requested.length})`} reservations={requested} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />
+      <AdminReservationGroup title="Pozostałe rezerwacje" reservations={other} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />
     </>
   );
 }
 
-function AdminReservationGroup({ title, reservations, adminSetReservationStatus, adminSetPaymentStatus }) {
+function AdminReservationGroup({ title, reservations, adminReservationsMsg, adminSetReservationStatus, adminSetPaymentStatus }) {
   return (
     <div className="admin-list-block">
       <p className="admin-route-title">{title}</p>
       {!reservations.length ? <p className="muted">Brak pozycji.</p> : null}
-      {reservations.map((res) => <AdminReservationCard key={res.id} res={res} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />)}
+      {reservations.map((res) => <AdminReservationCard key={res.id} res={res} message={adminReservationsMsg?.resId === res.id ? adminReservationsMsg : null} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />)}
     </div>
   );
 }
 
-function AdminReservationCard({ res, adminSetReservationStatus, adminSetPaymentStatus }) {
+function AdminReservationCard({ res, message, adminSetReservationStatus, adminSetPaymentStatus }) {
+  const [reservationSavingStatus, setReservationSavingStatus] = React.useState(null);
+  const [paymentSavingStatus, setPaymentSavingStatus] = React.useState(null);
   const payment = asArray(res.payments).slice().sort((a, b) => dateMs(b.created_at) - dateMs(a.created_at))[0];
   const paymentCurrency = payment?.currency || res.currency || 'PLN';
-  function onPaymentSubmit(event) {
+  const paymentStatus = payment?.status || 'unpaid';
+  const paymentAmount = payment?.amount ?? res.total_price_snapshot ?? 0;
+
+  async function onReservationStatusClick(status) {
+    setReservationSavingStatus(status);
+    try {
+      await adminSetReservationStatus(res.id, status);
+    } finally {
+      setReservationSavingStatus(null);
+    }
+  }
+
+  async function onPaymentSubmit(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const submitter = event.nativeEvent.submitter;
-    adminSetPaymentStatus(
-      res.id,
-      submitter?.value || 'paid',
-      String(form.get('method') || 'cash'),
-      Number(form.get('amount') || 0),
-      paymentCurrency,
-      String(form.get('note') || '')
-    );
+    const nextStatus = submitter?.value || 'paid';
+    setPaymentSavingStatus(nextStatus);
+    try {
+      await adminSetPaymentStatus(
+        res.id,
+        nextStatus,
+        String(form.get('method') || 'cash'),
+        Number(form.get('amount') || 0),
+        paymentCurrency,
+        String(form.get('note') || '')
+      );
+    } finally {
+      setPaymentSavingStatus(null);
+    }
   }
 
   return (
     <div className="res-card">
-      <div className="res-head"><div><strong>{res.passenger_name}</strong><span>{res.passenger_email}{res.passenger_phone ? ` · ${res.passenger_phone}` : ''}</span></div><span className={`badge ${adminStatusBadgeClass(res.status)}`}>{adminStatusLabel(res.status)} · {res.seats} miejsce(a)</span></div>
+      <div className="res-head"><div><strong>{res.passenger_name}</strong><span className="break-text">{res.passenger_email}{res.passenger_phone ? ` · ${res.passenger_phone}` : ''}</span></div><span className={`badge ${adminStatusBadgeClass(res.status)}`}>{adminStatusLabel(res.status)} · {res.seats} miejsce(a)</span></div>
       <p className="muted">{res.trips?.route === 'JW' ? 'Jarosław -> Wiedeń' : 'Wiedeń -> Jarosław'} · {res.trips?.date ? formatDate(res.trips.date) : '-'}</p>
-      <p className="muted">Cena snapshot: {formatMoney(res.total_price_snapshot, res.currency)} · Płatność: {payment?.status || 'unpaid'}</p>
-      {res.notes ? <p className="muted">Uwagi: {res.notes}</p> : null}
-      <div className="res-actions">{ADMIN_RESERVATION_ACTIONS.map(([status, label, className]) => <button key={status} className={className} onClick={() => adminSetReservationStatus(res.id, status)} type="button" disabled={res.status === status}>{label}</button>)}</div>
-      <form className="admin-inline-form" onSubmit={onPaymentSubmit}>
-        <input name="amount" type="number" min="0" step="0.01" defaultValue={Number(payment?.amount ?? res.total_price_snapshot ?? 0).toFixed(2)} aria-label="Kwota płatności" />
+      <div className="payment-summary">
+        <div><span>Status rezerwacji</span><strong>{adminStatusLabel(res.status)}</strong></div>
+        <div><span>Status płatności</span><strong><span className={`badge ${paymentBadgeClass(paymentStatus)}`}>{paymentStatusLabel(paymentStatus)}</span></strong></div>
+        <div><span>Kwota</span><strong>{formatMoney(paymentAmount, paymentCurrency)}</strong></div>
+        <div><span>Waluta</span><strong>{paymentCurrency}</strong></div>
+        <div><span>Metoda</span><strong>{paymentMethodLabel(payment?.method)}</strong></div>
+        <div><span>paid_at</span><strong>{formatDateTime(payment?.paid_at)}</strong></div>
+      </div>
+      {res.notes ? <p className="muted notes-block">Uwagi: {res.notes}</p> : null}
+      <Message message={message} />
+      <div className="res-actions">{ADMIN_RESERVATION_ACTIONS.map(([status, label, className]) => <button key={status} className={className} onClick={() => onReservationStatusClick(status)} type="button" disabled={res.status === status || Boolean(reservationSavingStatus)}>{reservationSavingStatus === status ? 'Zapisuję...' : label}</button>)}</div>
+      <form className="payment-form" key={payment?.id || paymentStatus} onSubmit={onPaymentSubmit}>
+        <input name="amount" type="number" min="0" step="0.01" defaultValue={Number(paymentAmount).toFixed(2)} aria-label="Kwota płatności" />
         <select name="method" defaultValue={payment?.method || 'cash'} aria-label="Metoda płatności"><option value="cash">Gotówka</option><option value="blik">BLIK</option><option value="bank_transfer">Przelew</option><option value="other">Inne</option></select>
         <input name="note" defaultValue={payment?.note || ''} placeholder="Notatka płatności" />
-        <button className="restore-btn" name="status" value="paid" type="submit">Opłacona</button>
-        <button className="status-btn" name="status" value="unpaid" type="submit">Nieopłacona</button>
+        <div className="payment-actions">{PAYMENT_STATUSES.map(([status, label, className]) => <button className={className} key={status} name="status" value={status} type="submit" disabled={Boolean(paymentSavingStatus)}>{paymentSavingStatus === status ? 'Zapisuję...' : label}</button>)}</div>
       </form>
     </div>
   );
 }
 
-function AdminPrices({ tripPrices, adminSetTripPrice }) {
+function AdminPrices({ tripPrices, adminPricesMsg, adminSetTripPrice }) {
+  const [savingRoute, setSavingRoute] = React.useState(null);
   const routes = [
     ['JW', 'Jarosław -> Wiedeń'],
     ['WJ', 'Wiedeń -> Jarosław']
   ];
 
-  function onSubmit(event, route) {
+  async function onSubmit(event, route) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    adminSetTripPrice(route, Number(form.get('price') || 0), String(form.get('currency') || 'PLN'));
+    setSavingRoute(route);
+    try {
+      await adminSetTripPrice(route, Number(form.get('price') || 0), String(form.get('currency') || 'PLN'));
+    } finally {
+      setSavingRoute(null);
+    }
   }
 
   return (
+    <>
+    <Message message={!adminPricesMsg?.route ? adminPricesMsg : null} />
     <div className="admin-grid">
       {routes.map(([route, label]) => {
         const price = currentRoutePrice(tripPrices, route);
@@ -331,31 +411,36 @@ function AdminPrices({ tripPrices, adminSetTripPrice }) {
           <form className="card" key={route} onSubmit={(event) => onSubmit(event, route)}>
             <h3>{label}</h3>
             <p className="muted">Aktualnie: {formatMoney(price?.price_per_seat, price?.currency)}</p>
+            <Message message={adminPricesMsg?.route === route ? adminPricesMsg : null} />
             <div className="fg"><label>Cena miejsca</label><input name="price" type="number" min="0" step="0.01" defaultValue={price?.price_per_seat ?? 0} /></div>
             <div className="fg"><label>Waluta</label><select name="currency" defaultValue={price?.currency || 'PLN'}><option value="PLN">PLN</option><option value="EUR">EUR</option></select></div>
-            <button className="btn-primary" type="submit">Zapisz cenę</button>
+            <button className="btn-primary" type="submit" disabled={savingRoute === route}>{savingRoute === route ? 'Zapisywanie...' : 'Zapisz cenę'}</button>
           </form>
         );
       })}
     </div>
+    </>
   );
 }
 
-function AdminRequests({ rentalRequests, towRequests, loading, updateRentalRequest, updateTowRequest }) {
+function AdminRequests({ rentalRequests, towRequests, loading, adminRequestsMsg, updateRentalRequest, updateTowRequest }) {
   if (loading) return <div className="loading-box">Ładuję zapytania...</div>;
   return (
-    <div className="admin-grid">
+    <>
+    <Message message={!adminRequestsMsg?.requestId ? adminRequestsMsg : null} />
+    <div className="requests-grid">
       <div>
         <p className="admin-route-title">Zapytania o wynajem busa</p>
         {!rentalRequests.length ? <p className="muted">Brak zapytań.</p> : null}
-        {rentalRequests.map((request) => <RentalRequestCard key={request.id} request={request} updateRentalRequest={updateRentalRequest} />)}
+        {rentalRequests.map((request) => <RentalRequestCard key={request.id} request={request} message={adminRequestsMsg?.kind === 'rental' && adminRequestsMsg?.requestId === request.id ? adminRequestsMsg : null} updateRentalRequest={updateRentalRequest} />)}
       </div>
       <div>
         <p className="admin-route-title">Zapytania o lawetę</p>
         {!towRequests.length ? <p className="muted">Brak zapytań.</p> : null}
-        {towRequests.map((request) => <TowRequestCard key={request.id} request={request} updateTowRequest={updateTowRequest} />)}
+        {towRequests.map((request) => <TowRequestCard key={request.id} request={request} message={adminRequestsMsg?.kind === 'tow' && adminRequestsMsg?.requestId === request.id ? adminRequestsMsg : null} updateTowRequest={updateTowRequest} />)}
       </div>
     </div>
+    </>
   );
 }
 
@@ -363,36 +448,61 @@ function RequestStatusSelect({ defaultValue }) {
   return <select name="status" defaultValue={defaultValue}>{REQUEST_STATUSES.map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select>;
 }
 
-function RentalRequestCard({ request, updateRentalRequest }) {
-  function onSubmit(event) {
+function RentalRequestCard({ request, message, updateRentalRequest }) {
+  const [saving, setSaving] = React.useState(false);
+  async function onSubmit(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    updateRentalRequest(request.id, String(form.get('status') || 'new'), String(form.get('admin_note') || ''));
+    setSaving(true);
+    try {
+      await updateRentalRequest(request.id, String(form.get('status') || 'new'), String(form.get('admin_note') || ''));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <form className="res-card" onSubmit={onSubmit}>
-      <div className="res-head"><div><strong>{BUS_DETAILS[request.bus_id]?.name || request.bus_id}</strong><span>{request.email} · {request.phone}</span></div><span className="badge badge-few">{request.status}</span></div>
-      <p className="muted">{formatDate(request.start_date)}{request.end_date !== request.start_date ? ` - ${formatDate(request.end_date)}` : ''}</p>
-      {request.message ? <p className="muted">Opis: {request.message}</p> : null}
-      <div className="admin-inline-form"><RequestStatusSelect defaultValue={request.status} /><input name="admin_note" defaultValue={request.admin_note || ''} placeholder="Notatka admina" /><button className="btn-outline" type="submit">Zapisz</button></div>
+      <div className="res-head"><div><strong>Wynajem busa</strong><span>{formatDateTime(request.created_at)}</span></div><span className="badge badge-few">{request.status}</span></div>
+      <div className="request-meta">
+        <div><span>Bus</span><strong>{BUS_DETAILS[request.bus_id]?.name || request.bus_id}</strong></div>
+        <div><span>Email</span><strong className="break-text">{request.email || '-'}</strong></div>
+        <div><span>Telefon</span><strong className="break-text">{request.phone || '-'}</strong></div>
+        <div><span>Termin</span><strong>{formatDate(request.start_date)}{request.end_date !== request.start_date ? ` - ${formatDate(request.end_date)}` : ''}</strong></div>
+      </div>
+      {request.message ? <p className="muted notes-block">Opis: {request.message}</p> : null}
+      <Message message={message} />
+      <div className="request-form-row"><RequestStatusSelect defaultValue={request.status} /><input name="admin_note" defaultValue={request.admin_note || ''} placeholder="Notatka admina" /><button className="btn-outline" type="submit" disabled={saving}>{saving ? 'Zapisywanie...' : 'Zapisz'}</button></div>
     </form>
   );
 }
 
-function TowRequestCard({ request, updateTowRequest }) {
-  function onSubmit(event) {
+function TowRequestCard({ request, message, updateTowRequest }) {
+  const [saving, setSaving] = React.useState(false);
+  async function onSubmit(event) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
-    updateTowRequest(request.id, String(form.get('status') || 'new'), form.get('estimated_price') ? Number(form.get('estimated_price')) : null, String(form.get('admin_note') || ''));
+    setSaving(true);
+    try {
+      await updateTowRequest(request.id, String(form.get('status') || 'new'), form.get('estimated_price') ? Number(form.get('estimated_price')) : null, String(form.get('admin_note') || ''));
+    } finally {
+      setSaving(false);
+    }
   }
 
   return (
     <form className="res-card" onSubmit={onSubmit}>
-      <div className="res-head"><div><strong>{request.vehicle_info}</strong><span>{request.email} · {request.phone}</span></div><span className="badge badge-few">{request.status}</span></div>
-      <p className="muted">{request.pickup_location} {'->'} {request.dropoff_location}</p>
-      {request.message ? <p className="muted">Opis: {request.message}</p> : null}
-      <div className="admin-inline-form"><RequestStatusSelect defaultValue={request.status} /><input name="estimated_price" type="number" min="0" step="0.01" defaultValue={request.estimated_price || ''} placeholder="Wycena" /><input name="admin_note" defaultValue={request.admin_note || ''} placeholder="Notatka admina" /><button className="btn-outline" type="submit">Zapisz</button></div>
+      <div className="res-head"><div><strong>Laweta / transport</strong><span>{formatDateTime(request.created_at)}</span></div><span className="badge badge-few">{request.status}</span></div>
+      <div className="request-meta">
+        <div><span>Trasa</span><strong className="break-text">{request.pickup_location || '-'} {'->'} {request.dropoff_location || '-'}</strong></div>
+        <div><span>Email</span><strong className="break-text">{request.email || '-'}</strong></div>
+        <div><span>Telefon</span><strong className="break-text">{request.phone || '-'}</strong></div>
+        <div><span>Cena szacowana</span><strong>{formatMoney(request.estimated_price, 'PLN')}</strong></div>
+      </div>
+      {request.vehicle_info ? <p className="muted notes-block">Ładunek/pojazd: {request.vehicle_info}</p> : null}
+      {request.message ? <p className="muted notes-block">Opis: {request.message}</p> : null}
+      <Message message={message} />
+      <div className="request-form-row tow-request-form"><RequestStatusSelect defaultValue={request.status} /><input name="estimated_price" type="number" min="0" step="0.01" defaultValue={request.estimated_price || ''} placeholder="Wycena" /><input name="admin_note" defaultValue={request.admin_note || ''} placeholder="Notatka admina" /><button className="btn-outline" type="submit" disabled={saving}>{saving ? 'Zapisywanie...' : 'Zapisz'}</button></div>
     </form>
   );
 }

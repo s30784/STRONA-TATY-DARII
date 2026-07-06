@@ -1,7 +1,7 @@
 import React from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ProtectedAdminRoute } from './components/ProtectedAdminRoute.jsx';
-import { ADMIN_ROLES, BLOCKING_RESERVATION_STATUSES, MONTHS, MAX_SEATS, TERMS_VERSION } from './data/constants.js';
+import { ADMIN_ROLES, BLOCKING_RESERVATION_STATUSES, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF, MONTHS, MAX_SEATS, TERMS_VERSION } from './data/constants.js';
 import { ROUTE_DETAILS } from './data/routeDetails.js';
 import { BUS_DETAILS } from './data/vehicles.js';
 import { useAuth } from './hooks/useAuth.js';
@@ -132,14 +132,20 @@ export function App() {
   const [adminTripsLoading, setAdminTripsLoading] = React.useState(false);
   const [adminReservations, setAdminReservations] = React.useState([]);
   const [adminReservationsLoading, setAdminReservationsLoading] = React.useState(false);
+  const [adminReservationsMsg, setAdminReservationsMsg] = React.useState(null);
+  const [adminPricesMsg, setAdminPricesMsg] = React.useState(null);
   const [adminRentalRequests, setAdminRentalRequests] = React.useState([]);
   const [adminTowRequests, setAdminTowRequests] = React.useState([]);
   const [adminRequestsLoading, setAdminRequestsLoading] = React.useState(false);
+  const [adminRequestsMsg, setAdminRequestsMsg] = React.useState(null);
   const [adminBlockViewMonth, setAdminBlockViewMonth] = React.useState(new Date());
   const [selectedAdminBus, setSelectedAdminBus] = React.useState('bus9');
   const [adminRentalBlocks, setAdminRentalBlocks] = React.useState([]);
   const [adminBlockMsg, setAdminBlockMsg] = React.useState(null);
   const [adminBlocksLoading, setAdminBlocksLoading] = React.useState(false);
+  const [adminBlockSubmitting, setAdminBlockSubmitting] = React.useState(false);
+  const [adminBlockActionId, setAdminBlockActionId] = React.useState(null);
+  const [cancelingReservationId, setCancelingReservationId] = React.useState(null);
 
   const routeDetails = ROUTE_DETAILS[selectedRoute];
   const selectedTrip = cachedTrips.find((trip) => trip.id === selectedTripId);
@@ -252,10 +258,13 @@ export function App() {
   async function loadTripPrices() {
     const { data, error } = await sb.from('trip_prices').select('*').order('route');
     if (error) {
-      setAdminGenMsg({ type: 'err', text: `Błąd ładowania cen: ${error.message}` });
+      if (pathname === '/booking') setBookingMsg({ type: 'err', text: `Nie udało się pobrać cen przejazdów: ${error.message}` });
+      else if (pathname === '/admin') setAdminPricesMsg({ type: 'err', text: `Nie udało się pobrać cen przejazdów: ${error.message}` });
+      else console.warn('trip prices load failed', error);
       return;
     }
     setTripPrices(data || []);
+    if (pathname === '/admin' && adminPricesMsg?.type === 'err') setAdminPricesMsg(null);
   }
 
   function setRentalRange(startDate, endDate) {
@@ -329,34 +338,44 @@ export function App() {
       setAdminBlockMsg({ type: 'err', text: validationError });
       return;
     }
-    const { error } = await sb.from('rental_calendar_blocks').insert({
-      id: `RB${Date.now()}${Math.random().toString(36).slice(2, 8)}`,
-      bus_id: selectedAdminBus,
-      start_date: startDate,
-      end_date: endDate,
-      status,
-      public_note: publicNote || null,
-      active: true
-    });
-    if (error) {
-      setAdminBlockMsg({ type: 'err', text: `Nie udało się dodać blokady: ${error.message}` });
-      return;
+    setAdminBlockSubmitting(true);
+    try {
+      const { error } = await sb.from('rental_calendar_blocks').insert({
+        id: `RB${Date.now()}${Math.random().toString(36).slice(2, 8)}`,
+        bus_id: selectedAdminBus,
+        start_date: startDate,
+        end_date: endDate,
+        status,
+        public_note: publicNote || null,
+        active: true
+      });
+      if (error) {
+        setAdminBlockMsg({ type: 'err', text: `Nie udało się dodać blokady: ${error.message}` });
+        return;
+      }
+      event.currentTarget.reset();
+      setAdminBlockMsg({ type: 'ok', text: 'Blokada kalendarza została dodana.' });
+      await loadAdminRentalBlocks();
+      if (selectedBus === selectedAdminBus) await loadRentalCalendarBlocks(true);
+    } finally {
+      setAdminBlockSubmitting(false);
     }
-    event.currentTarget.reset();
-    setAdminBlockMsg({ type: 'ok', text: 'Blokada kalendarza została dodana.' });
-    await loadAdminRentalBlocks();
-    if (selectedBus === selectedAdminBus) await loadRentalCalendarBlocks(true);
   }
 
   async function deactivateAdminRentalBlock(blockId) {
-    const { error } = await sb.from('rental_calendar_blocks').update({ active: false }).eq('id', blockId);
-    if (error) {
-      setAdminBlockMsg({ type: 'err', text: `Nie udało się usunąć blokady: ${error.message}` });
-      return;
+    setAdminBlockActionId(blockId);
+    try {
+      const { error } = await sb.from('rental_calendar_blocks').update({ active: false }).eq('id', blockId);
+      if (error) {
+        setAdminBlockMsg({ type: 'err', text: `Nie udało się usunąć blokady: ${error.message}` });
+        return;
+      }
+      setAdminBlockMsg({ type: 'ok', text: 'Blokada została usunięta z aktywnego kalendarza.' });
+      await loadAdminRentalBlocks();
+      if (selectedBus === selectedAdminBus) await loadRentalCalendarBlocks(true);
+    } finally {
+      setAdminBlockActionId(null);
     }
-    setAdminBlockMsg({ type: 'ok', text: 'Blokada została usunięta z aktywnego kalendarza.' });
-    await loadAdminRentalBlocks();
-    if (selectedBus === selectedAdminBus) await loadRentalCalendarBlocks(true);
   }
 
   async function doLogin(event) {
@@ -508,6 +527,8 @@ export function App() {
 
   async function submitTowRequest(event) {
     event.preventDefault();
+    if (towSubmitting) return;
+    const formEl = event.currentTarget;
     const form = new FormData(event.currentTarget);
     const name = field(form, 'name');
     const phone = field(form, 'phone');
@@ -531,21 +552,28 @@ export function App() {
       return;
     }
     setTowSubmitting(true);
-    const { data, error } = await sb.rpc('create_tow_request', {
-      p_pickup_location: from,
-      p_dropoff_location: to,
-      p_vehicle_info: `${car} | Stan: ${state} | Kierunek: ${direction} | Preferowana data: ${date}`,
-      p_phone: phone,
-      p_email: email,
-      p_message: `Imię i nazwisko: ${name}${notes ? ` | ${notes}` : ''}`
-    });
-    setTowSubmitting(false);
-    if (error) {
-      setTowMsg({ type: 'err', text: `Nie udało się zapisać zapytania: ${error.message}` });
-      return;
+    try {
+      const { error } = await sb.rpc('create_tow_request', {
+        p_pickup_location: from,
+        p_dropoff_location: to,
+        p_vehicle_info: `${car} | Stan: ${state} | Kierunek: ${direction} | Preferowana data: ${date}`,
+        p_phone: phone,
+        p_email: email,
+        p_message: `Imię i nazwisko: ${name}${notes ? ` | ${notes}` : ''}`
+      });
+      if (error) {
+        console.error('create_tow_request failed', error);
+        setTowMsg({ type: 'err', text: `Nie udało się zapisać zapytania: ${error.message}` });
+        return;
+      }
+      formEl.reset();
+      setTowMsg({ type: 'ok', text: 'Zapytanie zostało wysłane. Skontaktujemy się z Tobą w celu potwierdzenia szczegółów.' });
+    } catch (error) {
+      console.error('tow request submit failed', error);
+      setTowMsg({ type: 'err', text: 'Wystąpił błąd podczas wysyłania zapytania. Spróbuj ponownie.' });
+    } finally {
+      setTowSubmitting(false);
     }
-    event.currentTarget.reset();
-    setTowMsg({ type: 'ok', text: `Zapytanie zapisane. Nr: ${data?.id || 'nadany w systemie'}` });
   }
 
   function chooseStop(index, type) {
@@ -571,12 +599,16 @@ export function App() {
     const phone = field(form, 'phone');
     const seats = parseInt(form.get('seats'), 10) || 0;
     const notes = field(form, 'notes');
+    const pickup = field(form, 'pickup_stop') || pickupStop;
+    const dropoff = field(form, 'dropoff_stop') || dropoffStop;
     const termsAccepted = form.get('terms') === 'on';
     const validationError = (!currentUser ? 'Zaloguj się, aby wysłać zgłoszenie rezerwacji.' : null)
       || (!isEmailConfirmed(currentUser) ? 'Potwierdź adres email przed wysłaniem zgłoszenia rezerwacji.' : null)
       || validateRequired(name, 'Imię i nazwisko')
       || validateEmail(email)
       || validatePhone(phone)
+      || validateRequired(pickup, 'Miejsce wsiadania')
+      || validateRequired(dropoff, 'Miejsce wysiadania')
       || validateSeats(seats)
       || (seats === 1 ? null : 'Przez formularz online możesz zgłosić rezerwację tylko jednego miejsca.')
       || (termsAccepted ? null : 'Akceptacja regulaminu i zasad anulowania jest wymagana.')
@@ -589,12 +621,14 @@ export function App() {
       setBookingMsg({ type: 'err', text: 'Wybierz termin.' });
       return;
     }
-    if (pickupStop === dropoffStop) {
+    if (pickup === dropoff) {
       setBookingMsg({ type: 'err', text: 'Przystanek wsiadania i wysiadania nie może być taki sam.' });
       return;
     }
     const routeStops = routeDetails.stops.map((stop) => stop.name);
-    if (routeStops.indexOf(pickupStop) > routeStops.indexOf(dropoffStop)) {
+    const pickupIndex = routeStops.indexOf(pickup);
+    const dropoffIndex = routeStops.indexOf(dropoff);
+    if (pickupIndex >= 0 && dropoffIndex >= 0 && pickupIndex > dropoffIndex) {
       setBookingMsg({ type: 'err', text: 'Wybierz wysiadanie dalej na trasie niż miejsce wsiadania.' });
       return;
     }
@@ -608,7 +642,11 @@ export function App() {
     }
 
     setBookingSubmitting(true);
-    const stopNotes = `Wsiadanie: ${pickupStop} | Wysiadanie: ${dropoffStop}${notes ? ` | Uwagi: ${notes}` : ''}`;
+    const stopNotes = [
+      `Wsiadam: ${pickup}`,
+      `Wysiadam: ${dropoff}`,
+      notes ? `Uwagi klienta: ${notes}` : null
+    ].filter(Boolean).join('\n');
     const { data, error } = await sb.rpc('create_reservation_request', {
       p_trip_id: selectedTripId,
       p_passenger_name: name,
@@ -627,7 +665,7 @@ export function App() {
     setSelectedBookingDate(null);
     event.currentTarget.reset();
     await loadTrips();
-    setBookingMsg({ type: 'ok', text: `Zgłoszenie rezerwacji wysłane. Admin potwierdzi dostępność. Nr: ${data?.id || 'nadany w systemie'}` });
+    setBookingMsg({ type: 'ok', text: `Zgłoszenie rezerwacji wysłane. Admin potwierdzi dostępność. Nr: ${data?.id || data || 'nadany w systemie'}` });
   }
 
   async function loadMyReservations() {
@@ -650,15 +688,21 @@ export function App() {
   }
 
   async function cancelReservation(resId) {
+    if (cancelingReservationId) return;
     if (!window.confirm('Czy na pewno chcesz anulować tę rezerwację?')) return;
+    setCancelingReservationId(resId);
     setMyResMsg({ type: 'info', text: 'Anulowanie rezerwacji...' });
-    const { error } = await sb.rpc('cancel_own_reservation', { p_reservation_id: resId });
-    if (error) {
-      setMyResMsg({ type: 'err', text: `Błąd: ${error.message}` });
-      return;
+    try {
+      const { error } = await sb.rpc('cancel_own_reservation', { p_reservation_id: resId });
+      if (error) {
+        setMyResMsg({ type: 'err', text: `Nie udało się anulować rezerwacji: ${error.message}` });
+        return;
+      }
+      setMyResMsg({ type: 'ok', text: 'Rezerwacja została anulowana.' });
+      await loadMyReservations();
+    } finally {
+      setCancelingReservationId(null);
     }
-    setMyResMsg({ type: 'ok', text: 'Rezerwacja została anulowana.' });
-    await loadMyReservations();
   }
 
   async function loadAdminTrips() {
@@ -681,6 +725,7 @@ export function App() {
         setAdminGenMsg({ type: 'err', text: `Błąd: ${error.message}` });
         return;
       }
+      setAdminGenMsg({ type: 'ok', text: trip.cancelled ? 'Kurs został przywrócony.' : 'Kurs został odwołany.' });
     } else {
       const id = `T${dateStr.replace(/-/g, '')}${selectedAdminRoute}`;
       const { error } = await sb.from('trips').insert({ id, route: selectedAdminRoute, date: dateStr, cancelled: false, max_seats: MAX_SEATS });
@@ -688,6 +733,7 @@ export function App() {
         setAdminGenMsg({ type: 'err', text: `Błąd: ${error.message}` });
         return;
       }
+      setAdminGenMsg({ type: 'ok', text: 'Kurs został dodany.' });
     }
     await loadAdminTrips();
   }
@@ -695,7 +741,11 @@ export function App() {
   async function toggleTrip(id, cancel) {
     if (cancel && !window.confirm('Odwołać ten kurs?')) return;
     const { error } = await sb.from('trips').update({ cancelled: cancel }).eq('id', id);
-    if (error) setAdminGenMsg({ type: 'err', text: `Błąd: ${error.message}` });
+    if (error) {
+      setAdminGenMsg({ type: 'err', text: `Błąd: ${error.message}` });
+      return;
+    }
+    setAdminGenMsg({ type: 'ok', text: cancel ? 'Kurs został odwołany.' : 'Kurs został przywrócony.' });
     await loadAdminTrips();
   }
 
@@ -733,10 +783,11 @@ export function App() {
     setAdminReservationsLoading(false);
     if (error) {
       setAdminReservations([]);
-      setAdminGenMsg({ type: 'err', text: `Błąd ładowania rezerwacji: ${error.message}` });
+      setAdminReservationsMsg({ type: 'err', text: `Nie udało się pobrać rezerwacji: ${error.message}` });
       return;
     }
     setAdminReservations(data || []);
+    if (adminReservationsMsg?.type === 'err' && !adminReservationsMsg.resId) setAdminReservationsMsg(null);
   }
 
   async function adminSetTripPrice(route, pricePerSeat, currency) {
@@ -746,11 +797,12 @@ export function App() {
       p_currency: currency
     });
     if (error) {
-      setAdminGenMsg({ type: 'err', text: `Błąd zapisu ceny: ${error.message}` });
-      return;
+      setAdminPricesMsg({ type: 'err', route, text: `Nie udało się zapisać ceny: ${error.message}` });
+      return false;
     }
-    setAdminGenMsg({ type: 'ok', text: 'Cena przejazdu została zapisana.' });
+    setAdminPricesMsg({ type: 'ok', route, text: 'Cena przejazdu została zapisana.' });
     await loadTripPrices();
+    return true;
   }
 
   async function adminSetPaymentStatus(resId, status, method, amount, currency, note) {
@@ -763,11 +815,12 @@ export function App() {
       p_note: note
     });
     if (error) {
-      setAdminGenMsg({ type: 'err', text: `Błąd zapisu płatności: ${error.message}` });
-      return;
+      setAdminReservationsMsg({ type: 'err', resId, text: `Nie udało się zapisać płatności: ${error.message}` });
+      return false;
     }
-    setAdminGenMsg({ type: 'ok', text: 'Status płatności został zapisany.' });
+    setAdminReservationsMsg({ type: 'ok', resId, text: 'Status płatności został zapisany.' });
     await loadAdminReservations();
+    return true;
   }
 
   async function adminSetReservationStatus(resId, status) {
@@ -776,12 +829,13 @@ export function App() {
       p_new_status: status
     });
     if (error) {
-      setAdminGenMsg({ type: 'err', text: `Błąd zmiany statusu: ${error.message}` });
-      return;
+      setAdminReservationsMsg({ type: 'err', resId, text: `Nie udało się zmienić statusu rezerwacji: ${error.message}` });
+      return false;
     }
-    setAdminGenMsg({ type: 'ok', text: 'Status rezerwacji został zmieniony.' });
+    setAdminReservationsMsg({ type: 'ok', resId, text: 'Status rezerwacji został zmieniony.' });
     await loadAdminReservations();
     await loadAdminTrips();
+    return true;
   }
 
   async function loadAdminRequests() {
@@ -792,11 +846,12 @@ export function App() {
     ]);
     setAdminRequestsLoading(false);
     if (rentalResult.error || towResult.error) {
-      setAdminGenMsg({ type: 'err', text: `Błąd ładowania zapytań: ${rentalResult.error?.message || towResult.error?.message}` });
+      setAdminRequestsMsg({ type: 'err', text: `Nie udało się pobrać zapytań: ${rentalResult.error?.message || towResult.error?.message}` });
       return;
     }
     setAdminRentalRequests(rentalResult.data || []);
     setAdminTowRequests(towResult.data || []);
+    if (adminRequestsMsg?.type === 'err' && !adminRequestsMsg.requestId) setAdminRequestsMsg(null);
   }
 
   async function adminUpdateRentalRequest(requestId, status, adminNote) {
@@ -806,11 +861,12 @@ export function App() {
       p_admin_note: adminNote
     });
     if (error) {
-      setAdminGenMsg({ type: 'err', text: `Błąd zapisu zapytania: ${error.message}` });
-      return;
+      setAdminRequestsMsg({ type: 'err', requestId, kind: 'rental', text: `Nie udało się zapisać zapytania o wynajem: ${error.message}` });
+      return false;
     }
-    setAdminGenMsg({ type: 'ok', text: 'Zapytanie o wynajem zostało zaktualizowane.' });
+    setAdminRequestsMsg({ type: 'ok', requestId, kind: 'rental', text: 'Zapytanie o wynajem zostało zaktualizowane.' });
     await loadAdminRequests();
+    return true;
   }
 
   async function adminUpdateTowRequest(requestId, status, estimatedPrice, adminNote) {
@@ -821,11 +877,12 @@ export function App() {
       p_admin_note: adminNote
     });
     if (error) {
-      setAdminGenMsg({ type: 'err', text: `Błąd zapisu zapytania: ${error.message}` });
-      return;
+      setAdminRequestsMsg({ type: 'err', requestId, kind: 'tow', text: `Nie udało się zapisać zapytania o lawetę: ${error.message}` });
+      return false;
     }
-    setAdminGenMsg({ type: 'ok', text: 'Zapytanie o lawetę zostało zaktualizowane.' });
+    setAdminRequestsMsg({ type: 'ok', requestId, kind: 'tow', text: 'Zapytanie o lawetę zostało zaktualizowane.' });
     await loadAdminRequests();
+    return true;
   }
 
   const navItems = [
@@ -854,7 +911,7 @@ export function App() {
         </div>
         <div className="nav-contact">
           <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
-          <a href="tel:+48123456789">+48 123 456 789</a>
+          <a href={CONTACT_PHONE_HREF}>{CONTACT_PHONE_DISPLAY}</a>
         </div>
         <div className="nav-account">
           {currentUser ? (
@@ -874,14 +931,14 @@ export function App() {
       {profileError ? <div className="user-bar err">Nie udało się pobrać profilu: {profileError}</div> : null}
 
       <Routes>
-        <Route path="/" element={<HomePage showPage={showPage} currentUser={currentUser} contactEmail={CONTACT_EMAIL} />} />
-        <Route path="/rental" element={<RentalPage selectedBus={selectedBus} setSelectedBus={setSelectedBus} rentalViewMonth={rentalViewMonth} setRentalViewMonth={setRentalViewMonth} rentalBlocks={rentalBlocks} rentalRangeStart={rentalRangeStart} rentalRangeEnd={rentalRangeEnd} setRentalRange={setRentalRange} rentalRangeError={rentalRangeError} submitRentalRequest={submitRentalRequest} rentalMsg={rentalMsg} rentalSubmitting={rentalSubmitting} rentalLoading={rentalLoading} currentUser={currentUser} />} />
+        <Route path="/" element={<HomePage showPage={showPage} currentUser={currentUser} contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
+        <Route path="/rental" element={<RentalPage selectedBus={selectedBus} setSelectedBus={setSelectedBus} rentalViewMonth={rentalViewMonth} setRentalViewMonth={setRentalViewMonth} rentalBlocks={rentalBlocks} rentalRangeStart={rentalRangeStart} rentalRangeEnd={rentalRangeEnd} setRentalRange={setRentalRange} rentalRangeError={rentalRangeError} submitRentalRequest={submitRentalRequest} rentalMsg={rentalMsg} rentalSubmitting={rentalSubmitting} rentalLoading={rentalLoading} currentUser={currentUser} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
         <Route path="/auth" element={<AuthPage authForm={authForm} setAuthForm={setAuthForm} authMsg={authMsg} authLoading={authLoading} doLogin={doLogin} doRegister={doRegister} doReset={doReset} />} />
         <Route path="/booking" element={<BookingPage selectedRoute={selectedRoute} setSelectedRoute={setSelectedRoute} routeDetails={routeDetails} bookingViewMonth={bookingViewMonth} setBookingViewMonth={setBookingViewMonth} cachedTrips={cachedTrips} selectedTripId={selectedTripId} selectedBookingDate={selectedBookingDate} selectBookingDay={selectBookingDay} pickupStop={pickupStop} dropoffStop={dropoffStop} setPickupStop={setPickupStop} setDropoffStop={setDropoffStop} chooseStop={chooseStop} submitBooking={submitBooking} bookingMsg={bookingMsg} bookingSubmitting={bookingSubmitting} bookingLoading={bookingLoading} currentUser={currentUser} currentProfile={currentProfile} tripPrice={selectedRoutePrice} />} />
-        <Route path="/tow" element={<TowPage towMsg={towMsg} submitTowRequest={submitTowRequest} towSubmitting={towSubmitting} currentUser={currentUser} />} />
-        <Route path="/my-reservations" element={<MyReservationsPage currentUser={currentUser} showPage={showPage} myReservations={myReservations} myResMsg={myResMsg} myReservationsLoading={myReservationsLoading} cancelReservation={cancelReservation} />} />
-        <Route path="/contact" element={<ContactPage />} />
-        <Route path="/admin" element={<ProtectedAdminRoute authReady={authReady} currentProfile={currentProfile}><AdminPage adminTab={adminTab} setAdminTab={setAdminTab} adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} tripPrices={tripPrices} adminSetTripPrice={adminSetTripPrice} adminRentalRequests={adminRentalRequests} adminTowRequests={adminTowRequests} adminRequestsLoading={adminRequestsLoading} adminUpdateRentalRequest={adminUpdateRentalRequest} adminUpdateTowRequest={adminUpdateTowRequest} adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} adminRentalBlocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} adminBlocksLoading={adminBlocksLoading} addAdminRentalBlock={addAdminRentalBlock} deactivateAdminRentalBlock={deactivateAdminRentalBlock} /></ProtectedAdminRoute>} />
+        <Route path="/tow" element={<TowPage towMsg={towMsg} submitTowRequest={submitTowRequest} towSubmitting={towSubmitting} currentUser={currentUser} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
+        <Route path="/my-reservations" element={<MyReservationsPage currentUser={currentUser} showPage={showPage} myReservations={myReservations} myResMsg={myResMsg} myReservationsLoading={myReservationsLoading} cancelReservation={cancelReservation} cancelingReservationId={cancelingReservationId} />} />
+        <Route path="/contact" element={<ContactPage contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
+        <Route path="/admin" element={<ProtectedAdminRoute authReady={authReady} currentProfile={currentProfile}><AdminPage adminTab={adminTab} setAdminTab={setAdminTab} adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} tripPrices={tripPrices} adminPricesMsg={adminPricesMsg} adminSetTripPrice={adminSetTripPrice} adminRentalRequests={adminRentalRequests} adminTowRequests={adminTowRequests} adminRequestsLoading={adminRequestsLoading} adminRequestsMsg={adminRequestsMsg} adminUpdateRentalRequest={adminUpdateRentalRequest} adminUpdateTowRequest={adminUpdateTowRequest} adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} adminRentalBlocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} adminBlocksLoading={adminBlocksLoading} adminBlockSubmitting={adminBlockSubmitting} adminBlockActionId={adminBlockActionId} addAdminRentalBlock={addAdminRentalBlock} deactivateAdminRentalBlock={deactivateAdminRentalBlock} /></ProtectedAdminRoute>} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -906,6 +963,7 @@ export function App() {
           <div className="footer-col">
             <span>Kontakt</span>
             <a href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</a>
+            <a href={CONTACT_PHONE_HREF}>{CONTACT_PHONE_DISPLAY}</a>
             <NavLink to="/contact">Zapytania i informacje</NavLink>
           </div>
         </div>

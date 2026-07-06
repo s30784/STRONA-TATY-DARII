@@ -10,8 +10,12 @@ import { tripDate, tripFreeSeats } from '../lib/trips.js';
 
 function formatPrice(price) {
   const amount = Number(price?.price_per_seat);
-  if (!Number.isFinite(amount) || amount <= 0) return 'Cena do ustalenia';
-  return `${amount.toFixed(2)} ${price.currency || 'PLN'}`;
+  if (!Number.isFinite(amount) || amount <= 0) return 'Cena do potwierdzenia';
+  const formattedAmount = new Intl.NumberFormat('pl-PL', {
+    minimumFractionDigits: Number.isInteger(amount) ? 0 : 2,
+    maximumFractionDigits: 2
+  }).format(amount);
+  return `${formattedAmount} ${price.currency || 'PLN'}`;
 }
 
 export function BookingPage(props) {
@@ -40,6 +44,7 @@ export function BookingPage(props) {
   } = props;
 
   const emailConfirmed = Boolean(currentUser?.email_confirmed_at || currentUser?.confirmed_at);
+  const priceLabel = formatPrice(tripPrice);
   const range = monthRange(bookingViewMonth);
   const firstDay = new Date(range.year, range.month, 1).getDay();
   const startOffset = (firstDay + 6) % 7;
@@ -78,23 +83,24 @@ export function BookingPage(props) {
         <header>
           <span className="day-number">{day}</span>
           {freeSeats > 0 ? <span className="seat-count" aria-label={`${freeSeats} wolnych miejsc`}>{freeSeats}</span> : null}
+          {freeSeats > 0 ? <span className="day-price">{priceLabel}</span> : null}
         </header>
       </button>
     );
   }
 
   const meta = currentUser?.user_metadata || {};
+  const reservationFormVisible = Boolean(selectedBookingDate && currentUser && emailConfirmed);
 
   return (
     <div className="page active">
       <Hero title="Przejazdy Jarosław-Wiedeń" text="Sprawdź trasę, przystanki i dostępne terminy. Rezerwacja zamyka się automatycznie, gdy nie ma już wolnych miejsc." />
       <section className="section">
-        <Message message={bookingMsg} />
         <div className="route-switch">
           <button className={selectedRoute === 'JW' ? 'active' : ''} onClick={() => setSelectedRoute('JW')} type="button">{'Jarosław -> Wiedeń'}</button>
           <button className={selectedRoute === 'WJ' ? 'active' : ''} onClick={() => setSelectedRoute('WJ')} type="button">{'Wiedeń -> Jarosław'}</button>
         </div>
-        <div className="price-callout"><span>Cena miejsca</span><strong>{formatPrice(tripPrice)}</strong></div>
+        <div className="price-callout"><span>Cena miejsca</span><strong>{priceLabel}</strong></div>
         <div className="split-layout mb">
           <Card title={routeDetails.title}>
             <RouteDiagram routeDetails={routeDetails} chooseStop={chooseStop} />
@@ -120,6 +126,7 @@ export function BookingPage(props) {
         <div className="calendar-grid">{cells}</div>
         <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'selected', label: 'Wybrany' }, { type: 'seats', label: 'Liczba = wolne miejsca' }, { type: 'blocked', label: 'Niedostępny' }]} />
         <div className="no-trips mt-sm">{availableCount ? 'Kliknij dostępny dzień, aby wybrać termin.' : 'Brak dostępnych terminów w tym miesiącu dla wybranej trasy.'}</div>
+        {!reservationFormVisible ? <Message message={bookingMsg} /> : null}
         {selectedBookingDate && !currentUser ? (
           <Card>
             <p className="form-help">Zaloguj się i potwierdź adres email, aby wysłać zgłoszenie rezerwacji.</p>
@@ -131,15 +138,24 @@ export function BookingPage(props) {
             <p className="form-help">Potwierdź adres email przed wysłaniem zgłoszenia rezerwacji. Link potwierdzający znajdziesz w wiadomości z Supabase.</p>
           </Card>
         ) : null}
-        {selectedBookingDate && currentUser && emailConfirmed ? (
+        {reservationFormVisible ? (
           <form className="booking-form" onSubmit={submitBooking}>
             <p className="step-label">2. Dane pasażera</p>
             <Card>
               <div className="fg2"><div className="fg"><label>Imię i nazwisko</label><input name="name" defaultValue={meta.full_name || ''} autoComplete="name" /></div><div className="fg"><label>Email</label><input type="email" name="email" defaultValue={currentUser?.email || ''} autoComplete="email" /></div></div>
               <div className="fg2"><div className="fg"><label>Telefon</label><input type="tel" name="phone" defaultValue={currentProfile?.phone || ''} autoComplete="tel" /></div><div className="fg"><label>Liczba miejsc</label><input type="hidden" name="seats" value="1" /><input type="text" value="1" readOnly /></div></div>
               <p className="form-help">Chcesz zarezerwować więcej miejsc? Skontaktuj się z nami bezpośrednio.</p>
-              <div className="fg2"><div className="fg"><label>Przystanek wsiadania</label><select value={pickupStop} onChange={(e) => setPickupStop(e.target.value)}>{routeDetails.stops.map((stop, index) => <option key={stop.name} value={stop.name}>{index + 1}. {stop.name}</option>)}</select></div><div className="fg"><label>Przystanek wysiadania</label><select value={dropoffStop} onChange={(e) => setDropoffStop(e.target.value)}>{routeDetails.stops.map((stop, index) => <option key={stop.name} value={stop.name}>{index + 1}. {stop.name}</option>)}</select></div></div>
+              <datalist id="booking-route-stops">{routeDetails.stops.map((stop) => <option key={stop.name} value={stop.name} />)}</datalist>
+              <div className="fg2"><div className="fg"><label>Wsiadam tutaj</label><input list="booking-route-stops" name="pickup_stop" value={pickupStop} onChange={(e) => setPickupStop(e.target.value)} placeholder="Wybierz lub wpisz miejsce" /></div><div className="fg"><label>Wysiadam tutaj</label><input list="booking-route-stops" name="dropoff_stop" value={dropoffStop} onChange={(e) => setDropoffStop(e.target.value)} placeholder="Wybierz lub wpisz miejsce" /></div></div>
               <div className="fg"><label>Uwagi</label><input name="notes" placeholder="np. bagaż ponadgabarytowy" /></div>
+              <div className="booking-summary">
+                <div><span>Termin</span><strong>{formatDate(selectedBookingDate)}</strong></div>
+                <div><span>Trasa</span><strong>{routeDetails.title}</strong></div>
+                <div><span>Wsiadam</span><strong>{pickupStop || '-'}</strong></div>
+                <div><span>Wysiadam</span><strong>{dropoffStop || '-'}</strong></div>
+                <div><span>Cena miejsca</span><strong>{priceLabel}</strong></div>
+              </div>
+              <Message message={bookingMsg} />
               <label className="check-row"><input type="checkbox" name="terms" required /> Akceptuję regulamin i zasady anulowania.</label>
               <button className="btn-primary" disabled={bookingSubmitting} type="submit">{bookingSubmitting ? 'Wysyłam zgłoszenie...' : 'Wyślij zgłoszenie rezerwacji'}</button>
             </Card>

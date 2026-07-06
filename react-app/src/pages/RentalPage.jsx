@@ -5,9 +5,7 @@ import { Message } from '../components/Message.jsx';
 import { Weekdays } from '../components/Weekdays.jsx';
 import { MONTHS } from '../data/constants.js';
 import { BUS_DETAILS, busIdFromLabel } from '../data/vehicles.js';
-import { addDays, daysInclusive, formatDate, monthRange, todayStr } from '../lib/date.js';
-
-const QUICK_RANGES = [1, 2, 3, 7];
+import { daysInclusive, formatDate, monthRange, todayStr } from '../lib/date.js';
 
 function blockStart(block) {
   return String(block?.start_date || '').slice(0, 10);
@@ -49,17 +47,14 @@ export function RentalPage(props) {
     rentalMsg,
     rentalSubmitting,
     rentalLoading,
-    currentUser
+    currentUser,
+    contactPhone,
+    contactPhoneHref
   } = props;
   const bus = BUS_DETAILS[selectedBus];
   const rangeText = selectedRangeText(rentalRangeStart, rentalRangeEnd);
   const rentalDays = daysInclusive(rentalRangeStart, rentalRangeEnd);
-  const submitDisabled = rentalSubmitting || !rentalRangeStart || !rentalRangeEnd || Boolean(rentalRangeError);
-
-  function applyQuickRange(days) {
-    if (!rentalRangeStart) return;
-    setRentalRange(rentalRangeStart, addDays(rentalRangeStart, days - 1));
-  }
+  const submitDisabled = rentalSubmitting || !selectedBus || !rentalRangeStart || !rentalRangeEnd || Boolean(rentalRangeError);
 
   return (
     <div className="page active">
@@ -108,16 +103,16 @@ export function RentalPage(props) {
                 setRentalRange={setRentalRange}
                 rangeError={rentalRangeError}
               />
-              <div className="range-presets">
-                {QUICK_RANGES.map((days) => <button key={days} className="btn-outline" onClick={() => applyQuickRange(days)} type="button" disabled={!rentalRangeStart}>{days} {days === 1 ? 'dzień' : 'dni'}</button>)}
-              </div>
             </Card>
             <Card title="Zapytanie o wynajem">
+              <p className="form-help">W razie pytań możesz też zadzwonić: <a href={contactPhoneHref}>{contactPhone}</a>.</p>
               <Message message={rentalMsg} />
               <form onSubmit={submitRentalRequest}>
                 <div className="fg"><label>Wybrany bus</label><select value={BUS_DETAILS[selectedBus].selectLabel} onChange={(e) => setSelectedBus(busIdFromLabel(e.target.value))}>{Object.values(BUS_DETAILS).map((item) => <option key={item.name}>{item.selectLabel}</option>)}</select></div>
+                <div className="fg2"><div className="fg"><label>Data od</label><input type="date" value={rentalRangeStart || ''} min={todayStr()} onChange={(e) => setRentalRange(e.target.value, rentalRangeEnd || e.target.value)} /></div><div className="fg"><label>Data do</label><input type="date" value={rentalRangeEnd || ''} min={rentalRangeStart || todayStr()} onChange={(e) => setRentalRange(rentalRangeStart || e.target.value, e.target.value)} /></div></div>
                 <div className="fg"><label>Wybrany termin</label><input type="text" value={rangeText ? `Wybrany termin: ${rangeText}` : ''} placeholder="Wybierz początek i koniec w kalendarzu" readOnly /></div>
                 <div className="fg"><label>Liczba dni</label><input type="text" value={rentalDays ? `${rentalDays} ${rentalDays === 1 ? 'dzień' : 'dni'}` : ''} placeholder="-" readOnly /></div>
+                <div className={`range-status ${rentalRangeError ? 'err' : rentalRangeStart && rentalRangeEnd ? 'ok' : ''}`}>{rentalRangeError || (rentalRangeStart && rentalRangeEnd ? 'Wybrany zakres jest dostępny według aktualnego kalendarza.' : 'Wybierz datę od i datę do.')}</div>
                 <div className="fg"><label>Email</label><input type="email" name="email" defaultValue={currentUser?.email || ''} placeholder="jan@example.com" autoComplete="email" /></div>
                 <div className="fg"><label>Telefon</label><input type="tel" name="phone" placeholder="+48 000 000 000" autoComplete="tel" /></div>
                 <div className="fg"><label>Opis wyjazdu</label><textarea name="notes" rows="3" placeholder="np. wesele, lotnisko, wyjazd firmowy"></textarea></div>
@@ -183,7 +178,7 @@ function RentalCalendar({ viewDate, setViewDate, blocks, rangeStart, rangeEnd, s
       <Weekdays />
       <div className="calendar-grid">{cells}</div>
       <CalendarLegend items={[{ type: 'available', label: 'Dostępny' }, { type: 'selected', label: 'Wybrany zakres' }, { type: 'blocked', label: 'Niedostępny' }, { type: 'muted', label: 'Minął' }]} />
-      <div className="no-trips mt-sm">{rangeError || (rangeText ? `Wybrany termin: ${rangeText}` : 'Kliknij datę początkową, a potem końcową albo wybierz liczbę dni.')}</div>
+      <div className="no-trips mt-sm">{rangeError || (rangeText ? `Wybrany termin: ${rangeText}` : 'Kliknij datę początkową, a potem końcową albo wpisz daty w formularzu.')}</div>
     </>
   );
 }

@@ -32,6 +32,7 @@ html {
 body {
   min-width: 320px;
   margin: 0;
+  overflow-x: hidden;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.92), rgba(246, 246, 246, 0) 320px),
     var(--paper);
@@ -132,8 +133,9 @@ img {
 .route-actions button,
 .atab,
 .cancel-btn,
-.restore-btn {
-  min-height: 40px;
+.restore-btn,
+.status-btn {
+  min-height: 44px;
   border-radius: var(--radius);
   font-weight: 750;
   transition: transform 0.16s ease, background 0.16s ease, border-color 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
@@ -397,7 +399,7 @@ img {
   margin-top: 24px;
 }
 
-.trust-badges span {
+.trust-badge {
   display: inline-flex;
   align-items: center;
   min-height: 34px;
@@ -408,6 +410,10 @@ img {
   color: rgba(255, 255, 255, 0.88);
   font-size: 13px;
   font-weight: 760;
+}
+
+.trust-badge:hover {
+  background: rgba(255, 255, 255, 0.18);
 }
 
 .hero-actions {
@@ -728,6 +734,68 @@ aside .card:last-child {
   font-size: 18px;
 }
 
+.booking-summary,
+.payment-summary,
+.request-meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 14px 0;
+}
+
+.booking-summary div,
+.payment-summary div,
+.request-meta div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+}
+
+.booking-summary span,
+.payment-summary span,
+.request-meta span {
+  display: block;
+  color: var(--muted);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.booking-summary strong,
+.payment-summary strong,
+.request-meta strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--ink);
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.range-status {
+  margin: -2px 0 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.45;
+}
+
+.range-status.ok {
+  border-color: rgba(34, 122, 93, 0.28);
+  background: var(--success-bg);
+  color: var(--success);
+}
+
+.range-status.err {
+  border-color: rgba(238, 43, 71, 0.24);
+  background: var(--danger-bg);
+  color: #9E1830;
+}
+
 .fleet-meta {
   display: flex;
   flex-wrap: wrap;
@@ -739,11 +807,14 @@ aside .card:last-child {
 .badge {
   display: inline-flex;
   align-items: center;
+  max-width: 100%;
   min-height: 28px;
   padding: 0 10px;
   border-radius: 999px;
   font-size: 12px;
   font-weight: 800;
+  line-height: 1.2;
+  white-space: normal;
 }
 
 .pill {
@@ -891,6 +962,19 @@ aside .card:last-child {
   box-shadow: inset 0 0 0 1px rgba(34, 122, 93, 0.18);
 }
 
+.day-price {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  color: var(--ink-soft);
+  font-size: 10px;
+  font-weight: 850;
+  line-height: 1.1;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .calendar-day.available.confirmed .seat-count {
   color: var(--accent);
   box-shadow: inset 0 0 0 1px rgba(238, 43, 71, 0.24);
@@ -948,17 +1032,6 @@ aside .card:last-child {
   color: var(--muted);
   font-size: 12px;
   font-weight: 760;
-}
-
-.range-presets {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  margin-top: 12px;
-}
-
-.range-presets button {
-  min-width: 0;
 }
 
 .calendar-legend span {
@@ -1338,6 +1411,11 @@ form .btn-primary,
   gap: 16px;
 }
 
+.res-head > div,
+.admin-trip > div {
+  min-width: 0;
+}
+
 .res-head strong,
 .at-date {
   display: block;
@@ -1381,12 +1459,72 @@ form .btn-primary,
   gap: 16px;
 }
 
+.requests-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  align-items: start;
+}
+
+.break-text,
+.notes-block,
+.res-card,
+.request-meta,
+.payment-summary {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+.notes-block {
+  white-space: pre-wrap;
+}
+
 .admin-inline-form {
   display: grid;
   grid-template-columns: minmax(110px, 0.75fr) minmax(120px, 0.8fr) minmax(160px, 1.2fr) auto auto;
   gap: 8px;
   align-items: center;
   margin-top: 12px;
+}
+
+.payment-form,
+.request-form-row {
+  display: grid;
+  gap: 8px;
+  align-items: center;
+  margin-top: 12px;
+}
+
+.payment-form {
+  grid-template-columns: minmax(110px, 0.7fr) minmax(130px, 0.8fr) minmax(160px, 1fr);
+}
+
+.payment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  grid-column: 1 / -1;
+  gap: 8px;
+}
+
+.payment-actions button,
+.request-form-row button,
+.res-actions button {
+  min-height: 44px;
+}
+
+.request-form-row {
+  grid-template-columns: minmax(130px, 0.7fr) minmax(160px, 1fr) auto;
+}
+
+.tow-request-form {
+  grid-template-columns: minmax(130px, 0.7fr) minmax(110px, 0.55fr) minmax(160px, 1fr) auto;
+}
+
+.request-form-row input,
+.request-form-row select,
+.payment-form input,
+.payment-form select {
+  min-width: 0;
 }
 
 .admin-block-form {
@@ -1452,7 +1590,21 @@ form .btn-primary,
 }
 
 .contact-grid {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.contact-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.contact-actions .btn-primary,
+.contact-actions .btn-outline {
+  min-width: 0;
+  flex: 1 1 140px;
+  text-decoration: none;
 }
 
 .eyebrow {
@@ -1734,7 +1886,7 @@ form .btn-primary,
     margin-top: 18px;
   }
 
-  .trust-badges span {
+  .trust-badge {
     min-height: 30px;
     padding: 0 10px;
     font-size: 12px;
@@ -1817,17 +1969,24 @@ form .btn-primary,
     font-size: 9px;
   }
 
+  .day-price {
+    font-size: 8px;
+  }
+
   .fg2,
   .tow-form-grid,
   .summary-grid,
+  .booking-summary,
+  .payment-summary,
+  .request-meta,
   .admin-grid,
+  .requests-grid,
   .admin-inline-form,
-  .admin-block-form {
+  .admin-block-form,
+  .payment-form,
+  .request-form-row,
+  .tow-request-form {
     grid-template-columns: 1fr;
-  }
-
-  .range-presets {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .res-head,

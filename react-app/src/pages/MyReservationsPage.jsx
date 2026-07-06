@@ -17,7 +17,7 @@ function reservationStatusLabel(status, tripCancelled) {
   return 'oczekuje na potwierdzenie';
 }
 
-export function MyReservationsPage({ currentUser, showPage, myReservations, myResMsg, myReservationsLoading, cancelReservation }) {
+export function MyReservationsPage({ currentUser, showPage, myReservations, myResMsg, myReservationsLoading, cancelReservation, cancelingReservationId }) {
   const total = myReservations.length;
   const upcoming = myReservations.filter((res) => res.trips?.date && new Date(res.trips.date) >= new Date() && !TERMINAL_STATUSES.includes(res.status) && !res.trips?.cancelled).length;
   const cancelled = myReservations.filter((res) => CANCELLED_STATUSES.includes(res.status) || res.trips?.cancelled).length;
@@ -37,7 +37,8 @@ export function MyReservationsPage({ currentUser, showPage, myReservations, myRe
               const route = res.trips?.route;
               const label = reservationStatusLabel(res.status, res.trips?.cancelled);
               const isInactive = TERMINAL_STATUSES.includes(res.status) || res.trips?.cancelled;
-              return <div className="res-card" key={res.id}><div className="res-head"><div><strong>{res.trips?.date ? formatDate(res.trips.date) : '-'}</strong><span>{route === 'JW' ? 'Jarosław -> Wiedeń' : 'Wiedeń -> Jarosław'}</span></div><span className={`badge ${isInactive ? 'badge-cancel' : 'badge-ok'}`}>{label}</span></div><p className="muted">Miejsc: {res.seats}{res.notes ? ` · ${res.notes}` : ''}</p>{!isInactive ? <button className="cancel-btn" onClick={() => cancelReservation(res.id)} type="button">Anuluj rezerwację</button> : null}</div>;
+              const isCanceling = cancelingReservationId === res.id;
+              return <div className="res-card" key={res.id}><div className="res-head"><div><strong>{res.trips?.date ? formatDate(res.trips.date) : '-'}</strong><span>{route === 'JW' ? 'Jarosław -> Wiedeń' : 'Wiedeń -> Jarosław'}</span></div><span className={`badge ${isInactive ? 'badge-cancel' : 'badge-ok'}`}>{label}</span></div><p className="muted">Miejsc: {res.seats}</p>{res.notes ? <p className="muted notes-block">{res.notes}</p> : null}{!isInactive ? <button className="cancel-btn" onClick={() => cancelReservation(res.id)} type="button" disabled={Boolean(cancelingReservationId)}>{isCanceling ? 'Anuluję...' : 'Anuluj rezerwację'}</button> : null}</div>;
             })}
           </>
         ) : null}
