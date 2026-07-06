@@ -1,4 +1,16 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin/
+Disallow: /login
+Disallow: /login/
+Disallow: /auth
+Disallow: /auth/
+Disallow: /my-reservations
+Disallow: /my-reservations/
+Disallow: /reset-password
+Disallow: /reset-password/
+Disallow: /verify-email
+Disallow: /verify-email/
 
 Sitemap: https://strona-taty-darii.onrender.com/sitemap.xml

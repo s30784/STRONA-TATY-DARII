@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { Card } from '../components/Card.jsx';
 import { CalendarLegend } from '../components/CalendarLegend.jsx';
 import { Hero } from '../components/Hero.jsx';
@@ -58,14 +59,20 @@ export function RentalPage(props) {
 
   return (
     <div className="page active">
-      <Hero title="Wynajem busów w okolicach Rzeszowa" text="Wybierz pojazd, zakres dat i wyślij zapytanie o wynajem bez logowania." />
+      <Hero title="Wynajem busa w Jarosławiu i na Podkarpaciu" text="Wybierz pojazd, zakres dat i wyślij zapytanie o wynajem bez logowania." />
       <section className="section">
+        <div className="seo-panel mb">
+          <h2>Bus do wynajęcia Jarosław i okolice</h2>
+          <p>Wynajem busa Jarosław i wynajem busa Podkarpacie to rozwiązanie dla wyjazdów rodzinnych, firmowych oraz transportu grupowego po wcześniejszym ustaleniu szczegółów. Wybierz bus do wynajęcia, zaznacz termin i wyślij zapytanie.</p>
+          <p>Obsługujemy zapytania z Jarosławia, okolic Jarosławia, Przeworska, Przemyśla i Rzeszowa. Trasy indywidualne oraz dłuższe przejazdy ustalamy telefonicznie.</p>
+          <div className="seo-text-actions"><Link className="btn-outline" to="/contact">Kontakt w sprawie wynajmu</Link></div>
+        </div>
         <div className="split-layout">
           <div>
             <div className="fleet-grid">
               {Object.entries(BUS_DETAILS).map(([id, item]) => (
                 <article className={`fleet-card ${selectedBus === id ? 'selected' : ''}`} key={id}>
-                  <img src={item.image} alt={item.name} />
+                  <img src={item.image} alt={`${item.name} - wynajem busa w Jarosławiu`} />
                   <div className="fleet-card-body">
                     <h3>{item.name}</h3>
                     <p className="muted">{item.description}</p>

@@ -22,8 +22,8 @@ export function HomePage({ showPage, currentUser, contactEmail, contactPhone, co
     <div className="page active">
       <section className="home-hero">
         <div className="home-hero-inner">
-          <h1>Transport dla ludzi, grup i pojazdów na trasie Polska-Austria</h1>
-          <p>Wynajem busów w okolicach Rzeszowa i Jarosławia, regularne przejazdy Jarosław-Wiedeń oraz transport lawetą na tej samej trasie.</p>
+          <h1>Transport z Jarosławia i Podkarpacia</h1>
+          <p>Przejazdy Jarosław-Wiedeń, wynajem busa w okolicach Jarosławia oraz laweta i transport pojazdów na trasach Polska-Austria.</p>
           <div className="trust-badges" aria-label="Najważniejsze usługi">
             {trustBadges.map(([badge, page]) => <button className="trust-badge" key={badge} onClick={() => showPage(page)} type="button">{badge}</button>)}
           </div>
@@ -59,6 +59,30 @@ export function HomePage({ showPage, currentUser, contactEmail, contactPhone, co
               </div>
             </article>
           ))}
+        </div>
+      </section>
+      <section className="section seo-section">
+        <div className="seo-panel">
+          <h2>Usługi transportowe Jarosław, Podkarpacie i Austria</h2>
+          <p>Obsługujemy klientów z Jarosławia i okolic oraz realizujemy usługi na terenie Podkarpacia. W sprawie tras indywidualnych, przejazdu do Austrii albo transportu pojazdu najlepiej skontaktować się telefonicznie i ustalić szczegóły.</p>
+          <div className="seo-copy-grid">
+            <article>
+              <h3>Przewóz osób Jarosław - Wiedeń</h3>
+              <p>Regularne przejazdy busem na trasie Jarosław - Wiedeń i Wiedeń - Jarosław mają widoczne terminy, cenę oraz wolne miejsca w kalendarzu rezerwacji.</p>
+            </article>
+            <article>
+              <h3>Wynajem busa</h3>
+              <p>Wynajem busa sprawdza się przy wyjazdach rodzinnych, firmowych i grupowych. Formularz pozwala wybrać termin i wysłać zapytanie o dostępność.</p>
+            </article>
+            <article>
+              <h3>Laweta i transport</h3>
+              <p>Laweta obejmuje transport pojazdów, maszyn oraz wybranych towarów. Opisz trasę i ładunek w formularzu, a potwierdzimy możliwość transportu.</p>
+            </article>
+            <article>
+              <h3>Jarosław i okolice</h3>
+              <p>Oferta jest kierowana do osób z Jarosławia, Przeworska, Przemyśla, Rzeszowa i innych miejscowości Podkarpacia, po wcześniejszym ustaleniu trasy.</p>
+            </article>
+          </div>
         </div>
       </section>
     </div>

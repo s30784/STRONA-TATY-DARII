@@ -1,6 +1,7 @@
 import React from 'react';
 import { Navigate, NavLink, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
 import { ProtectedAdminRoute } from './components/ProtectedAdminRoute.jsx';
+import { Seo } from './components/Seo.jsx';
 import { ADMIN_ROLES, BLOCKING_RESERVATION_STATUSES, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF, MONTHS, MAX_SEATS, TERMS_VERSION } from './data/constants.js';
 import { ROUTE_DETAILS } from './data/routeDetails.js';
 import { BUS_DETAILS } from './data/vehicles.js';
@@ -896,6 +897,7 @@ export function App() {
 
   return (
     <div className="site">
+      <Seo pathname={pathname} contactEmail={CONTACT_EMAIL} />
       <nav className="nav">
         <NavLink className="nav-logo" to="/">
           <span className="nav-logo-main">Wynajem Busów</span>

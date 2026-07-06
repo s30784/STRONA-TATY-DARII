@@ -10,7 +10,14 @@ export function ContactPage({ contactEmail, contactPhone, contactPhoneHref }) {
 
   return (
     <div className="page active">
-      <div className="hero"><h1>Kontakt i zapytania</h1><p>Wybierz usługę na stronie i wyślij zapytanie z kompletem danych do wyceny.</p></div>
+      <div className="hero"><h1>Kontakt</h1><p>Szybki kontakt w sprawie przejazdu, wynajmu busa, lawety albo transportu pojazdu.</p></div>
+      <section className="section seo-section">
+        <div className="seo-panel">
+          <h2>Kontakt w sprawie transportu z Jarosławia</h2>
+          <p>Zadzwoń pod numer <a href={contactPhoneHref}>{contactPhone}</a> albo napisz na <a href={`mailto:${contactEmail}`}>{contactEmail}</a>. Przyjmujemy zapytania o przejazdy Jarosław - Wiedeń, wynajem busa, lawetę oraz transport wybranych towarów.</p>
+          <p>Obsługujemy klientów z Jarosławia i okolic oraz zapytania z Podkarpacia. W sprawie tras indywidualnych najlepiej skontaktować się telefonicznie i ustalić szczegóły.</p>
+        </div>
+      </section>
       <section className="section contact-grid">
         <Card>
           <div className="eyebrow">Kontakt bezpośredni</div>

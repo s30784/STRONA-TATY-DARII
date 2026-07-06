@@ -94,8 +94,14 @@ export function BookingPage(props) {
 
   return (
     <div className="page active">
-      <Hero title="Przejazdy Jarosław-Wiedeń" text="Sprawdź trasę, przystanki i dostępne terminy. Rezerwacja zamyka się automatycznie, gdy nie ma już wolnych miejsc." />
+      <Hero title="Busy Jarosław - Wiedeń" text="Sprawdź trasę, przystanki i dostępne terminy. Rezerwacja zamyka się automatycznie, gdy nie ma już wolnych miejsc." />
       <section className="section">
+        <div className="seo-panel mb">
+          <h2>Przewóz osób Jarosław Wiedeń</h2>
+          <p>Busy Jarosław Wiedeń i Wiedeń Jarosław możesz sprawdzić w kalendarzu poniżej. Przy dostępnym kursie widać wolne miejsca, cenę przejazdu i formularz rezerwacji miejsca.</p>
+          <p>Jeżeli potrzebujesz przejazdu dla większej grupy albo masz pytanie o trasę, skorzystaj z formularza lub przejdź do kontaktu.</p>
+          <div className="seo-text-actions"><Link className="btn-outline" to="/contact">Kontakt w sprawie przejazdu</Link></div>
+        </div>
         <div className="route-switch">
           <button className={selectedRoute === 'JW' ? 'active' : ''} onClick={() => setSelectedRoute('JW')} type="button">{'Jarosław -> Wiedeń'}</button>
           <button className={selectedRoute === 'WJ' ? 'active' : ''} onClick={() => setSelectedRoute('WJ')} type="button">{'Wiedeń -> Jarosław'}</button>
