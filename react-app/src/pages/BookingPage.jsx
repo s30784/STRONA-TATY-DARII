@@ -103,13 +103,21 @@ export function BookingPage(props) {
         <div className="price-callout"><span>Cena miejsca</span><strong>{priceLabel}</strong></div>
         <div className="split-layout mb">
           <Card title={routeDetails.title}>
-            <RouteDiagram routeDetails={routeDetails} chooseStop={chooseStop} />
+            <RouteDiagram routeDetails={routeDetails} chooseStop={chooseStop} pickupStop={pickupStop} dropoffStop={dropoffStop} />
           </Card>
           <Card title="Przystanki na trasie">
             <div className="stops-grid">
-              {routeDetails.stops.map((stop, index) => (
-                <button className="stop-item" key={stop.name} type="button" onClick={() => chooseStop(index, 'pickup')}><strong>{index + 1}. {stop.name}</strong><span>{stop.desc}</span></button>
-              ))}
+              {routeDetails.stops.map((stop, index) => {
+                const isPickup = pickupStop === stop.name;
+                const isDropoff = dropoffStop === stop.name;
+                return (
+                  <button className={`stop-item ${isPickup ? 'selected-pickup' : ''} ${isDropoff ? 'selected-dropoff' : ''}`} key={stop.name} type="button" onClick={() => chooseStop(index, 'pickup')}>
+                    <strong>{index + 1}. {stop.name}</strong>
+                    <span>{stop.desc}</span>
+                    <SelectedStopBadges isPickup={isPickup} isDropoff={isDropoff} />
+                  </button>
+                );
+              })}
             </div>
           </Card>
         </div>
@@ -166,19 +174,40 @@ export function BookingPage(props) {
   );
 }
 
-function RouteDiagram({ routeDetails, chooseStop }) {
+function SelectedStopBadges({ isPickup, isDropoff }) {
+  if (!isPickup && !isDropoff) return null;
+  return (
+    <span className="selected-stop-badges">
+      {isPickup ? <span className="selected-stop-chip pickup">Wsiadam</span> : null}
+      {isDropoff ? <span className="selected-stop-chip dropoff">Wysiadam</span> : null}
+    </span>
+  );
+}
+
+function RouteDiagram({ routeDetails, chooseStop, pickupStop, dropoffStop }) {
   return (
     <div className="route-diagram">
       <div className="route-line"></div>
-      {routeDetails.stops.map((stop, index) => (
-        <div className="route-stop-wrap" key={stop.name}>
-          <button className={`route-stop ${index === 0 ? 'start' : index === routeDetails.stops.length - 1 ? 'end' : ''}`} type="button" onClick={() => chooseStop(index, 'pickup')}>
-            <span className="route-dot">{index + 1}</span>
-            <span><strong>{stop.name}</strong><span>{stop.desc}</span></span>
-          </button>
-          <div className="route-actions"><button type="button" onClick={() => chooseStop(index, 'pickup')}>Wsiadam tutaj</button><button type="button" onClick={() => chooseStop(index, 'dropoff')}>Wysiadam tutaj</button></div>
-        </div>
-      ))}
+      {routeDetails.stops.map((stop, index) => {
+        const isPickup = pickupStop === stop.name;
+        const isDropoff = dropoffStop === stop.name;
+        return (
+          <div className={`route-stop-wrap ${isPickup ? 'selected-pickup' : ''} ${isDropoff ? 'selected-dropoff' : ''}`} key={stop.name}>
+            <button className={`route-stop ${index === 0 ? 'start' : index === routeDetails.stops.length - 1 ? 'end' : ''}`} type="button" onClick={() => chooseStop(index, 'pickup')}>
+              <span className="route-dot">{index + 1}</span>
+              <span>
+                <strong>{stop.name}</strong>
+                <span>{stop.desc}</span>
+                <SelectedStopBadges isPickup={isPickup} isDropoff={isDropoff} />
+              </span>
+            </button>
+            <div className="route-actions">
+              <button className={isPickup ? 'selected-action' : ''} type="button" onClick={() => chooseStop(index, 'pickup')} aria-pressed={isPickup}>Wsiadam tutaj</button>
+              <button className={isDropoff ? 'selected-action' : ''} type="button" onClick={() => chooseStop(index, 'dropoff')} aria-pressed={isDropoff}>Wysiadam tutaj</button>
+            </div>
+          </div>
+        );
+      })}
       <a className="map-link" href={routeDetails.mapUrl} target="_blank" rel="noreferrer">Otwórz trasę w Google Maps</a>
     </div>
   );
