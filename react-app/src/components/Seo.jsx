@@ -1,6 +1,7 @@
 import React from 'react';
 
 const FALLBACK_ORIGIN = 'https://busyjaroslaw.pl';
+const FALLBACK_CONTACT_EMAIL = 'kontakt@busyjaroslaw.pl';
 const SITE_NAME = 'Wynajem Busów Jarosław';
 const DEFAULT_IMAGE_PATH = '/og-image.svg';
 const CONTACT_PHONE_E164 = '+48663063364';
@@ -129,7 +130,7 @@ function service(name, url, serviceType) {
 
 function structuredData(contactEmail) {
   const url = `${baseUrl()}/`;
-  const email = String(contactEmail || import.meta.env.VITE_CONTACT_EMAIL || '').trim();
+  const email = String(contactEmail || import.meta.env.VITE_CONTACT_EMAIL || FALLBACK_CONTACT_EMAIL).trim();
   const services = [
     service('Przewóz osób Jarosław - Wiedeń', `${baseUrl()}/booking`, 'Przewóz osób Jarosław - Wiedeń'),
     service('Wynajem busa', `${baseUrl()}/rental`, 'Wynajem busa'),

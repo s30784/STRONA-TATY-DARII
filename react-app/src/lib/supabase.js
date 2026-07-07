@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 
+const DEFAULT_CONTACT_EMAIL = 'kontakt@busyjaroslaw.pl';
+
 function readEnv(name) {
   return String(import.meta.env[name] || '').trim();
 }
@@ -11,7 +13,13 @@ const env = {
   VITE_CONTACT_EMAIL: readEnv('VITE_CONTACT_EMAIL')
 };
 
-const missing = Object.entries(env)
+const requiredEnv = {
+  VITE_SUPABASE_URL: env.VITE_SUPABASE_URL,
+  VITE_SUPABASE_PUBLISHABLE_KEY: env.VITE_SUPABASE_PUBLISHABLE_KEY,
+  VITE_PUBLIC_APP_ORIGIN: env.VITE_PUBLIC_APP_ORIGIN
+};
+
+const missing = Object.entries(requiredEnv)
   .filter(([, value]) => !value)
   .map(([name]) => name);
 
@@ -31,7 +39,7 @@ const isBrowser = typeof window !== 'undefined';
 const currentHost = isBrowser ? window.location.hostname : '';
 
 export const PUBLIC_APP_ORIGIN = normalizeOrigin(env.VITE_PUBLIC_APP_ORIGIN);
-export const CONTACT_EMAIL = env.VITE_CONTACT_EMAIL;
+export const CONTACT_EMAIL = env.VITE_CONTACT_EMAIL || DEFAULT_CONTACT_EMAIL;
 export const APP_ORIGIN = isBrowser && (currentHost === 'localhost' || currentHost === '127.0.0.1')
   ? PUBLIC_APP_ORIGIN
   : isBrowser
