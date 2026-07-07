@@ -348,7 +348,7 @@ cp .env.example .env.local
 VITE_SUPABASE_URL=https://...supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=...
 VITE_PUBLIC_APP_ORIGIN=http://localhost:5173
-VITE_CONTACT_EMAIL=kontakt@example.com
+VITE_CONTACT_EMAIL=kontakt@busyjaroslaw.pl
 ```
 
 Dev:

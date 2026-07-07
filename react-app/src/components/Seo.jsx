@@ -130,7 +130,7 @@ function service(name, url, serviceType) {
 
 function structuredData(contactEmail) {
   const url = `${baseUrl()}/`;
-  const email = String(contactEmail || import.meta.env.VITE_CONTACT_EMAIL || FALLBACK_CONTACT_EMAIL).trim();
+  const email = String(contactEmail || FALLBACK_CONTACT_EMAIL).trim();
   const services = [
     service('Przewóz osób Jarosław - Wiedeń', `${baseUrl()}/booking`, 'Przewóz osób Jarosław - Wiedeń'),
     service('Wynajem busa', `${baseUrl()}/rental`, 'Wynajem busa'),

@@ -6,6 +6,11 @@ function readEnv(name) {
   return String(import.meta.env[name] || '').trim();
 }
 
+function publicContactEmail(value) {
+  const email = String(value || '').trim().toLowerCase();
+  return email === DEFAULT_CONTACT_EMAIL ? email : DEFAULT_CONTACT_EMAIL;
+}
+
 const env = {
   VITE_SUPABASE_URL: readEnv('VITE_SUPABASE_URL'),
   VITE_SUPABASE_PUBLISHABLE_KEY: readEnv('VITE_SUPABASE_PUBLISHABLE_KEY'),
@@ -39,7 +44,7 @@ const isBrowser = typeof window !== 'undefined';
 const currentHost = isBrowser ? window.location.hostname : '';
 
 export const PUBLIC_APP_ORIGIN = normalizeOrigin(env.VITE_PUBLIC_APP_ORIGIN);
-export const CONTACT_EMAIL = env.VITE_CONTACT_EMAIL || DEFAULT_CONTACT_EMAIL;
+export const CONTACT_EMAIL = publicContactEmail(env.VITE_CONTACT_EMAIL);
 export const APP_ORIGIN = isBrowser && (currentHost === 'localhost' || currentHost === '127.0.0.1')
   ? PUBLIC_APP_ORIGIN
   : isBrowser
