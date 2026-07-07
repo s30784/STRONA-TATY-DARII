@@ -13,4 +13,4 @@ Disallow: /reset-password/
 Disallow: /verify-email
 Disallow: /verify-email/
 
-Sitemap: https://strona-taty-darii.onrender.com/sitemap.xml
+Sitemap: https://busyjaroslaw.pl/sitemap.xml

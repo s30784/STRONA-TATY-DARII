@@ -1,6 +1,6 @@
 import React from 'react';
 
-const FALLBACK_ORIGIN = 'https://strona-taty-darii.onrender.com';
+const FALLBACK_ORIGIN = 'https://busyjaroslaw.pl';
 const SITE_NAME = 'Wynajem Busów Jarosław';
 const DEFAULT_IMAGE_PATH = '/og-image.svg';
 const CONTACT_PHONE_E164 = '+48663063364';

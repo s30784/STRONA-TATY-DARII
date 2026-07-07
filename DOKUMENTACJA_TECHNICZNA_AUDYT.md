@@ -314,6 +314,8 @@ Zamkniete i potwierdzone testami produkcyjnymi MVP:
 - Reczna ewidencja platnosci dziala.
 - Zapytania rental/tow zapisuja sie i sa obslugiwane w panelu admina.
 - `notification_events` powstaja po rezerwacji, anulowaniu oraz rental/tow request.
+- Domena produkcyjna `https://busyjaroslaw.pl` jest podpieta.
+- SEO techniczne dla publicznych tras ma `title`, `meta`, `sitemap`, `robots`, Open Graph i structured data.
 
 TODO po MVP:
 - Poprawki wizualne/UX.
@@ -321,8 +323,6 @@ TODO po MVP:
 - Rate limiting.
 - Realna wysylka `notification_events`.
 - Regulamin i polityka prywatnosci.
-- SEO: `title`, `meta`, `sitemap`, `robots`, Open Graph, structured data.
-- Domena produkcyjna.
 - Backupy Supabase.
 - Monitoring bledow.
 - Aktualizacja zaleznosci / `npm audit`.
@@ -402,10 +402,10 @@ VITE_CONTACT_EMAIL=
 Po zmianie envow trzeba przebudowac aplikacje, bo Vite wstrzykuje `VITE_*` na etapie builda.
 
 Custom Domain i SSL:
-- Dodac domene w Render Dashboard.
-- Ustawic DNS wedlug instrukcji Rendera dla domeny/root/subdomeny.
-- Po weryfikacji Render wystawia SSL automatycznie.
-- Zaktualizowac `VITE_PUBLIC_APP_ORIGIN`, Supabase Auth Site URL, Additional Redirect URLs, `sitemap.xml`, `robots.txt`, `og:url`.
+- Domena produkcyjna: `https://busyjaroslaw.pl`.
+- DNS i SSL sa podpiete po stronie Render/hostingu.
+- Publiczne URL-e SEO (`sitemap.xml`, `robots.txt`, fallback canonical/OG/JSON-LD) wskazuja `https://busyjaroslaw.pl`.
+- Supabase Auth Site URL i Additional Redirect URLs sa utrzymywane recznie w panelu Supabase.
 
 Zrodla dla Render:
 - https://render.com/docs/static-sites
@@ -442,6 +442,8 @@ Gotowe i potwierdzone testami produkcyjnymi MVP:
 - Rental/tow requests zapisuja sie w bazie i sa widoczne w panelu admina.
 - Admin zmienia status rental/tow request oraz `estimated_price` dla lawety.
 - `notification_events` powstaja po rezerwacji, anulowaniu oraz rental/tow request.
+- Domena produkcyjna `https://busyjaroslaw.pl` dziala.
+- SEO techniczne publicznych tras jest wdrozone.
 
 Do potwierdzenia / utrzymania operacyjnego:
 - Supabase Auth redirect URLs sa poprawne.
@@ -453,8 +455,6 @@ Nadal do zrobienia:
 - Cloudflare Turnstile / antyspam.
 - Rate limiting.
 - Realna wysylka `notification_events`.
-- Domena produkcyjna.
-- SEO: `title`, `meta`, `sitemap`, `robots`, Open Graph, structured data.
 - Regulamin i polityka prywatnosci.
 - Backupy Supabase.
 - Monitoring bledow.
@@ -522,8 +522,7 @@ Ryzyka i TODO nadal otwarte:
 - Brak rate limitingu.
 - Brak faktycznej wysylki powiadomien admina.
 - Brak backupow opisanych w repo.
-- Redirecty Auth i custom domain/SSL.
-- SEO/sitemap/robots/OG.
+- Supabase Auth redirect URLs do utrzymania recznie w panelu Supabase.
 - Brak monitoringu bledow.
 - Podatnosci `vite/esbuild` z `npm audit`.
 - Regulamin i polityka prywatnosci do finalizacji.
