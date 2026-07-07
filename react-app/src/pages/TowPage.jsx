@@ -2,8 +2,9 @@ import { Link } from 'react-router-dom';
 import { Card } from '../components/Card.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { Message } from '../components/Message.jsx';
+import { TurnstileWidget } from '../components/TurnstileWidget.jsx';
 
-export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, contactPhone, contactPhoneHref }) {
+export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, contactPhone, contactPhoneHref, onTurnstileVerify, turnstileResetKey }) {
   return (
     <div className="page active">
       <Hero title="Laweta Jarosław i transport pojazdów" text="Przewóz samochodów, motocykli i pojazdów niesprawnych na trasie Jarosław-Wiedeń oraz w miejscowościach po drodze." />
@@ -30,6 +31,7 @@ export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, 
                 <div className="fg"><label>Miejsce dostawy</label><input name="to" /></div>
                 <div className="fg2"><div className="fg"><label>Preferowana data</label><input type="date" name="date" /></div><div className="fg"><label>Kierunek</label><select name="direction"><option>{'Polska -> Austria'}</option><option>{'Austria -> Polska'}</option></select></div></div>
                 <div className="fg"><label>Dodatkowe informacje</label><textarea name="notes" rows="3"></textarea></div>
+                <TurnstileWidget onVerify={onTurnstileVerify} resetKey={turnstileResetKey} />
                 <button className="btn-primary" type="submit" disabled={towSubmitting}>{towSubmitting ? 'Zapisuję zapytanie...' : 'Przygotuj zapytanie'}</button>
               </form>
             </Card>

@@ -3,6 +3,7 @@ import { Card } from '../components/Card.jsx';
 import { CalendarLegend } from '../components/CalendarLegend.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { Message } from '../components/Message.jsx';
+import { TurnstileWidget } from '../components/TurnstileWidget.jsx';
 import { Weekdays } from '../components/Weekdays.jsx';
 import { MONTHS } from '../data/constants.js';
 import { BUS_DETAILS, busIdFromLabel } from '../data/vehicles.js';
@@ -50,7 +51,9 @@ export function RentalPage(props) {
     rentalLoading,
     currentUser,
     contactPhone,
-    contactPhoneHref
+    contactPhoneHref,
+    onTurnstileVerify,
+    turnstileResetKey
   } = props;
   const bus = BUS_DETAILS[selectedBus];
   const rangeText = selectedRangeText(rentalRangeStart, rentalRangeEnd);
@@ -123,6 +126,7 @@ export function RentalPage(props) {
                 <div className="fg"><label>Email</label><input type="email" name="email" defaultValue={currentUser?.email || ''} placeholder="jan@example.com" autoComplete="email" /></div>
                 <div className="fg"><label>Telefon</label><input type="tel" name="phone" placeholder="+48 000 000 000" autoComplete="tel" /></div>
                 <div className="fg"><label>Opis wyjazdu</label><textarea name="notes" rows="3" placeholder="np. wesele, lotnisko, wyjazd firmowy"></textarea></div>
+                <TurnstileWidget onVerify={onTurnstileVerify} resetKey={turnstileResetKey} />
                 <button className="btn-primary" type="submit" disabled={submitDisabled}>{rentalSubmitting ? 'Zapisuję zapytanie...' : 'Wyślij zapytanie'}</button>
               </form>
             </Card>

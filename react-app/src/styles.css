@@ -869,6 +869,24 @@ aside .card:last-child {
   color: #9E1830;
 }
 
+.turnstile-widget,
+.turnstile-placeholder {
+  max-width: 100%;
+  margin: 12px 0 14px;
+  overflow: hidden;
+}
+
+.turnstile-placeholder {
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--paper);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+  line-height: 1.4;
+}
+
 .fleet-meta {
   display: flex;
   flex-wrap: wrap;

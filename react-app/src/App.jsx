@@ -34,6 +34,27 @@ function dateMs(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+async function edgeFunctionErrorMessage(error, fallback) {
+  const response = error?.context;
+  if (response && typeof response.clone === 'function') {
+    try {
+      const payload = await response.clone().json();
+      if (payload?.message) return payload.message;
+    } catch {
+      try {
+        const text = await response.clone().text();
+        if (text) return text;
+      } catch {
+        // Keep the public fallback message.
+      }
+    }
+  }
+
+  const message = String(error?.message || '').trim();
+  if (message && !/non-2xx|FunctionsHttpError/i.test(message)) return message;
+  return fallback;
+}
+
 function currentRoutePrice(prices, route) {
   const now = Date.now();
   const routePrices = (prices || []).filter((price) => price?.route === route);
@@ -105,6 +126,8 @@ export function App() {
   const [rentalMsg, setRentalMsg] = React.useState(null);
   const [rentalSubmitting, setRentalSubmitting] = React.useState(false);
   const [rentalLoading, setRentalLoading] = React.useState(false);
+  const [rentalTurnstileToken, setRentalTurnstileToken] = React.useState(null);
+  const [rentalTurnstileResetKey, setRentalTurnstileResetKey] = React.useState(0);
   const rentalSubmittingRef = React.useRef(false);
 
   const [selectedRoute, setSelectedRoute] = React.useState('JW');
@@ -121,6 +144,9 @@ export function App() {
 
   const [towMsg, setTowMsg] = React.useState(null);
   const [towSubmitting, setTowSubmitting] = React.useState(false);
+  const [towTurnstileToken, setTowTurnstileToken] = React.useState(null);
+  const [towTurnstileResetKey, setTowTurnstileResetKey] = React.useState(0);
+  const towSubmittingRef = React.useRef(false);
   const [myReservations, setMyReservations] = React.useState([]);
   const [myResMsg, setMyResMsg] = React.useState(null);
   const [myReservationsLoading, setMyReservationsLoading] = React.useState(false);
@@ -215,6 +241,16 @@ export function App() {
   function showPage(path) {
     navigate(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function resetRentalTurnstile() {
+    setRentalTurnstileToken(null);
+    setRentalTurnstileResetKey((key) => key + 1);
+  }
+
+  function resetTowTurnstile() {
+    setTowTurnstileToken(null);
+    setTowTurnstileResetKey((key) => key + 1);
   }
 
   async function fetchTripsWithSeats(from, to) {
@@ -475,6 +511,10 @@ export function App() {
       setRentalMsg({ type: 'err', text: validationError });
       return;
     }
+    if (!rentalTurnstileToken) {
+      setRentalMsg({ type: 'err', text: 'Potwierdź, że nie jesteś robotem.' });
+      return;
+    }
     rentalSubmittingRef.current = true;
     setRentalSubmitting(true);
     try {
@@ -485,28 +525,40 @@ export function App() {
       });
       if (availabilityError) {
         setRentalMsg({ type: 'err', text: `Nie udało się sprawdzić zakresu wynajmu: ${availabilityError.message}` });
+        resetRentalTurnstile();
         return;
       }
       if (!available) {
         setRentalRangeError('Wybrany termin jest niedostępny. Wybierz inny zakres dat.');
         setRentalMsg({ type: 'err', text: 'Wybrany termin jest niedostępny. Wybierz inny zakres dat.' });
         await loadRentalCalendarBlocks(true);
+        resetRentalTurnstile();
         return;
       }
-      const { data: requestId, error } = await sb.rpc('create_rental_request', {
-        p_bus_id: selectedBus,
-        p_start_date: rentalRangeStart,
-        p_end_date: rentalRangeEnd,
-        p_phone: phone,
-        p_email: email,
-        p_message: notes || null
+      const { data, error } = await sb.functions.invoke('submit-rental-request', {
+        body: {
+          turnstileToken: rentalTurnstileToken,
+          p_bus_id: selectedBus,
+          p_start_date: rentalRangeStart,
+          p_end_date: rentalRangeEnd,
+          p_phone: phone,
+          p_email: email,
+          p_message: notes || null
+        }
       });
       if (error) {
-        console.error('create_rental_request failed', error);
-        setRentalMsg({ type: 'err', text: `Nie udało się zapisać zapytania: ${error.message}` });
+        console.error('submit-rental-request failed', error);
+        const message = await edgeFunctionErrorMessage(error, 'Nie udało się wysłać zapytania. Spróbuj ponownie.');
+        setRentalMsg({ type: 'err', text: message });
+        resetRentalTurnstile();
         return;
       }
-      if (!requestId) console.warn('create_rental_request returned empty request id');
+      if (data?.success !== true) {
+        setRentalMsg({ type: 'err', text: data?.message || 'Nie udało się wysłać zapytania. Spróbuj ponownie.' });
+        resetRentalTurnstile();
+        return;
+      }
+      if (!data?.request_id) console.warn('submit-rental-request returned empty request id');
       try {
         formEl.reset();
       } catch (resetError) {
@@ -515,11 +567,13 @@ export function App() {
       setRentalRangeStart(null);
       setRentalRangeEnd(null);
       setRentalRangeError(null);
+      resetRentalTurnstile();
       setRentalMsg({ type: 'ok', text: 'Zapytanie zostało wysłane. Skontaktujemy się z Tobą w celu potwierdzenia ceny.' });
       await loadRentalCalendarBlocks(true);
     } catch (error) {
       console.error('rental request submit failed', error);
       setRentalMsg({ type: 'err', text: 'Wystąpił błąd podczas wysyłania zapytania. Spróbuj ponownie.' });
+      resetRentalTurnstile();
     } finally {
       rentalSubmittingRef.current = false;
       setRentalSubmitting(false);
@@ -528,7 +582,7 @@ export function App() {
 
   async function submitTowRequest(event) {
     event.preventDefault();
-    if (towSubmitting) return;
+    if (towSubmittingRef.current) return;
     const formEl = event.currentTarget;
     const form = new FormData(event.currentTarget);
     const name = field(form, 'name');
@@ -552,27 +606,46 @@ export function App() {
       setTowMsg({ type: 'err', text: validationError });
       return;
     }
+    if (!towTurnstileToken) {
+      setTowMsg({ type: 'err', text: 'Potwierdź, że nie jesteś robotem.' });
+      return;
+    }
+    towSubmittingRef.current = true;
     setTowSubmitting(true);
     try {
-      const { error } = await sb.rpc('create_tow_request', {
-        p_pickup_location: from,
-        p_dropoff_location: to,
-        p_vehicle_info: `${car} | Stan: ${state} | Kierunek: ${direction} | Preferowana data: ${date}`,
-        p_phone: phone,
-        p_email: email,
-        p_message: `Imię i nazwisko: ${name}${notes ? ` | ${notes}` : ''}`
+      const { data, error } = await sb.functions.invoke('submit-tow-request', {
+        body: {
+          turnstileToken: towTurnstileToken,
+          p_pickup_location: from,
+          p_dropoff_location: to,
+          p_vehicle_info: `${car} | Stan: ${state} | Kierunek: ${direction} | Preferowana data: ${date}`,
+          p_phone: phone,
+          p_email: email,
+          p_message: `Imię i nazwisko: ${name}${notes ? ` | ${notes}` : ''}`
+        }
       });
       if (error) {
-        console.error('create_tow_request failed', error);
-        setTowMsg({ type: 'err', text: `Nie udało się zapisać zapytania: ${error.message}` });
+        console.error('submit-tow-request failed', error);
+        const message = await edgeFunctionErrorMessage(error, 'Nie udało się wysłać zapytania. Spróbuj ponownie.');
+        setTowMsg({ type: 'err', text: message });
+        resetTowTurnstile();
         return;
       }
+      if (data?.success !== true) {
+        setTowMsg({ type: 'err', text: data?.message || 'Nie udało się wysłać zapytania. Spróbuj ponownie.' });
+        resetTowTurnstile();
+        return;
+      }
+      if (!data?.request_id) console.warn('submit-tow-request returned empty request id');
       formEl.reset();
+      resetTowTurnstile();
       setTowMsg({ type: 'ok', text: 'Zapytanie zostało wysłane. Skontaktujemy się z Tobą w celu potwierdzenia szczegółów.' });
     } catch (error) {
       console.error('tow request submit failed', error);
       setTowMsg({ type: 'err', text: 'Wystąpił błąd podczas wysyłania zapytania. Spróbuj ponownie.' });
+      resetTowTurnstile();
     } finally {
+      towSubmittingRef.current = false;
       setTowSubmitting(false);
     }
   }
@@ -934,10 +1007,10 @@ export function App() {
 
       <Routes>
         <Route path="/" element={<HomePage showPage={showPage} currentUser={currentUser} contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
-        <Route path="/rental" element={<RentalPage selectedBus={selectedBus} setSelectedBus={setSelectedBus} rentalViewMonth={rentalViewMonth} setRentalViewMonth={setRentalViewMonth} rentalBlocks={rentalBlocks} rentalRangeStart={rentalRangeStart} rentalRangeEnd={rentalRangeEnd} setRentalRange={setRentalRange} rentalRangeError={rentalRangeError} submitRentalRequest={submitRentalRequest} rentalMsg={rentalMsg} rentalSubmitting={rentalSubmitting} rentalLoading={rentalLoading} currentUser={currentUser} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
+        <Route path="/rental" element={<RentalPage selectedBus={selectedBus} setSelectedBus={setSelectedBus} rentalViewMonth={rentalViewMonth} setRentalViewMonth={setRentalViewMonth} rentalBlocks={rentalBlocks} rentalRangeStart={rentalRangeStart} rentalRangeEnd={rentalRangeEnd} setRentalRange={setRentalRange} rentalRangeError={rentalRangeError} submitRentalRequest={submitRentalRequest} rentalMsg={rentalMsg} rentalSubmitting={rentalSubmitting} rentalLoading={rentalLoading} currentUser={currentUser} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} onTurnstileVerify={setRentalTurnstileToken} turnstileResetKey={rentalTurnstileResetKey} />} />
         <Route path="/auth" element={<AuthPage authForm={authForm} setAuthForm={setAuthForm} authMsg={authMsg} authLoading={authLoading} doLogin={doLogin} doRegister={doRegister} doReset={doReset} />} />
         <Route path="/booking" element={<BookingPage selectedRoute={selectedRoute} setSelectedRoute={setSelectedRoute} routeDetails={routeDetails} bookingViewMonth={bookingViewMonth} setBookingViewMonth={setBookingViewMonth} cachedTrips={cachedTrips} selectedTripId={selectedTripId} selectedBookingDate={selectedBookingDate} selectBookingDay={selectBookingDay} pickupStop={pickupStop} dropoffStop={dropoffStop} setPickupStop={setPickupStop} setDropoffStop={setDropoffStop} chooseStop={chooseStop} submitBooking={submitBooking} bookingMsg={bookingMsg} bookingSubmitting={bookingSubmitting} bookingLoading={bookingLoading} currentUser={currentUser} currentProfile={currentProfile} tripPrice={selectedRoutePrice} />} />
-        <Route path="/tow" element={<TowPage towMsg={towMsg} submitTowRequest={submitTowRequest} towSubmitting={towSubmitting} currentUser={currentUser} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
+        <Route path="/tow" element={<TowPage towMsg={towMsg} submitTowRequest={submitTowRequest} towSubmitting={towSubmitting} currentUser={currentUser} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} onTurnstileVerify={setTowTurnstileToken} turnstileResetKey={towTurnstileResetKey} />} />
         <Route path="/my-reservations" element={<MyReservationsPage currentUser={currentUser} showPage={showPage} myReservations={myReservations} myResMsg={myResMsg} myReservationsLoading={myReservationsLoading} cancelReservation={cancelReservation} cancelingReservationId={cancelingReservationId} />} />
         <Route path="/contact" element={<ContactPage contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
         <Route path="/admin" element={<ProtectedAdminRoute authReady={authReady} currentProfile={currentProfile}><AdminPage adminTab={adminTab} setAdminTab={setAdminTab} adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} tripPrices={tripPrices} adminPricesMsg={adminPricesMsg} adminSetTripPrice={adminSetTripPrice} adminRentalRequests={adminRentalRequests} adminTowRequests={adminTowRequests} adminRequestsLoading={adminRequestsLoading} adminRequestsMsg={adminRequestsMsg} adminUpdateRentalRequest={adminUpdateRentalRequest} adminUpdateTowRequest={adminUpdateTowRequest} adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} adminRentalBlocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} adminBlocksLoading={adminBlocksLoading} adminBlockSubmitting={adminBlockSubmitting} adminBlockActionId={adminBlockActionId} addAdminRentalBlock={addAdminRentalBlock} deactivateAdminRentalBlock={deactivateAdminRentalBlock} /></ProtectedAdminRoute>} />
