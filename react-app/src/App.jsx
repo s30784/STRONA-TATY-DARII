@@ -6,11 +6,13 @@ import { ADMIN_ROLES, BLOCKING_RESERVATION_STATUSES, CONTACT_PHONE_DISPLAY, CONT
 import { ROUTE_DETAILS } from './data/routeDetails.js';
 import { BUS_DETAILS } from './data/vehicles.js';
 import { useAuth } from './hooks/useAuth.js';
+import { parseAuthUrlError, isExpiredAuthUrlError } from './lib/authUrl.js';
 import { dateOnly, formatDate, monthRange, todayStr } from './lib/date.js';
 import { AUTH_REDIRECTS, CONTACT_EMAIL, ENV_ERROR, sb } from './lib/supabase.js';
 import { lastStop, normalizeTrips, tripDate, tripFreeSeats, tripMaxSeats, tripUsedSeats } from './lib/trips.js';
 import { field, validateEmail, validatePhone, validateRequired, validateSeats } from './lib/validation.js';
 import { AdminPage } from './pages/AdminPage.jsx';
+import { AuthLinkErrorPage } from './pages/AuthLinkErrorPage.jsx';
 import { AuthPage } from './pages/AuthPage.jsx';
 import { BookingPage } from './pages/BookingPage.jsx';
 import { ContactPage } from './pages/ContactPage.jsx';
@@ -1029,6 +1031,17 @@ export function App() {
     ...(currentUser ? [['/my-reservations', 'Moje rezerwacje']] : []),
     ...(isAdminUser ? [['/admin', 'Admin']] : [])
   ];
+  const authUrlError = parseAuthUrlError(location);
+  const showRootAuthLinkError = pathname === '/' && isExpiredAuthUrlError(authUrlError);
+
+  if (showRootAuthLinkError) {
+    return (
+      <div className="site">
+        <Seo pathname="/auth" contactEmail={CONTACT_EMAIL} />
+        <AuthLinkErrorPage mode="generic" authError={authUrlError} onAction={() => window.history.replaceState({}, document.title, '/')} />
+      </div>
+    );
+  }
 
   return (
     <div className="site">

@@ -1,20 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { parseAuthUrlParams, isExpiredAuthUrlError } from '../lib/authUrl.js';
 import { sb } from '../lib/supabase.js';
-
-function authUrlParams() {
-  const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const queryParams = new URLSearchParams(window.location.search);
-  return {
-    code: queryParams.get('code'),
-    type: hashParams.get('type') || queryParams.get('type') || 'signup',
-    tokenHash: hashParams.get('token_hash') || queryParams.get('token_hash'),
-    email: hashParams.get('email') || queryParams.get('email'),
-    accessToken: hashParams.get('access_token') || queryParams.get('access_token'),
-    refreshToken: hashParams.get('refresh_token') || queryParams.get('refresh_token'),
-    error: hashParams.get('error_description') || queryParams.get('error_description') || hashParams.get('error') || queryParams.get('error')
-  };
-}
+import { AuthLinkErrorPage } from './AuthLinkErrorPage.jsx';
 
 function clearVerifyUrl() {
   window.history.replaceState({}, document.title, '/verify-email');
@@ -30,7 +18,8 @@ export function VerifyEmailPage() {
   const [state, setState] = React.useState({
     type: 'loading',
     title: 'Potwierdzamy adres email...',
-    text: 'Potwierdzamy adres email...'
+    text: 'Potwierdzamy adres email...',
+    authError: null
   });
 
   React.useEffect(() => {
@@ -41,9 +30,20 @@ export function VerifyEmailPage() {
     }
 
     async function verifyEmail() {
-      const params = authUrlParams();
+      const params = parseAuthUrlParams();
       try {
-        if (params.error) throw new Error(params.error);
+        if (isExpiredAuthUrlError(params.authError)) {
+          clearVerifyUrl();
+          setSafe({
+            type: 'expired',
+            title: 'Link potwierdzający email jest nieważny albo wygasł.',
+            text: 'Spróbuj zalogować się lub wyślij link ponownie.',
+            authError: params.authError
+          });
+          return;
+        }
+
+        if (params.authError) throw new Error(params.authError.errorDescription || params.authError.error || 'Nie udało się potwierdzić adresu email.');
 
         if (params.code) {
           const { error } = await sb.auth.exchangeCodeForSession(params.code);
@@ -66,7 +66,7 @@ export function VerifyEmailPage() {
 
         if (params.tokenHash) {
           const { error } = await sb.auth.verifyOtp({
-            type: params.type,
+            type: params.type || 'signup',
             token_hash: params.tokenHash,
             email: params.email || undefined
           });
@@ -93,6 +93,8 @@ export function VerifyEmailPage() {
       mounted = false;
     };
   }, []);
+
+  if (state.type === 'expired') return <AuthLinkErrorPage mode="verify" authError={state.authError} />;
 
   return (
     <main className="auth-redirect">

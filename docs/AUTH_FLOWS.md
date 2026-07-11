@@ -53,6 +53,14 @@ supabase.auth.updateUser({ password })
 
 After a successful password change the app signs the user out and shows a link back to `/auth`.
 
+Supabase Auth links are single-use and valid only for a limited time. If a reset link is reused or expires, Supabase can redirect back with URL data such as:
+
+```text
+#error=access_denied&error_code=otp_expired&error_description=Email+link+is+invalid+or+has+expired
+```
+
+The app parses auth errors from both query string and hash fragments. For `otp_expired`, or descriptions containing `expired` or `invalid`, it shows a readable Polish message and a form for sending a new password reset link. The reset resend form intentionally uses a generic success message and does not reveal whether an account exists for the entered email address.
+
 ## Email confirmation
 
 Registration uses:
@@ -75,6 +83,18 @@ The `/verify-email` route handles:
 - Token hash links with `token_hash` using `verifyOtp`.
 
 The page shows a success or error state and does not immediately redirect away, so the user gets a clear confirmation message.
+
+If the confirmation link is expired or already used, `/verify-email` shows a readable message and lets the user request a new signup confirmation link with:
+
+```text
+supabase.auth.resend({
+  type: 'signup',
+  email,
+  options: { emailRedirectTo: `${PUBLIC_APP_ORIGIN}/verify-email` }
+})
+```
+
+The success message is generic and does not expose account status.
 
 ## Noindex routes
 
@@ -114,3 +134,26 @@ Expired or reused link:
 1. Open the same auth link a second time.
 2. The app should not crash.
 3. The page should show a readable error and a link back to `/auth`.
+4. For password reset, the page should allow sending a new reset link.
+
+## Reset password email template
+
+Recommended Supabase Reset password template text:
+
+```html
+<h2>Ustaw nowe hasło</h2>
+
+<p>Otrzymaliśmy prośbę o zmianę hasła do konta Busy Jarosław.</p>
+
+<p>Kliknij poniższy link, aby ustawić nowe hasło:</p>
+
+<p>
+  <a href="{{ .ConfirmationURL }}">Ustaw nowe hasło</a>
+</p>
+
+<p>Link jest jednorazowy i ważny przez ograniczony czas. Jeśli link nie działa, wróć na stronę logowania i wyślij nowy link resetujący.</p>
+
+<p>Jeśli to nie Ty wysłałeś tę prośbę, możesz zignorować tę wiadomość.</p>
+
+<p>Busy Jarosław</p>
+```

@@ -1,18 +1,8 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { parseAuthUrlParams, isExpiredAuthUrlError } from '../lib/authUrl.js';
 import { sb } from '../lib/supabase.js';
-
-function authUrlParams() {
-  const hashParams = new URLSearchParams(window.location.hash.substring(1));
-  const queryParams = new URLSearchParams(window.location.search);
-  return {
-    code: queryParams.get('code'),
-    accessToken: hashParams.get('access_token') || queryParams.get('access_token'),
-    refreshToken: hashParams.get('refresh_token') || queryParams.get('refresh_token'),
-    type: hashParams.get('type') || queryParams.get('type'),
-    error: hashParams.get('error_description') || queryParams.get('error_description') || hashParams.get('error') || queryParams.get('error')
-  };
-}
+import { AuthLinkErrorPage } from './AuthLinkErrorPage.jsx';
 
 function clearRecoveryUrl() {
   window.history.replaceState({}, document.title, '/reset-password');
@@ -27,7 +17,8 @@ function invalidRecoveryMessage(error) {
 export function ResetPasswordPage() {
   const [state, setState] = React.useState({
     status: 'loading',
-    message: 'Sprawdzamy link resetu hasła...'
+    message: 'Sprawdzamy link resetu hasła...',
+    authError: null
   });
   const [saving, setSaving] = React.useState(false);
 
@@ -41,9 +32,9 @@ export function ResetPasswordPage() {
       clearRecoveryUrl();
     }
 
-    function markInvalid(error) {
+    function markInvalid(error, authError = null) {
       if (!mounted) return;
-      setState({ status: 'invalid', message: invalidRecoveryMessage(error) });
+      setState({ status: 'invalid', message: invalidRecoveryMessage(error), authError });
       clearRecoveryUrl();
     }
 
@@ -55,9 +46,13 @@ export function ResetPasswordPage() {
     });
 
     async function prepareRecoverySession() {
-      const params = authUrlParams();
+      const params = parseAuthUrlParams();
       try {
-        if (params.error) throw new Error(params.error);
+        if (isExpiredAuthUrlError(params.authError)) {
+          markInvalid(null, params.authError);
+          return;
+        }
+        if (params.authError) throw new Error(params.authError.errorDescription || params.authError.error || 'Nie udało się obsłużyć linku resetu hasła.');
         if (params.type && params.type !== 'recovery') throw new Error('Ten link nie jest linkiem do resetowania hasła.');
 
         if (params.code) {
@@ -125,6 +120,8 @@ export function ResetPasswordPage() {
   const showInvalid = state.status === 'invalid';
   const showSuccess = state.status === 'success';
 
+  if (showInvalid) return <AuthLinkErrorPage mode="reset" authError={state.authError} />;
+
   return (
     <main className="auth-redirect">
       <div className="card">
@@ -138,7 +135,6 @@ export function ResetPasswordPage() {
             <button className="btn-primary" type="submit" disabled={saving}>{saving ? 'Zmieniam hasło...' : 'Zmień hasło'}</button>
           </form>
         ) : null}
-        {showInvalid ? <p className="form-help">Wyślij reset hasła ponownie z formularza logowania.</p> : null}
         {!showLoading ? <Link className="btn-outline mt-sm" to="/auth">Wróć do logowania</Link> : null}
       </div>
     </main>
