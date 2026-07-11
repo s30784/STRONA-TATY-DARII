@@ -2,27 +2,56 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import { sb } from '../lib/supabase.js';
 
-function getAuthParams() {
+function authUrlParams() {
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
   const queryParams = new URLSearchParams(window.location.search);
   return {
-    type: hashParams.get('type') || queryParams.get('type') || 'email',
+    code: queryParams.get('code'),
+    type: hashParams.get('type') || queryParams.get('type') || 'signup',
     tokenHash: hashParams.get('token_hash') || queryParams.get('token_hash'),
     email: hashParams.get('email') || queryParams.get('email'),
     accessToken: hashParams.get('access_token') || queryParams.get('access_token'),
     refreshToken: hashParams.get('refresh_token') || queryParams.get('refresh_token'),
-    error: hashParams.get('error_description') || queryParams.get('error_description')
+    error: hashParams.get('error_description') || queryParams.get('error_description') || hashParams.get('error') || queryParams.get('error')
   };
 }
 
+function clearVerifyUrl() {
+  window.history.replaceState({}, document.title, '/verify-email');
+}
+
+function verifyErrorMessage(error) {
+  const text = String(error?.message || error || '').trim();
+  if (!text) return 'Nie udało się potwierdzić adresu email. Link mógł wygasnąć albo zostać już użyty.';
+  return text;
+}
+
 export function VerifyEmailPage() {
-  const [state, setState] = React.useState({ type: 'loading', title: 'Potwierdzanie emaila...', text: 'Czekaj, weryfikuję Twój adres email.' });
+  const [state, setState] = React.useState({
+    type: 'loading',
+    title: 'Potwierdzamy adres email...',
+    text: 'Potwierdzamy adres email...'
+  });
 
   React.useEffect(() => {
+    let mounted = true;
+
+    function setSafe(nextState) {
+      if (mounted) setState(nextState);
+    }
+
     async function verifyEmail() {
+      const params = authUrlParams();
       try {
-        const params = getAuthParams();
         if (params.error) throw new Error(params.error);
+
+        if (params.code) {
+          const { error } = await sb.auth.exchangeCodeForSession(params.code);
+          if (error) throw error;
+          clearVerifyUrl();
+          setSafe({ type: 'success', title: 'Adres email został potwierdzony.', text: 'Adres email został potwierdzony. Możesz teraz zarezerwować przejazd.' });
+          return;
+        }
 
         if (params.accessToken && params.refreshToken) {
           const { error } = await sb.auth.setSession({
@@ -30,25 +59,39 @@ export function VerifyEmailPage() {
             refresh_token: params.refreshToken
           });
           if (error) throw error;
-        } else {
-          if (!params.tokenHash) {
-            throw new Error('Brak tokenu weryfikacyjnego w URL. Sprawdź link z emaila.');
-          }
+          clearVerifyUrl();
+          setSafe({ type: 'success', title: 'Adres email został potwierdzony.', text: 'Adres email został potwierdzony. Możesz teraz zarezerwować przejazd.' });
+          return;
+        }
+
+        if (params.tokenHash) {
           const { error } = await sb.auth.verifyOtp({
             type: params.type,
             token_hash: params.tokenHash,
             email: params.email || undefined
           });
           if (error) throw error;
+          clearVerifyUrl();
+          setSafe({ type: 'success', title: 'Adres email został potwierdzony.', text: 'Adres email został potwierdzony. Możesz teraz zarezerwować przejazd.' });
+          return;
         }
 
-        setState({ type: 'success', title: 'Email potwierdzony', text: 'Adres email został potwierdzony. Możesz wrócić do strony i zalogować się na konto.' });
-      } catch (err) {
-        setState({ type: 'error', title: 'Błąd weryfikacji', text: err.message || 'Nie udało się potwierdzić emaila.' });
+        throw new Error('Brak tokenu potwierdzającego w adresie.');
+      } catch (error) {
+        clearVerifyUrl();
+        setSafe({
+          type: 'error',
+          title: 'Nie udało się potwierdzić adresu email.',
+          text: verifyErrorMessage(error)
+        });
       }
     }
 
     verifyEmail();
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   return (
@@ -57,7 +100,14 @@ export function VerifyEmailPage() {
         <div className="icon">{state.type === 'loading' ? '...' : state.type === 'success' ? 'OK' : '!'}</div>
         <h1>{state.title}</h1>
         <p>{state.text}</p>
-        <Link className="btn-primary" to="/auth">Przejdź do logowania</Link>
+        {state.type === 'success' ? (
+          <div className="auth-action-grid">
+            <Link className="btn-primary" to="/booking">Przejdź do rezerwacji</Link>
+            <Link className="btn-outline" to="/my-reservations">Moje rezerwacje</Link>
+            <Link className="btn-outline" to="/auth">Przejdź do logowania</Link>
+          </div>
+        ) : null}
+        {state.type === 'error' ? <Link className="btn-primary" to="/auth">Przejdź do logowania</Link> : null}
       </div>
     </main>
   );

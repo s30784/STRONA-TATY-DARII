@@ -1615,6 +1615,11 @@ form .btn-primary,
   text-align: center;
 }
 
+.auth-action-grid {
+  display: grid;
+  gap: 8px;
+}
+
 .auth-redirect .icon {
   display: inline-flex;
   align-items: center;

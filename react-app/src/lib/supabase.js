@@ -20,8 +20,7 @@ const env = {
 
 const requiredEnv = {
   VITE_SUPABASE_URL: env.VITE_SUPABASE_URL,
-  VITE_SUPABASE_PUBLISHABLE_KEY: env.VITE_SUPABASE_PUBLISHABLE_KEY,
-  VITE_PUBLIC_APP_ORIGIN: env.VITE_PUBLIC_APP_ORIGIN
+  VITE_SUPABASE_PUBLISHABLE_KEY: env.VITE_SUPABASE_PUBLISHABLE_KEY
 };
 
 const missing = Object.entries(requiredEnv)
@@ -37,23 +36,19 @@ if (missing.length) {
 }
 
 function normalizeOrigin(origin) {
-  return origin.replace(/\/+$/, '');
+  return String(origin || '').trim().replace(/\/+$/, '');
 }
 
 const isBrowser = typeof window !== 'undefined';
-const currentHost = isBrowser ? window.location.hostname : '';
+const fallbackOrigin = isBrowser ? window.location.origin : 'https://busyjaroslaw.pl';
 
-export const PUBLIC_APP_ORIGIN = normalizeOrigin(env.VITE_PUBLIC_APP_ORIGIN);
+export const PUBLIC_APP_ORIGIN = normalizeOrigin(env.VITE_PUBLIC_APP_ORIGIN || fallbackOrigin);
 export const CONTACT_EMAIL = publicContactEmail(env.VITE_CONTACT_EMAIL);
-export const APP_ORIGIN = isBrowser && (currentHost === 'localhost' || currentHost === '127.0.0.1')
-  ? PUBLIC_APP_ORIGIN
-  : isBrowser
-    ? window.location.origin
-    : PUBLIC_APP_ORIGIN;
+export const APP_ORIGIN = PUBLIC_APP_ORIGIN || fallbackOrigin;
 
 export const AUTH_REDIRECTS = {
-  verifyEmail: `${APP_ORIGIN}/verify-email.html`,
-  resetPassword: `${APP_ORIGIN}/reset-password.html`
+  verifyEmail: `${APP_ORIGIN}/verify-email`,
+  resetPassword: `${APP_ORIGIN}/reset-password`
 };
 
 export const sb = ENV_ERROR ? null : createClient(env.VITE_SUPABASE_URL, env.VITE_SUPABASE_PUBLISHABLE_KEY);

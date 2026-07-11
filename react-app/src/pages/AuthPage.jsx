@@ -15,7 +15,7 @@ export function AuthPage({ authForm, setAuthForm, authMsg, authLoading, doLogin,
             </form>
             <hr className="divider" />
             <button className="btn-outline" onClick={() => setAuthForm('register')} type="button">Nie masz konta? Zarejestruj się</button>
-            <button className="btn-outline mt-sm" onClick={() => setAuthForm('reset')} type="button">Zapomniałem hasła</button>
+            <button className="btn-outline mt-sm" onClick={() => setAuthForm('reset')} type="button">Nie pamiętasz hasła?</button>
           </Card>
         ) : null}
         {authForm === 'register' ? (

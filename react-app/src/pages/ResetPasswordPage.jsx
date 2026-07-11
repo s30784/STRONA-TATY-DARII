@@ -1,46 +1,96 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { sb } from '../lib/supabase.js';
 
-function getUrlParams() {
+function authUrlParams() {
   const hashParams = new URLSearchParams(window.location.hash.substring(1));
   const queryParams = new URLSearchParams(window.location.search);
   return {
+    code: queryParams.get('code'),
     accessToken: hashParams.get('access_token') || queryParams.get('access_token'),
     refreshToken: hashParams.get('refresh_token') || queryParams.get('refresh_token'),
     type: hashParams.get('type') || queryParams.get('type'),
-    error: hashParams.get('error_description') || queryParams.get('error_description')
+    error: hashParams.get('error_description') || queryParams.get('error_description') || hashParams.get('error') || queryParams.get('error')
   };
 }
 
+function clearRecoveryUrl() {
+  window.history.replaceState({}, document.title, '/reset-password');
+}
+
+function invalidRecoveryMessage(error) {
+  const text = String(error?.message || error || '').trim();
+  if (!text) return 'Link do resetu hasła jest nieprawidłowy albo wygasł.';
+  return text;
+}
+
 export function ResetPasswordPage() {
-  const navigate = useNavigate();
-  const [ready, setReady] = React.useState(false);
-  const [loading, setLoading] = React.useState(false);
-  const [message, setMessage] = React.useState(null);
+  const [state, setState] = React.useState({
+    status: 'loading',
+    message: 'Sprawdzamy link resetu hasła...'
+  });
+  const [saving, setSaving] = React.useState(false);
 
   React.useEffect(() => {
+    let mounted = true;
+    let recoveryEventSeen = false;
+
+    function markReady() {
+      if (!mounted) return;
+      setState({ status: 'ready', message: null });
+      clearRecoveryUrl();
+    }
+
+    function markInvalid(error) {
+      if (!mounted) return;
+      setState({ status: 'invalid', message: invalidRecoveryMessage(error) });
+      clearRecoveryUrl();
+    }
+
+    const { data: listener } = sb.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        recoveryEventSeen = true;
+        markReady();
+      }
+    });
+
     async function prepareRecoverySession() {
+      const params = authUrlParams();
       try {
-        const params = getUrlParams();
         if (params.error) throw new Error(params.error);
         if (params.type && params.type !== 'recovery') throw new Error('Ten link nie jest linkiem do resetowania hasła.');
+
+        if (params.code) {
+          const { error } = await sb.auth.exchangeCodeForSession(params.code);
+          if (error) throw error;
+          markReady();
+          return;
+        }
+
         if (params.accessToken && params.refreshToken) {
           const { error } = await sb.auth.setSession({
             access_token: params.accessToken,
             refresh_token: params.refreshToken
           });
           if (error) throw error;
+          markReady();
+          return;
         }
-        const { data: { session } } = await sb.auth.getSession();
-        if (!session) throw new Error('Link wygasł albo jest nieprawidłowy. Poproś o nowy reset hasła.');
-        setReady(true);
-      } catch (err) {
-        setMessage({ type: 'err', text: err.message || 'Spróbuj ponownie wysłać link resetujący.' });
+
+        window.setTimeout(() => {
+          if (mounted && !recoveryEventSeen) markInvalid();
+        }, 800);
+      } catch (error) {
+        markInvalid(error);
       }
     }
 
     prepareRecoverySession();
+
+    return () => {
+      mounted = false;
+      listener?.subscription?.unsubscribe();
+    };
   }, []);
 
   async function onSubmit(event) {
@@ -49,43 +99,47 @@ export function ResetPasswordPage() {
     const password = String(form.get('password') || '');
     const repeat = String(form.get('repeat') || '');
 
-    if (password.length < 6) {
-      setMessage({ type: 'err', text: 'Hasło musi mieć co najmniej 6 znaków.' });
+    if (password.length < 8) {
+      setState({ status: 'ready', message: 'Hasło musi mieć co najmniej 8 znaków.' });
       return;
     }
     if (password !== repeat) {
-      setMessage({ type: 'err', text: 'Hasła muszą być takie same.' });
+      setState({ status: 'ready', message: 'Hasła muszą być identyczne.' });
       return;
     }
 
-    setLoading(true);
+    setSaving(true);
     const { error } = await sb.auth.updateUser({ password });
-    setLoading(false);
+    setSaving(false);
     if (error) {
-      setMessage({ type: 'err', text: `Nie udało się zmienić hasła: ${error.message}` });
+      setState({ status: 'ready', message: `Nie udało się zmienić hasła: ${error.message}` });
       return;
     }
 
     await sb.auth.signOut();
-    setMessage({ type: 'ok', text: 'Hasło zostało zapisane. Możesz zalogować się nowym hasłem.' });
-    window.setTimeout(() => navigate('/auth'), 1600);
+    setState({ status: 'success', message: 'Hasło zostało zmienione. Możesz się teraz zalogować.' });
   }
+
+  const showForm = state.status === 'ready';
+  const showLoading = state.status === 'loading';
+  const showInvalid = state.status === 'invalid';
+  const showSuccess = state.status === 'success';
 
   return (
     <main className="auth-redirect">
       <div className="card">
         <h1>Ustaw nowe hasło</h1>
-        <p>Wpisz nowe hasło do swojego konta.</p>
-        {message ? <div className={`msg ${message.type}`}>{message.text}</div> : null}
-        {ready ? (
+        {showLoading ? <p>Sprawdzamy link resetu hasła...</p> : <p>Wpisz nowe hasło do swojego konta Busy Jarosław.</p>}
+        {state.message && !showLoading ? <div className={`msg ${showSuccess ? 'ok' : 'err'}`}>{state.message}</div> : null}
+        {showForm ? (
           <form onSubmit={onSubmit}>
-            <div className="fg"><label>Nowe hasło</label><input type="password" name="password" minLength="6" autoComplete="new-password" /></div>
-            <div className="fg"><label>Powtórz hasło</label><input type="password" name="repeat" minLength="6" autoComplete="new-password" /></div>
-            <button className="btn-primary" type="submit" disabled={loading}>{loading ? 'Zapisuję...' : 'Zapisz nowe hasło'}</button>
+            <div className="fg"><label>Nowe hasło</label><input type="password" name="password" minLength="8" autoComplete="new-password" /></div>
+            <div className="fg"><label>Powtórz nowe hasło</label><input type="password" name="repeat" minLength="8" autoComplete="new-password" /></div>
+            <button className="btn-primary" type="submit" disabled={saving}>{saving ? 'Zmieniam hasło...' : 'Zmień hasło'}</button>
           </form>
-        ) : (
-          <Link className="btn-outline" to="/auth">Wróć do logowania</Link>
-        )}
+        ) : null}
+        {showInvalid ? <p className="form-help">Wyślij reset hasła ponownie z formularza logowania.</p> : null}
+        {!showLoading ? <Link className="btn-outline mt-sm" to="/auth">Wróć do logowania</Link> : null}
       </div>
     </main>
   );

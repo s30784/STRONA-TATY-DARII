@@ -519,7 +519,7 @@ export function App() {
       setAuthMsg({ type: 'err', text: `Błąd: ${error.message}` });
       return;
     }
-    setAuthMsg({ type: 'ok', text: 'Sprawdź skrzynkę email. Wysłaliśmy link potwierdzający.' });
+    setAuthMsg({ type: 'ok', text: 'Konto zostało utworzone. Sprawdź skrzynkę email i kliknij link potwierdzający.' });
   }
 
   async function doReset(event) {
@@ -538,7 +538,7 @@ export function App() {
       setAuthMsg({ type: 'err', text: `Błąd: ${error.message}` });
       return;
     }
-    setAuthMsg({ type: 'ok', text: `Link resetujący wysłany na ${email}` });
+    setAuthMsg({ type: 'ok', text: `Link resetujący hasło został wysłany na ${email}.` });
   }
 
   async function signOut() {
