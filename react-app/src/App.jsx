@@ -15,6 +15,7 @@ import { AuthPage } from './pages/AuthPage.jsx';
 import { BookingPage } from './pages/BookingPage.jsx';
 import { ContactPage } from './pages/ContactPage.jsx';
 import { HomePage } from './pages/HomePage.jsx';
+import { LandingPage } from './pages/LandingPage.jsx';
 import { MyReservationsPage } from './pages/MyReservationsPage.jsx';
 import { RentalPage } from './pages/RentalPage.jsx';
 import { ResetPasswordPage } from './pages/ResetPasswordPage.jsx';
@@ -95,10 +96,18 @@ function validateRentalRange(startDate, endDate, blocks) {
   return null;
 }
 
+const ADMIN_TAB_KEYS = ['trips', 'res', 'payments', 'prices', 'rental', 'tow', 'buses'];
+
+function normalizeAdminTab(value) {
+  return ADMIN_TAB_KEYS.includes(value) ? value : 'trips';
+}
+
 export function App() {
   const navigate = useNavigate();
   const location = useLocation();
   const pathname = location.pathname;
+  const search = location.search;
+  const navRef = React.useRef(null);
   const { authReady, currentUser, currentProfile, profileError } = useAuth();
 
   if (ENV_ERROR || !sb) {
@@ -151,7 +160,11 @@ export function App() {
   const [myResMsg, setMyResMsg] = React.useState(null);
   const [myReservationsLoading, setMyReservationsLoading] = React.useState(false);
 
-  const [adminTab, setAdminTab] = React.useState('trips');
+  const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
+  const [adminTab, setAdminTab] = React.useState(() => {
+    if (typeof window === 'undefined') return 'trips';
+    return normalizeAdminTab(new URLSearchParams(window.location.search).get('tab'));
+  });
   const [adminViewMonth, setAdminViewMonth] = React.useState(new Date());
   const [selectedAdminRoute, setSelectedAdminRoute] = React.useState('JW');
   const [cachedAdminTrips, setCachedAdminTrips] = React.useState([]);
@@ -190,13 +203,42 @@ export function App() {
   React.useEffect(() => {
     if (pathname === '/rental') loadRentalCalendarBlocks();
     if (pathname === '/booking') loadTrips();
-    if (pathname === '/booking' || pathname === '/admin') loadTripPrices();
+    if (pathname === '/booking') loadTripPrices();
     if (pathname === '/my-reservations') loadMyReservations();
-    if (pathname === '/admin') loadAdminTrips();
-    if (pathname === '/admin' && adminTab === 'buses') loadAdminRentalBlocks();
-    if (pathname === '/admin' && adminTab === 'res') loadAdminReservations();
-    if (pathname === '/admin' && adminTab === 'requests') loadAdminRequests();
+    if (pathname === '/admin') {
+      loadAdminTrips();
+      loadAdminReservations();
+      loadAdminRequests();
+      loadTripPrices();
+      if (adminTab === 'buses') loadAdminRentalBlocks();
+    }
   }, [pathname, currentUser?.id]);
+
+  React.useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [pathname]);
+
+  React.useEffect(() => {
+    if (!mobileMenuOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setMobileMenuOpen(false);
+    };
+    const onPointerDown = (event) => {
+      if (navRef.current && !navRef.current.contains(event.target)) setMobileMenuOpen(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('pointerdown', onPointerDown);
+    return () => {
+      document.removeEventListener('keydown', onKeyDown);
+      document.removeEventListener('pointerdown', onPointerDown);
+    };
+  }, [mobileMenuOpen]);
+
+  React.useEffect(() => {
+    if (pathname !== '/admin') return;
+    const nextTab = normalizeAdminTab(new URLSearchParams(search).get('tab'));
+    setAdminTab((current) => (current === nextTab ? current : nextTab));
+  }, [pathname, search]);
 
   React.useEffect(() => {
     setRentalRangeStart(null);
@@ -219,10 +261,10 @@ export function App() {
 
   React.useEffect(() => {
     if (pathname === '/admin' && adminTab === 'buses') loadAdminRentalBlocks();
-    if (pathname === '/admin' && adminTab === 'res') loadAdminReservations();
+    if (pathname === '/admin' && (adminTab === 'res' || adminTab === 'payments')) loadAdminReservations();
     if (pathname === '/admin' && adminTab === 'prices') loadTripPrices();
-    if (pathname === '/admin' && adminTab === 'requests') loadAdminRequests();
-  }, [adminTab, adminBlockViewMonth, selectedAdminBus]);
+    if (pathname === '/admin' && (adminTab === 'rental' || adminTab === 'tow')) loadAdminRequests();
+  }, [pathname, adminTab, adminBlockViewMonth, selectedAdminBus]);
 
   React.useEffect(() => {
     const interval = window.setInterval(() => {
@@ -241,6 +283,16 @@ export function App() {
   function showPage(path) {
     navigate(path);
     window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  function selectAdminTab(tab) {
+    const nextTab = normalizeAdminTab(tab);
+    setAdminTab(nextTab);
+    if (pathname === '/admin') {
+      const params = new URLSearchParams(search);
+      params.set('tab', nextTab);
+      navigate({ pathname: '/admin', search: `?${params.toString()}` }, { replace: true });
+    }
   }
 
   function resetRentalTurnstile() {
@@ -959,7 +1011,8 @@ export function App() {
     return true;
   }
 
-  const navItems = [
+  const isAdminUser = ADMIN_ROLES.includes(currentProfile?.role);
+  const desktopNavItems = [
     ['/', 'Start'],
     ['/rental', 'Busy'],
     ['/booking', 'Przejazdy'],
@@ -967,20 +1020,41 @@ export function App() {
     ['/my-reservations', 'Rezerwacje'],
     ['/contact', 'Kontakt']
   ];
+  const mobileNavItems = [
+    ['/', 'Strona główna'],
+    ['/booking', 'Przejazdy'],
+    ['/rental', 'Wynajem busa'],
+    ['/tow', 'Laweta'],
+    ['/contact', 'Kontakt'],
+    ...(currentUser ? [['/my-reservations', 'Moje rezerwacje']] : []),
+    ...(isAdminUser ? [['/admin', 'Admin']] : [])
+  ];
 
   return (
     <div className="site">
       <Seo pathname={pathname} contactEmail={CONTACT_EMAIL} />
-      <nav className="nav">
+      <nav className="nav" ref={navRef}>
         <NavLink className="nav-logo" to="/">
-          <span className="nav-logo-main">Wynajem Busów</span>
+          <span className="nav-logo-main">Busy Jarosław</span>
           <span>Jarosław - Polska/Austria</span>
         </NavLink>
+        <button
+          className={`nav-menu-toggle ${mobileMenuOpen ? 'active' : ''}`}
+          type="button"
+          aria-label={mobileMenuOpen ? 'Zamknij menu' : 'Otwórz menu'}
+          aria-expanded={mobileMenuOpen}
+          aria-controls="mobile-nav-menu"
+          onClick={() => setMobileMenuOpen((open) => !open)}
+        >
+          <span></span>
+          <span></span>
+          <span></span>
+        </button>
         <div className="nav-tabs">
-          {navItems.map(([to, label]) => (
+          {desktopNavItems.map(([to, label]) => (
             <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `tab-btn ${isActive ? 'active' : ''}`}>{label}</NavLink>
           ))}
-          {ADMIN_ROLES.includes(currentProfile?.role) ? (
+          {isAdminUser ? (
             <NavLink to="/admin" className={({ isActive }) => `tab-btn admin-link ${isActive ? 'active' : ''}`}>Panel</NavLink>
           ) : null}
         </div>
@@ -1001,6 +1075,16 @@ export function App() {
             <NavLink to="/auth" className="account-link">Niezalogowany</NavLink>
           )}
         </div>
+        <div className={`mobile-nav-panel ${mobileMenuOpen ? 'open' : ''}`} id="mobile-nav-menu">
+          {mobileNavItems.map(([to, label]) => (
+            <NavLink key={to} to={to} end={to === '/'} className={({ isActive }) => `mobile-nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>{label}</NavLink>
+          ))}
+          {currentUser ? (
+            <button className="mobile-nav-link mobile-nav-button" onClick={signOut} type="button">Wyloguj</button>
+          ) : (
+            <NavLink to="/auth" className={({ isActive }) => `mobile-nav-link ${isActive ? 'active' : ''}`} onClick={() => setMobileMenuOpen(false)}>Logowanie</NavLink>
+          )}
+        </div>
       </nav>
 
       {profileError ? <div className="user-bar err">Nie udało się pobrać profilu: {profileError}</div> : null}
@@ -1013,7 +1097,11 @@ export function App() {
         <Route path="/tow" element={<TowPage towMsg={towMsg} submitTowRequest={submitTowRequest} towSubmitting={towSubmitting} currentUser={currentUser} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} onTurnstileVerify={setTowTurnstileToken} turnstileResetKey={towTurnstileResetKey} />} />
         <Route path="/my-reservations" element={<MyReservationsPage currentUser={currentUser} showPage={showPage} myReservations={myReservations} myResMsg={myResMsg} myReservationsLoading={myReservationsLoading} cancelReservation={cancelReservation} cancelingReservationId={cancelingReservationId} />} />
         <Route path="/contact" element={<ContactPage contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
-        <Route path="/admin" element={<ProtectedAdminRoute authReady={authReady} currentProfile={currentProfile}><AdminPage adminTab={adminTab} setAdminTab={setAdminTab} adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} tripPrices={tripPrices} adminPricesMsg={adminPricesMsg} adminSetTripPrice={adminSetTripPrice} adminRentalRequests={adminRentalRequests} adminTowRequests={adminTowRequests} adminRequestsLoading={adminRequestsLoading} adminRequestsMsg={adminRequestsMsg} adminUpdateRentalRequest={adminUpdateRentalRequest} adminUpdateTowRequest={adminUpdateTowRequest} adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} adminRentalBlocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} adminBlocksLoading={adminBlocksLoading} adminBlockSubmitting={adminBlockSubmitting} adminBlockActionId={adminBlockActionId} addAdminRentalBlock={addAdminRentalBlock} deactivateAdminRentalBlock={deactivateAdminRentalBlock} /></ProtectedAdminRoute>} />
+        <Route path="/busy-jaroslaw-wieden" element={<LandingPage page="busy" contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
+        <Route path="/wynajem-busa-jaroslaw" element={<LandingPage page="rental" contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
+        <Route path="/laweta-jaroslaw" element={<LandingPage page="tow" contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
+        <Route path="/transport-pojazdow-jaroslaw" element={<LandingPage page="vehicle-transport" contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
+        <Route path="/admin" element={<ProtectedAdminRoute authReady={authReady} currentProfile={currentProfile}><AdminPage adminTab={adminTab} setAdminTab={selectAdminTab} adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} tripPrices={tripPrices} adminPricesMsg={adminPricesMsg} adminSetTripPrice={adminSetTripPrice} adminRentalRequests={adminRentalRequests} adminTowRequests={adminTowRequests} adminRequestsLoading={adminRequestsLoading} adminRequestsMsg={adminRequestsMsg} adminUpdateRentalRequest={adminUpdateRentalRequest} adminUpdateTowRequest={adminUpdateTowRequest} adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} adminRentalBlocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} adminBlocksLoading={adminBlocksLoading} adminBlockSubmitting={adminBlockSubmitting} adminBlockActionId={adminBlockActionId} addAdminRentalBlock={addAdminRentalBlock} deactivateAdminRentalBlock={deactivateAdminRentalBlock} /></ProtectedAdminRoute>} />
         <Route path="/verify-email" element={<VerifyEmailPage />} />
         <Route path="/reset-password" element={<ResetPasswordPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
@@ -1022,7 +1110,7 @@ export function App() {
       <footer className="footer">
         <div className="footer-inner">
           <div className="footer-brand">
-            <strong>Wynajem Busów Jarosław</strong>
+            <strong>Busy Jarosław</strong>
             <span>Przejazdy Jarosław-Wiedeń, wynajem busów i transport lawetą na trasie Polska-Austria.</span>
           </div>
           <div className="footer-col">
@@ -1032,8 +1120,10 @@ export function App() {
           </div>
           <div className="footer-col">
             <span>Usługi</span>
-            <NavLink to="/rental">Wynajem busów</NavLink>
-            <NavLink to="/tow">Transport lawetą</NavLink>
+            <NavLink to="/busy-jaroslaw-wieden">Busy Jarosław Wiedeń</NavLink>
+            <NavLink to="/wynajem-busa-jaroslaw">Wynajem busa Jarosław</NavLink>
+            <NavLink to="/laweta-jaroslaw">Laweta Jarosław</NavLink>
+            <NavLink to="/transport-pojazdow-jaroslaw">Transport pojazdów Jarosław</NavLink>
           </div>
           <div className="footer-col">
             <span>Kontakt</span>
@@ -1042,7 +1132,7 @@ export function App() {
             <NavLink to="/contact">Zapytania i informacje</NavLink>
           </div>
         </div>
-        <div className="footer-bottom">© 2026 Wynajem Busów Jarosław. Wszelkie prawa zastrzeżone.</div>
+        <div className="footer-bottom">© 2026 Busy Jarosław. Wszelkie prawa zastrzeżone.</div>
       </footer>
     </div>
   );

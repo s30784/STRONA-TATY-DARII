@@ -26,6 +26,10 @@ export const PUBLIC_ROUTES = [
   '/booking',
   '/tow',
   '/contact',
+  '/busy-jaroslaw-wieden',
+  '/wynajem-busa-jaroslaw',
+  '/laweta-jaroslaw',
+  '/transport-pojazdow-jaroslaw',
   '/auth',
   '/my-reservations'
 ];

@@ -196,6 +196,71 @@ img {
   justify-self: end;
 }
 
+.nav-menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  width: 44px;
+  min-width: 44px;
+  height: 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.nav-menu-toggle span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+  transition: transform 0.16s ease, opacity 0.16s ease;
+}
+
+.nav-menu-toggle.active span:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+.nav-menu-toggle.active span:nth-child(2) {
+  opacity: 0;
+}
+
+.nav-menu-toggle.active span:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+.mobile-nav-panel {
+  display: none;
+}
+
+.mobile-nav-link {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: #FFFFFF;
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 800;
+  text-align: left;
+  text-decoration: none;
+}
+
+.mobile-nav-link.active {
+  border-color: rgba(238, 43, 71, 0.34);
+  background: var(--danger-bg);
+  color: #9E1830;
+}
+
+.mobile-nav-button {
+  width: 100%;
+}
+
 .nav-contact {
   flex: 0 0 auto;
   display: grid;
@@ -433,6 +498,7 @@ img {
   min-width: 164px;
   min-height: 46px;
   padding: 0 20px;
+  text-decoration: none;
 }
 
 .hero-btn.primary,
@@ -1175,10 +1241,15 @@ aside .card:last-child {
 
 .route-switch button,
 .atab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   padding: 0 16px;
   border: 1px solid var(--line);
   background: var(--surface);
   color: var(--muted);
+  white-space: nowrap;
 }
 
 .route-switch button.active,
@@ -1186,6 +1257,50 @@ aside .card:last-child {
   border-color: var(--ink);
   background: var(--ink);
   color: #FFFFFF;
+}
+
+.tab-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.atab.active .tab-count {
+  background: rgba(255, 255, 255, 0.16);
+  color: #FFFFFF;
+}
+
+.admin-alert-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.admin-alert-strip span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.admin-alert-strip strong {
+  color: var(--ink);
 }
 
 .route-diagram {
@@ -1817,6 +1932,141 @@ form .btn-primary,
   line-height: 1;
 }
 
+.landing-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 430px;
+  padding: 58px 24px 64px;
+  overflow: hidden;
+  background-image:
+    linear-gradient(100deg, rgba(17, 24, 39, 0.96), rgba(44, 46, 62, 0.78) 58%, rgba(44, 46, 62, 0.38)),
+    url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
+  background-position: center right;
+  background-size: cover;
+}
+
+.landing-tow,
+.landing-vehicle-transport {
+  background-image:
+    linear-gradient(100deg, rgba(17, 24, 39, 0.96), rgba(44, 46, 62, 0.78) 58%, rgba(44, 46, 62, 0.38)),
+    url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
+}
+
+.landing-hero-inner {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, calc(100% - 48px));
+  margin: 0 auto;
+}
+
+.landing-hero h1 {
+  max-width: 760px;
+  margin: 0;
+  color: #FFFFFF;
+  font-size: 46px;
+  line-height: 1.06;
+}
+
+.landing-hero p {
+  max-width: 680px;
+  margin: 18px 0 0;
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 18px;
+  line-height: 1.68;
+}
+
+.landing-section {
+  padding-bottom: 36px;
+}
+
+.landing-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.landing-card {
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.landing-card h2,
+.landing-faq h2,
+.landing-cta h2 {
+  margin: 0 0 14px;
+  color: var(--ink);
+  font-size: 23px;
+  line-height: 1.22;
+}
+
+.landing-card p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.landing-steps {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding-left: 20px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.landing-link-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.landing-faq-section {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+  gap: 18px;
+  align-items: start;
+  padding-top: 28px;
+}
+
+.landing-faq,
+.landing-cta {
+  min-width: 0;
+  padding: 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.landing-faq details {
+  border-top: 1px solid var(--line);
+}
+
+.landing-faq details:first-of-type {
+  border-top: 0;
+}
+
+.landing-faq summary {
+  min-height: 48px;
+  padding: 14px 0;
+  color: var(--ink);
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.landing-faq p,
+.landing-cta p {
+  margin: 0 0 14px;
+  color: var(--muted);
+  line-height: 1.68;
+}
+
 .eyebrow {
   margin-bottom: 12px;
   color: var(--accent);
@@ -1920,35 +2170,31 @@ form .btn-primary,
     grid-column: 1;
   }
 
-  .nav-tabs {
-    grid-column: 1 / -1;
-    justify-content: flex-start;
-    width: 100%;
+  .nav-menu-toggle {
+    display: inline-flex;
+    grid-column: 2;
+    grid-row: 1;
+    justify-self: end;
   }
 
+  .nav-tabs,
   .nav-contact {
-    position: static;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px 14px;
-    grid-column: 1 / -1;
-    width: 100%;
-    min-width: 0;
-    padding-left: 0;
-    border-left: 0;
-    text-align: left;
+    display: none;
   }
 
   .nav-account {
-    grid-column: 2;
-    grid-row: 1;
-    position: static;
-    width: 132px;
-    min-width: 0;
+    display: none;
   }
 
-  .user-menu summary {
-    max-width: 132px;
+  .mobile-nav-panel {
+    grid-column: 1 / -1;
+    width: 100%;
+    padding-top: 2px;
+  }
+
+  .mobile-nav-panel.open {
+    display: grid;
+    gap: 8px;
   }
 
   .home-hero {
@@ -1961,6 +2207,7 @@ form .btn-primary,
   }
 
   .home-hero-inner,
+  .landing-hero-inner,
   .section,
   .hero {
     width: min(100% - 32px, 1180px);
@@ -1970,13 +2217,24 @@ form .btn-primary,
     font-size: 34px;
   }
 
+  .landing-hero {
+    min-height: 390px;
+    padding: 48px 20px 54px;
+  }
+
+  .landing-hero h1 {
+    font-size: 36px;
+  }
+
   .hero h1 {
     font-size: 28px;
   }
 
   .service-grid,
   .fleet-grid,
-  .split-layout {
+  .split-layout,
+  .landing-grid,
+  .landing-faq-section {
     grid-template-columns: 1fr;
   }
 
@@ -2024,17 +2282,9 @@ form .btn-primary,
     font-size: 10px;
   }
 
-  .nav-tabs {
-    width: 100%;
-    padding-bottom: 2px;
-  }
-
+  .nav-tabs,
   .nav-contact {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    width: 100%;
-    text-align: left;
+    display: none;
   }
 
   .nav-contact a,
@@ -2043,7 +2293,7 @@ form .btn-primary,
   }
 
   .nav-account {
-    width: 116px;
+    display: none;
   }
 
   .account-link,
@@ -2082,12 +2332,23 @@ form .btn-primary,
     padding: 42px 16px 46px;
   }
 
+  .landing-hero {
+    min-height: auto;
+    padding: 38px 16px 42px;
+  }
+
   .home-hero h1 {
     font-size: 31px;
     line-height: 1.08;
   }
 
-  .home-hero p {
+  .landing-hero h1 {
+    font-size: 31px;
+    line-height: 1.08;
+  }
+
+  .home-hero p,
+  .landing-hero p {
     font-size: 16px;
     line-height: 1.62;
   }
@@ -2145,6 +2406,23 @@ form .btn-primary,
     padding: 20px 18px;
   }
 
+  .atabs {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scroll-snap-type: x proximity;
+  }
+
+  .atab {
+    flex: 0 0 auto;
+    scroll-snap-align: start;
+  }
+
+  .admin-alert-strip {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
   .service-body,
   .fleet-card-body,
   .card {
@@ -2162,6 +2440,17 @@ form .btn-primary,
 
   .seo-panel {
     padding: 18px;
+  }
+
+  .landing-card,
+  .landing-faq,
+  .landing-cta {
+    padding: 18px;
+  }
+
+  .landing-link-row .btn-primary,
+  .landing-link-row .btn-outline {
+    width: 100%;
   }
 
   .seo-panel h2 {

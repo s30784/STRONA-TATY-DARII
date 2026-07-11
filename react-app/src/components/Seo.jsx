@@ -1,32 +1,34 @@
 import React from 'react';
+import { LANDING_PAGES } from '../data/landingPages.js';
 
 const FALLBACK_ORIGIN = 'https://busyjaroslaw.pl';
 const FALLBACK_CONTACT_EMAIL = 'kontakt@busyjaroslaw.pl';
-const SITE_NAME = 'Wynajem Busów Jarosław';
+const SITE_NAME = 'Busy Jarosław';
 const DEFAULT_IMAGE_PATH = '/og-image.svg';
 const CONTACT_PHONE_E164 = '+48663063364';
 
 const PUBLIC_SEO = {
   '/': {
-    title: 'Transport Jarosław i Podkarpacie | Busy, wynajem busa i laweta',
-    description: 'Przejazdy Jarosław - Wiedeń, wynajem busa oraz laweta i transport pojazdów z Podkarpacia. Sprawdź terminy, wyślij zapytanie lub zadzwoń: 663 063 364.'
+    title: 'Busy Jarosław | Busy Jarosław Wiedeń, wynajem busa i laweta',
+    description: 'Przejazdy Jarosław Wiedeń, wynajem busa oraz laweta w Jarosławiu i na Podkarpaciu. Sprawdź ofertę Busy Jarosław i skontaktuj się z nami.'
   },
   '/booking': {
-    title: 'Busy Jarosław - Wiedeń | Rezerwacja przejazdu',
-    description: 'Zarezerwuj przejazd busem na trasie Jarosław - Wiedeń lub Wiedeń - Jarosław. Sprawdź dostępne terminy, cenę i wolne miejsca.'
+    title: 'Busy Jarosław Wiedeń | Rezerwacja przejazdu',
+    description: 'Zarezerwuj przejazd na trasie Jarosław Wiedeń lub Wiedeń Jarosław. Sprawdź terminy, wolne miejsca i cenę przejazdu.'
   },
   '/rental': {
-    title: 'Wynajem busa Jarosław | Bus do wynajęcia Podkarpacie',
-    description: 'Wynajem busa w Jarosławiu i okolicy. Wybierz termin, wyślij zapytanie i ustal szczegóły wynajmu. Obsługa klientów z Podkarpacia.'
+    title: 'Wynajem busa Jarosław | Busy Jarosław',
+    description: 'Wynajem busa w Jarosławiu i na Podkarpaciu. Busy na wyjazdy rodzinne, firmowe, transfery, delegacje i trasy indywidualne.'
   },
   '/tow': {
-    title: 'Laweta Jarosław | Transport pojazdów i towarów Podkarpacie',
-    description: 'Laweta Jarosław i Podkarpacie. Transport pojazdów, maszyn oraz wybranych towarów. Opisz trasę i ładunek, a potwierdzimy szczegóły transportu.'
+    title: 'Laweta Jarosław | Transport pojazdów i pomoc drogowa',
+    description: 'Laweta Jarosław i transport pojazdów na Podkarpaciu. Wycena transportu auta, motocykla lub wybranych towarów.'
   },
   '/contact': {
-    title: 'Kontakt | Transport Jarosław, wynajem busa i laweta',
-    description: 'Skontaktuj się w sprawie przejazdu Jarosław - Wiedeń, wynajmu busa, lawety lub transportu. Telefon: 663 063 364.'
-  }
+    title: 'Kontakt | Busy Jarosław',
+    description: 'Skontaktuj się z Busy Jarosław. Przejazdy Jarosław Wiedeń, wynajem busa, laweta i transport pojazdów. Telefon 663 063 364.'
+  },
+  ...Object.fromEntries(Object.values(LANDING_PAGES).map((page) => [page.path, { title: page.title, description: page.description }]))
 };
 
 const PRIVATE_PATHS = ['/admin', '/auth', '/login', '/my-reservations', '/reset-password', '/verify-email'];
@@ -128,27 +130,46 @@ function service(name, url, serviceType) {
   };
 }
 
-function structuredData(contactEmail) {
+function faqStructuredData(pathname) {
+  const path = normalizePath(pathname);
+  const page = Object.values(LANDING_PAGES).find((item) => item.path === path);
+  if (!page?.faq?.length) return null;
+  return {
+    '@type': 'FAQPage',
+    '@id': `${canonicalFor(path)}#faq`,
+    mainEntity: page.faq.map(([question, answer]) => ({
+      '@type': 'Question',
+      name: question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: answer
+      }
+    }))
+  };
+}
+
+function structuredData(contactEmail, pathname) {
   const url = `${baseUrl()}/`;
   const email = String(contactEmail || FALLBACK_CONTACT_EMAIL).trim();
   const services = [
-    service('Przewóz osób Jarosław - Wiedeń', `${baseUrl()}/booking`, 'Przewóz osób Jarosław - Wiedeń'),
-    service('Wynajem busa', `${baseUrl()}/rental`, 'Wynajem busa'),
-    service('Laweta i transport pojazdów', `${baseUrl()}/tow`, 'Laweta i transport pojazdów'),
-    service('Transport wybranych towarów', `${baseUrl()}/tow`, 'Transport wybranych towarów')
+    service('Przewóz osób Jarosław Wiedeń', `${baseUrl()}/booking`, 'przewóz osób'),
+    service('Wynajem busa Jarosław', `${baseUrl()}/rental`, 'wynajem busa'),
+    service('Laweta Jarosław', `${baseUrl()}/tow`, 'laweta'),
+    service('Transport pojazdów Jarosław', `${baseUrl()}/tow`, 'transport pojazdów')
   ];
+  const faq = faqStructuredData(pathname);
   return {
     '@context': 'https://schema.org',
     '@graph': [
       {
-        '@type': 'ProfessionalService',
+        '@type': 'LocalBusiness',
         '@id': `${baseUrl()}/#business`,
         name: SITE_NAME,
         url,
         telephone: CONTACT_PHONE_E164,
         email: email || undefined,
         areaServed: ['Jarosław', 'Podkarpacie', 'Wiedeń', 'Austria'].map(place),
-        serviceType: services.map((item) => item.serviceType),
+        serviceType: ['przewóz osób', 'wynajem busa', 'laweta', 'transport pojazdów'],
         hasOfferCatalog: {
           '@type': 'OfferCatalog',
           name: 'Usługi transportowe',
@@ -158,7 +179,8 @@ function structuredData(contactEmail) {
           }))
         }
       },
-      ...services
+      ...services,
+      ...(faq ? [faq] : [])
     ]
   };
 }
@@ -183,7 +205,7 @@ export function Seo({ pathname, contactEmail }) {
     setMetaName('twitter:title', seo.title);
     setMetaName('twitter:description', seo.description);
     setMetaName('twitter:image', imageUrl);
-    setStructuredData(publicPage ? structuredData(contactEmail) : null);
+    setStructuredData(publicPage ? structuredData(contactEmail, pathname) : null);
   }, [pathname, contactEmail]);
 
   return null;

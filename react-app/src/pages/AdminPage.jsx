@@ -47,23 +47,44 @@ export function AdminPage(props) {
     addAdminRentalBlock,
     deactivateAdminRentalBlock
   } = props;
+  const newReservationsCount = adminReservations.filter((res) => res.status === 'requested').length;
+  const rentalNewCount = adminRentalRequests.filter((request) => request.status === 'new').length;
+  const towNewCount = adminTowRequests.filter((request) => request.status === 'new').length;
+  const paymentAttentionCount = adminReservations.filter(paymentNeedsAttention).length;
+  const tabs = [
+    ['trips', 'Terminy kursów'],
+    ['res', 'Rezerwacje przejazdów', newReservationsCount],
+    ['payments', 'Płatności', paymentAttentionCount],
+    ['prices', 'Ceny'],
+    ['rental', 'Wynajem busa', rentalNewCount],
+    ['tow', 'Laweta', towNewCount],
+    ['buses', 'Blokady wynajmu']
+  ];
 
   return (
     <div className="page active">
       <section className="section">
         <div className="panel-head"><h2>Panel właściciela</h2></div>
-        <div className="atabs">
-          <button className={`atab ${adminTab === 'trips' ? 'active' : ''}`} onClick={() => setAdminTab('trips')} type="button">Terminy kursów</button>
-          <button className={`atab ${adminTab === 'buses' ? 'active' : ''}`} onClick={() => setAdminTab('buses')} type="button">Blokady wynajmu</button>
-          <button className={`atab ${adminTab === 'res' ? 'active' : ''}`} onClick={() => setAdminTab('res')} type="button">Rezerwacje</button>
-          <button className={`atab ${adminTab === 'prices' ? 'active' : ''}`} onClick={() => setAdminTab('prices')} type="button">Ceny</button>
-          <button className={`atab ${adminTab === 'requests' ? 'active' : ''}`} onClick={() => setAdminTab('requests')} type="button">Zapytania</button>
+        <div className="admin-alert-strip">
+          <span>Nowe rezerwacje <strong>{newReservationsCount}</strong></span>
+          <span>Wynajem busa <strong>{rentalNewCount}</strong></span>
+          <span>Laweta <strong>{towNewCount}</strong></span>
+        </div>
+        <div className="atabs" role="tablist" aria-label="Sekcje panelu admina">
+          {tabs.map(([key, label, count]) => (
+            <button className={`atab ${adminTab === key ? 'active' : ''}`} key={key} onClick={() => setAdminTab(key)} type="button" aria-pressed={adminTab === key}>
+              <span>{label}</span>
+              {Number.isFinite(count) ? <strong className="tab-count">{count}</strong> : null}
+            </button>
+          ))}
         </div>
         {adminTab === 'trips' ? <AdminTrips adminViewMonth={adminViewMonth} setAdminViewMonth={setAdminViewMonth} selectedAdminRoute={selectedAdminRoute} setSelectedAdminRoute={setSelectedAdminRoute} cachedAdminTrips={cachedAdminTrips} toggleAdminTripDate={toggleAdminTripDate} generateMonth={generateMonth} adminGenMsg={adminGenMsg} toggleTrip={toggleTrip} adminTripsLoading={adminTripsLoading} /> : null}
         {adminTab === 'buses' ? <AdminRentalBlocks adminBlockViewMonth={adminBlockViewMonth} setAdminBlockViewMonth={setAdminBlockViewMonth} selectedAdminBus={selectedAdminBus} setSelectedAdminBus={setSelectedAdminBus} blocks={adminRentalBlocks} adminBlockMsg={adminBlockMsg} loading={adminBlocksLoading} adminBlockSubmitting={adminBlockSubmitting} adminBlockActionId={adminBlockActionId} addBlock={addAdminRentalBlock} deactivateBlock={deactivateAdminRentalBlock} /> : null}
         {adminTab === 'res' ? <AdminReservations adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} /> : null}
+        {adminTab === 'payments' ? <AdminPayments adminReservations={adminReservations} adminReservationsLoading={adminReservationsLoading} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} /> : null}
         {adminTab === 'prices' ? <AdminPrices tripPrices={tripPrices} adminPricesMsg={adminPricesMsg} adminSetTripPrice={adminSetTripPrice} /> : null}
-        {adminTab === 'requests' ? <AdminRequests rentalRequests={adminRentalRequests} towRequests={adminTowRequests} loading={adminRequestsLoading} adminRequestsMsg={adminRequestsMsg} updateRentalRequest={adminUpdateRentalRequest} updateTowRequest={adminUpdateTowRequest} /> : null}
+        {adminTab === 'rental' ? <AdminRequestSection kind="rental" requests={adminRentalRequests} loading={adminRequestsLoading} adminRequestsMsg={adminRequestsMsg} updateRequest={adminUpdateRentalRequest} /> : null}
+        {adminTab === 'tow' ? <AdminRequestSection kind="tow" requests={adminTowRequests} loading={adminRequestsLoading} adminRequestsMsg={adminRequestsMsg} updateRequest={adminUpdateTowRequest} /> : null}
       </section>
     </div>
   );
@@ -237,6 +258,15 @@ function dateMs(value) {
   return Number.isFinite(parsed) ? parsed : 0;
 }
 
+function latestPayment(reservation) {
+  return asArray(reservation?.payments).slice().sort((a, b) => dateMs(b.created_at) - dateMs(a.created_at))[0];
+}
+
+function paymentNeedsAttention(reservation) {
+  const status = latestPayment(reservation)?.status || 'unpaid';
+  return status === 'unpaid' || status === 'pending';
+}
+
 function formatDateTime(value) {
   if (!value) return '-';
   const parsed = new Date(value);
@@ -307,6 +337,20 @@ function AdminReservations({ adminReservations, adminReservationsLoading, adminR
       <Message message={!adminReservationsMsg?.resId ? adminReservationsMsg : null} />
       <AdminReservationGroup title={`Nowe zgłoszenia (${requested.length})`} reservations={requested} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />
       <AdminReservationGroup title="Pozostałe rezerwacje" reservations={other} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />
+    </>
+  );
+}
+
+function AdminPayments({ adminReservations, adminReservationsLoading, adminReservationsMsg, adminSetReservationStatus, adminSetPaymentStatus }) {
+  if (adminReservationsLoading) return <div className="loading-box">Ładuję płatności...</div>;
+  if (!adminReservations.length) return <><Message message={!adminReservationsMsg?.resId ? adminReservationsMsg : null} /><div className="no-trips">Brak płatności do wyświetlenia.</div></>;
+  const attention = adminReservations.filter(paymentNeedsAttention);
+  const other = adminReservations.filter((res) => !paymentNeedsAttention(res));
+  return (
+    <>
+      <Message message={!adminReservationsMsg?.resId ? adminReservationsMsg : null} />
+      <AdminReservationGroup title={`Płatności do sprawdzenia (${attention.length})`} reservations={attention} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />
+      <AdminReservationGroup title="Pozostałe płatności" reservations={other} adminReservationsMsg={adminReservationsMsg} adminSetReservationStatus={adminSetReservationStatus} adminSetPaymentStatus={adminSetPaymentStatus} />
     </>
   );
 }
@@ -423,23 +467,31 @@ function AdminPrices({ tripPrices, adminPricesMsg, adminSetTripPrice }) {
   );
 }
 
-function AdminRequests({ rentalRequests, towRequests, loading, adminRequestsMsg, updateRentalRequest, updateTowRequest }) {
-  if (loading) return <div className="loading-box">Ładuję zapytania...</div>;
+function AdminRequestSection({ kind, requests, loading, adminRequestsMsg, updateRequest }) {
+  const isRental = kind === 'rental';
+  const title = isRental ? 'Zapytania o wynajem busa' : 'Zapytania o lawetę';
+  const emptyText = isRental ? 'Brak zapytań o wynajem busa.' : 'Brak zapytań o lawetę.';
+  const newRequests = requests.filter((request) => request.status === 'new');
+  const otherRequests = requests.filter((request) => request.status !== 'new');
+  const globalMessage = !adminRequestsMsg?.requestId && (!adminRequestsMsg?.kind || adminRequestsMsg.kind === kind) ? adminRequestsMsg : null;
+  if (loading) return <div className="loading-box">{isRental ? 'Ładuję zapytania o wynajem busa...' : 'Ładuję zapytania o lawetę...'}</div>;
   return (
     <>
-    <Message message={!adminRequestsMsg?.requestId ? adminRequestsMsg : null} />
-    <div className="requests-grid">
-      <div>
-        <p className="admin-route-title">Zapytania o wynajem busa</p>
-        {!rentalRequests.length ? <p className="muted">Brak zapytań.</p> : null}
-        {rentalRequests.map((request) => <RentalRequestCard key={request.id} request={request} message={adminRequestsMsg?.kind === 'rental' && adminRequestsMsg?.requestId === request.id ? adminRequestsMsg : null} updateRentalRequest={updateRentalRequest} />)}
+      <Message message={globalMessage} />
+      <div className="admin-list-block">
+        <p className="admin-route-title">{title} - nowe ({newRequests.length})</p>
+        {!newRequests.length ? <p className="muted">{emptyText}</p> : null}
+        {newRequests.map((request) => isRental
+          ? <RentalRequestCard key={request.id} request={request} message={adminRequestsMsg?.kind === 'rental' && adminRequestsMsg?.requestId === request.id ? adminRequestsMsg : null} updateRentalRequest={updateRequest} />
+          : <TowRequestCard key={request.id} request={request} message={adminRequestsMsg?.kind === 'tow' && adminRequestsMsg?.requestId === request.id ? adminRequestsMsg : null} updateTowRequest={updateRequest} />)}
       </div>
-      <div>
-        <p className="admin-route-title">Zapytania o lawetę</p>
-        {!towRequests.length ? <p className="muted">Brak zapytań.</p> : null}
-        {towRequests.map((request) => <TowRequestCard key={request.id} request={request} message={adminRequestsMsg?.kind === 'tow' && adminRequestsMsg?.requestId === request.id ? adminRequestsMsg : null} updateTowRequest={updateTowRequest} />)}
+      <div className="admin-list-block">
+        <p className="admin-route-title">{title} - pozostałe</p>
+        {!otherRequests.length ? <p className="muted">Brak pozycji.</p> : null}
+        {otherRequests.map((request) => isRental
+          ? <RentalRequestCard key={request.id} request={request} message={adminRequestsMsg?.kind === 'rental' && adminRequestsMsg?.requestId === request.id ? adminRequestsMsg : null} updateRentalRequest={updateRequest} />
+          : <TowRequestCard key={request.id} request={request} message={adminRequestsMsg?.kind === 'tow' && adminRequestsMsg?.requestId === request.id ? adminRequestsMsg : null} updateTowRequest={updateRequest} />)}
       </div>
-    </div>
     </>
   );
 }
