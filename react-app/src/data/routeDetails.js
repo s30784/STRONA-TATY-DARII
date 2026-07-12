@@ -4,6 +4,7 @@ export const ROUTE_DETAILS = {
     mapUrl: 'https://www.google.com/maps/dir/Jaros%C5%82aw/Rzesz%C3%B3w/Krak%C3%B3w/Wiede%C5%84',
     stops: [
       { name: 'Jarosław', desc: 'start kursu, dokładne miejsce do potwierdzenia telefonicznie' },
+      { name: 'Przemyśl', desc: 'możliwy odbiór po wcześniejszym ustaleniu' },
       { name: 'Przeworsk / Łańcut', desc: 'możliwy odbiór po wcześniejszym ustaleniu' },
       { name: 'Rzeszów', desc: 'dogodne miejsce dosiadki przy trasie' },
       { name: 'Kraków / okolice A4', desc: 'przystanek zależny od konkretnego przejazdu' },

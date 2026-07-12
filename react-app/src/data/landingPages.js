@@ -11,7 +11,7 @@ export const LANDING_PAGES = {
     introTitle: 'Przejazdy Jarosław Wiedeń bez pośredników',
     intro: [
       'Bus Jarosław Wiedeń to wygodna opcja dla osób jadących do Austrii do pracy, rodziny albo na krótki wyjazd. W kalendarzu przejazdów widać dostępne terminy, trasę oraz cenę miejsca.',
-      'Na trasie obsługiwane są przejazdy z Jarosławia w kierunku Wiednia oraz powroty Wiedeń Jarosław. Przy większej grupie warto skontaktować się telefonicznie i ustalić szczegóły.'
+      'Na trasie obsługiwane są przejazdy z Jarosławia w kierunku Wiednia oraz powroty Wiedeń Jarosław. W kierunku Jarosław - Wiedeń przystanki po stronie Polski służą do wsiadania, a wysiadanie odbywa się w Wiedniu. Przy większej grupie warto skontaktować się telefonicznie i ustalić szczegóły.'
     ],
     audience: ['osoby jadące z Jarosławia i Podkarpacia do Wiednia', 'klienci wracający z Austrii do Polski', 'pasażerowie, którzy chcą wcześniej sprawdzić termin i wolne miejsca'],
     steps: ['wybierz kierunek Jarosław - Wiedeń albo Wiedeń - Jarosław', 'sprawdź dostępny termin w kalendarzu', 'wyślij zgłoszenie rezerwacji i zaczekaj na potwierdzenie'],

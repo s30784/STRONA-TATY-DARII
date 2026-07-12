@@ -99,6 +99,7 @@ function validateRentalRange(startDate, endDate, blocks) {
 }
 
 const ADMIN_TAB_KEYS = ['trips', 'res', 'payments', 'prices', 'rental', 'tow', 'buses'];
+const JW_FIXED_DROPOFF_STOP = 'Wiedeń';
 
 function normalizeAdminTab(value) {
   return ADMIN_TAB_KEYS.includes(value) ? value : 'trips';
@@ -196,7 +197,7 @@ export function App() {
   React.useEffect(() => {
     const stops = ROUTE_DETAILS[selectedRoute].stops;
     setPickupStop(stops[0].name);
-    setDropoffStop(lastStop(stops).name);
+    setDropoffStop(selectedRoute === 'JW' ? JW_FIXED_DROPOFF_STOP : lastStop(stops).name);
     setSelectedTripId(null);
     setSelectedBookingDate(null);
     if (pathname === '/booking') loadTrips();
@@ -707,8 +708,11 @@ export function App() {
   function chooseStop(index, type) {
     const stop = routeDetails.stops[index];
     if (!stop) return;
-    if (type === 'dropoff') setDropoffStop(stop.name);
-    else setPickupStop(stop.name);
+    if (type === 'dropoff') {
+      setDropoffStop(selectedRoute === 'JW' ? JW_FIXED_DROPOFF_STOP : stop.name);
+      return;
+    }
+    setPickupStop(stop.name);
   }
 
   function selectBookingDay(dateStr) {
@@ -728,7 +732,9 @@ export function App() {
     const seats = parseInt(form.get('seats'), 10) || 0;
     const notes = field(form, 'notes');
     const pickup = field(form, 'pickup_stop') || pickupStop;
-    const dropoff = field(form, 'dropoff_stop') || dropoffStop;
+    const rawDropoff = field(form, 'dropoff_stop') || dropoffStop;
+    const dropoff = selectedRoute === 'JW' ? JW_FIXED_DROPOFF_STOP : rawDropoff;
+    if (selectedRoute === 'JW' && dropoffStop !== JW_FIXED_DROPOFF_STOP) setDropoffStop(JW_FIXED_DROPOFF_STOP);
     const termsAccepted = form.get('terms') === 'on';
     const validationError = (!currentUser ? 'Zaloguj się, aby wysłać zgłoszenie rezerwacji.' : null)
       || (!isEmailConfirmed(currentUser) ? 'Potwierdź adres email przed wysłaniem zgłoszenia rezerwacji.' : null)
@@ -1106,7 +1112,7 @@ export function App() {
         <Route path="/" element={<HomePage showPage={showPage} currentUser={currentUser} contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
         <Route path="/rental" element={<RentalPage selectedBus={selectedBus} setSelectedBus={setSelectedBus} rentalViewMonth={rentalViewMonth} setRentalViewMonth={setRentalViewMonth} rentalBlocks={rentalBlocks} rentalRangeStart={rentalRangeStart} rentalRangeEnd={rentalRangeEnd} setRentalRange={setRentalRange} rentalRangeError={rentalRangeError} submitRentalRequest={submitRentalRequest} rentalMsg={rentalMsg} rentalSubmitting={rentalSubmitting} rentalLoading={rentalLoading} currentUser={currentUser} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} onTurnstileVerify={setRentalTurnstileToken} turnstileResetKey={rentalTurnstileResetKey} />} />
         <Route path="/auth" element={<AuthPage authForm={authForm} setAuthForm={setAuthForm} authMsg={authMsg} authLoading={authLoading} doLogin={doLogin} doRegister={doRegister} doReset={doReset} />} />
-        <Route path="/booking" element={<BookingPage selectedRoute={selectedRoute} setSelectedRoute={setSelectedRoute} routeDetails={routeDetails} bookingViewMonth={bookingViewMonth} setBookingViewMonth={setBookingViewMonth} cachedTrips={cachedTrips} selectedTripId={selectedTripId} selectedBookingDate={selectedBookingDate} selectBookingDay={selectBookingDay} pickupStop={pickupStop} dropoffStop={dropoffStop} setPickupStop={setPickupStop} setDropoffStop={setDropoffStop} chooseStop={chooseStop} submitBooking={submitBooking} bookingMsg={bookingMsg} bookingSubmitting={bookingSubmitting} bookingLoading={bookingLoading} currentUser={currentUser} currentProfile={currentProfile} tripPrice={selectedRoutePrice} />} />
+        <Route path="/booking" element={<BookingPage selectedRoute={selectedRoute} setSelectedRoute={setSelectedRoute} routeDetails={routeDetails} bookingViewMonth={bookingViewMonth} setBookingViewMonth={setBookingViewMonth} cachedTrips={cachedTrips} selectedTripId={selectedTripId} selectedBookingDate={selectedBookingDate} selectBookingDay={selectBookingDay} pickupStop={pickupStop} dropoffStop={dropoffStop} fixedDropoffStop={selectedRoute === 'JW' ? JW_FIXED_DROPOFF_STOP : ''} setPickupStop={setPickupStop} setDropoffStop={setDropoffStop} chooseStop={chooseStop} submitBooking={submitBooking} bookingMsg={bookingMsg} bookingSubmitting={bookingSubmitting} bookingLoading={bookingLoading} currentUser={currentUser} currentProfile={currentProfile} tripPrice={selectedRoutePrice} />} />
         <Route path="/tow" element={<TowPage towMsg={towMsg} submitTowRequest={submitTowRequest} towSubmitting={towSubmitting} currentUser={currentUser} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} onTurnstileVerify={setTowTurnstileToken} turnstileResetKey={towTurnstileResetKey} />} />
         <Route path="/my-reservations" element={<MyReservationsPage currentUser={currentUser} showPage={showPage} myReservations={myReservations} myResMsg={myResMsg} myReservationsLoading={myReservationsLoading} cancelReservation={cancelReservation} cancelingReservationId={cancelingReservationId} />} />
         <Route path="/contact" element={<ContactPage contactEmail={CONTACT_EMAIL} contactPhone={CONTACT_PHONE_DISPLAY} contactPhoneHref={CONTACT_PHONE_HREF} />} />
