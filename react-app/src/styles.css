@@ -1921,6 +1921,130 @@ form .btn-primary,
   border-radius: var(--radius);
 }
 
+.tow-fleet-panel {
+  margin-bottom: 16px;
+}
+
+.tow-fleet-panel h3 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 23px;
+  line-height: 1.25;
+}
+
+.tow-fleet-panel > p {
+  max-width: 720px;
+  margin: 0 0 16px;
+  color: var(--muted);
+  line-height: 1.62;
+}
+
+.tow-fleet-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.tow-vehicle-card {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--surface);
+  box-shadow: var(--shadow-soft);
+}
+
+.tow-vehicle-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 20px;
+}
+
+.tow-vehicle-card h4 {
+  margin: 0 0 10px;
+  color: var(--ink);
+  font-size: 17px;
+  line-height: 1.28;
+}
+
+.tow-vehicle-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.tow-vehicle-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  margin-top: auto;
+  padding-top: 16px;
+}
+
+.tow-vehicle-photos {
+  display: grid;
+  gap: 8px;
+  padding: 8px;
+  background: var(--paper);
+}
+
+.tow-vehicle-photo-main {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--line);
+}
+
+.tow-vehicle-photo-main img,
+.tow-vehicle-thumbs img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tow-vehicle-photo-main span {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  display: inline-flex;
+  align-items: center;
+  min-height: 28px;
+  padding: 0 9px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(17, 24, 39, 0.76);
+  color: #FFFFFF;
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.tow-vehicle-thumbs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.tow-vehicle-thumbs button {
+  overflow: hidden;
+  aspect-ratio: 16 / 10;
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: calc(var(--radius) - 2px);
+  background: var(--surface);
+}
+
+.tow-vehicle-thumbs button.active {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(238, 43, 71, 0.12);
+}
+
 .summary-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -2506,6 +2630,7 @@ form .btn-primary,
   .service-grid,
   .fleet-grid,
   .split-layout,
+  .tow-fleet-grid,
   .landing-grid,
   .landing-faq-section {
     grid-template-columns: 1fr;
@@ -2851,6 +2976,48 @@ form .btn-primary,
 
   .day-price {
     font-size: 8px;
+  }
+
+  .map-frame {
+    height: 280px;
+  }
+
+  .tow-fleet-panel {
+    margin-bottom: 14px;
+  }
+
+  .tow-fleet-panel h3 {
+    font-size: 21px;
+  }
+
+  .tow-fleet-panel > p {
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+
+  .tow-fleet-grid {
+    gap: 14px;
+  }
+
+  .tow-vehicle-content {
+    padding: 18px;
+  }
+
+  .tow-vehicle-card h4 {
+    font-size: 16px;
+  }
+
+  .tow-vehicle-meta {
+    padding-top: 14px;
+  }
+
+  .tow-vehicle-photos {
+    padding: 7px;
+  }
+
+  .tow-vehicle-photo-main,
+  .tow-vehicle-thumbs button {
+    aspect-ratio: 4 / 3;
   }
 
   .fg2,

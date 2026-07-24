@@ -1,8 +1,10 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../components/Card.jsx';
 import { Hero } from '../components/Hero.jsx';
 import { Message } from '../components/Message.jsx';
 import { TurnstileWidget } from '../components/TurnstileWidget.jsx';
+import { TOW_VEHICLES } from '../data/towVehicles.js';
 
 export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, contactPhone, contactPhoneHref, onTurnstileVerify, turnstileResetKey }) {
   return (
@@ -18,6 +20,24 @@ export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, 
         <div className="split-layout">
           <div>
             <Card title="Trasa lawety"><iframe className="map-frame" title="Mapa trasy lawety Jarosław Wiedeń" loading="lazy" referrerPolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=Jaros%C5%82aw%20Poland%20to%20Vienna%20Austria&output=embed"></iframe></Card>
+            <section className="tow-fleet-panel" aria-labelledby="tow-fleet-title">
+              <h3 id="tow-fleet-title">Dostępne lawety</h3>
+              <p>Dobieramy lawetę do pojazdu, trasy i warunków odbioru. Poniższe opisy pomagają szybko określić, jaki typ transportu będzie potrzebny.</p>
+              <div className="tow-fleet-grid">
+                {TOW_VEHICLES.map((vehicle) => (
+                  <article className="tow-vehicle-card" key={vehicle.name}>
+                    <TowVehiclePhotos vehicle={vehicle} />
+                    <div className="tow-vehicle-content">
+                      <h4>{vehicle.name}</h4>
+                      <p>{vehicle.description}</p>
+                      <div className="tow-vehicle-meta">
+                        {vehicle.parameters.map((parameter) => <span className="pill" key={parameter}>{parameter}</span>)}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </section>
             <Card title="Co można zamówić"><p className="form-help">Realizujemy transport pojazdów, maszyn i wybranych towarów. Opisz ładunek w formularzu, a potwierdzimy możliwość transportu.</p><ul className="mini-list"><li>przewóz auta z Polski do Austrii albo z Austrii do Polski</li><li>transport pojazdu niesprawnego po awarii lub kolizji</li><li>odbiór pojazdu z adresu, parkingu, warsztatu albo komisu</li><li>dostarczenie pod wskazany adres na trasie przejazdu</li></ul></Card>
           </div>
           <aside>
@@ -39,6 +59,32 @@ export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, 
           </aside>
         </div>
       </section>
+    </div>
+  );
+}
+
+function TowVehiclePhotos({ vehicle }) {
+  const photos = vehicle.photos || [];
+  const [activePhotoIndex, setActivePhotoIndex] = React.useState(0);
+  const activePhoto = photos[activePhotoIndex] || photos[0];
+
+  if (!activePhoto) return null;
+
+  return (
+    <div className="tow-vehicle-photos">
+      <div className="tow-vehicle-photo-main">
+        <img src={activePhoto.src} alt={activePhoto.alt} />
+        <span>{activePhotoIndex + 1} / {photos.length}</span>
+      </div>
+      {photos.length > 1 ? (
+        <div className="tow-vehicle-thumbs" aria-label={`Zdjęcia: ${vehicle.name}`}>
+          {photos.map((photo, index) => (
+            <button className={activePhotoIndex === index ? 'active' : ''} key={`${photo.src}-${index}`} onClick={() => setActivePhotoIndex(index)} type="button" aria-label={`Pokaż zdjęcie ${index + 1}: ${photo.label || photo.alt}`} aria-current={activePhotoIndex === index ? 'true' : undefined}>
+              <img src={photo.src} alt="" />
+            </button>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }
