@@ -1,16 +1,18 @@
 # Dokumentacja Techniczna Do Audytu Produkcyjnego
 
-Stan dokumentacji: aktualizacja po testach produkcyjnych MVP wykonanych 2026-07-05. Zakres MVP obejmuje bezpieczne rezerwacje, ceny, reczna ewidencje platnosci, zapytania rental/tow oraz zapis `notification_events`. Ten etap dotyczy tylko dokumentacji; kod aplikacji nie byl zmieniany. Poprzedni `npm audit` wykazal 2 podatnosci w zaleznosciach deweloperskich zwiazanych z `vite/esbuild`.
+Stan dokumentacji: aktualizacja po testach produkcyjnych MVP oraz paczkach produkcyjnych: domena `https://busyjaroslaw.pl`, Cloudflare Turnstile dla formularzy `/rental` i `/tow`, Supabase Edge Functions dla zapytan rental/tow, powiadomienia admina przez Resend oraz mail OVH Zimbra `kontakt@busyjaroslaw.pl`. Poprzedni `npm audit` wykazal 2 podatnosci w zaleznosciach deweloperskich zwiazanych z `vite/esbuild`.
 
 Wazne rozroznienie:
 - Secure reservations sa wdrozone i potwierdzone testami produkcyjnymi MVP.
 - Stare RPC `create_reservation_atomic` zostalo usuniete przez migracje secure reservations i frontend nie powinien go uzywac.
 - `notification_events` sa tworzone po rezerwacji, anulowaniu oraz zapytaniach rental/tow, ale realna wysylka powiadomien jest nadal do zrobienia.
+- Formularze `/rental` i `/tow` korzystaja z Cloudflare Turnstile oraz Supabase Edge Functions przed wywolaniem RPC.
+- Po udanym zapisie zapytania rental/tow Edge Function wysyla mail do admina przez Resend; automatyczne maile do klientow nie sa jeszcze wysylane.
 - Rzeczy zrobione i przetestowane sa rozdzielone od listy TODO w sekcjach 6, 8 i 11.
 
 ## 1. Architektura Projektu
 
-Aplikacja to statyczny frontend React/Vite hostowany jako Static Site na Renderze. Nie ma osobnego backendu aplikacyjnego, API ani Edge Functions. Backendowa role pelni Supabase: Auth, Postgres, RLS, widok `trips_with_seats`, funkcje RPC oraz tabele operacyjne.
+Aplikacja to statyczny frontend React/Vite hostowany jako Static Site na Renderze. Backendowa role pelni Supabase: Auth, Postgres, RLS, widok `trips_with_seats`, funkcje RPC, Supabase Edge Functions oraz tabele operacyjne.
 
 Frontend:
 - React 18, Vite 5, React Router.
@@ -21,11 +23,20 @@ Frontend:
 Backend / Supabase:
 - Klient Supabase: `react-app/src/lib/supabase.js`.
 - Migracje SQL: `supabase/migrations/`.
+- Edge Functions: `supabase/functions/submit-rental-request` i `supabase/functions/submit-tow-request`.
 - Tabele podstawowe: `profiles`, `trips`, `reservations`.
 - Tabele operacyjne: `reservation_audit_log`, `trip_prices`, `payments`, `rental_requests`, `rental_calendar_blocks`, `tow_requests`, `notification_events`.
 - Widok: `trips_with_seats`.
 - Aktywne RPC rezerwacyjne: `create_reservation_request`, `cancel_own_reservation`, `admin_set_reservation_status`.
 - Aktywne RPC administracyjne i ofertowe: `admin_set_trip_price`, `admin_set_payment_status`, `get_rental_calendar_blocks`, `rental_is_range_available`, `create_rental_request`, `create_tow_request`, `admin_update_rental_request`, `admin_update_tow_request`.
+
+Publiczne formularze rental/tow:
+- `/rental` i `/tow` uzywaja Cloudflare Turnstile.
+- Frontend wysyla dane do Edge Function przez `supabase.functions.invoke`.
+- Edge Function sprawdza token Turnstile przez Cloudflare Siteverify.
+- Edge Function wykonuje prosty rate limiting po emailu i telefonie.
+- Edge Function dopiero potem wywoluje RPC `create_rental_request` albo `create_tow_request`.
+- Edge Function sklada czytelne `p_message` z dodatkowych pol formularza i po udanym RPC wysyla mail admina przez Resend.
 
 Routing:
 - `/` strona glowna.
@@ -47,10 +58,15 @@ Panel administratora:
 
 Integracje zewnetrzne:
 - Supabase Auth/Postgres/RLS/RPC.
+- Supabase Edge Functions dla publicznych formularzy rental/tow.
+- Cloudflare Turnstile dla `/rental` i `/tow`.
+- Resend dla technicznych maili admina po nowych zapytaniach rental/tow.
 - Render Static Site.
 - Google Maps: linki tras i iframe na stronie lawety.
 - Zewnetrzne URL-e zdjec pojazdow w `react-app/src/data/vehicles.js`.
-- `VITE_CONTACT_EMAIL` pozostaje publicznym adresem kontaktowym w UI, ale formularze rental/tow w aktualnym repo zapisuja zapytania do Supabase przez RPC.
+- Publiczny kontakt: `kontakt@busyjaroslaw.pl`, telefon `663 063 364`, domena `https://busyjaroslaw.pl`.
+- Mail firmowy: OVH Zimbra Starter, webmail `https://webmail.mail.ovh.net/`; szczegoly w `docs/MAIL_OVH_ZIMBRA.md`.
+- Powiadomienia admina: Resend, odbiorca `kontakt@busyjaroslaw.pl`, nadawca techniczny `Busy Jarosław <powiadomienia@busyjaroslaw.pl>`; szczegoly w `docs/ADMIN_EMAIL_NOTIFICATIONS.md`.
 
 ## 2. Struktura Katalogow I Najwazniejsze Pliki
 
@@ -59,6 +75,7 @@ STRONA-TATY-DARII/
   render.yaml
   DOKUMENTACJA_TECHNICZNA_AUDYT.md
   supabase/migrations/
+  supabase/functions/
   react-app/
     .env.example
     package.json
@@ -74,6 +91,7 @@ STRONA-TATY-DARII/
       hooks/
       lib/
       pages/
+  docs/
 ```
 
 Najwazniejsze pliki:
@@ -88,9 +106,16 @@ Najwazniejsze pliki:
 - `react-app/src/pages/BookingPage.jsx`: kalendarz kursow, cena miejsca, formularz zgloszenia rezerwacji.
 - `react-app/src/pages/RentalPage.jsx`: formularz zapytania o wynajem busa.
 - `react-app/src/pages/TowPage.jsx`: formularz zapytania o lawete.
+- `react-app/src/components/TurnstileWidget.jsx`: widget Cloudflare Turnstile dla publicznych formularzy.
 - `react-app/src/data/routeDetails.js`: trasy, przystanki, linki Google Maps.
 - `react-app/src/data/vehicles.js`: dane busow i zdjecia.
 - `react-app/public/verify-email.html`, `react-app/public/reset-password.html`: mostki redirectow Supabase Auth.
+- `supabase/functions/submit-rental-request/index.ts`: Edge Function dla zapytan o wynajem busa.
+- `supabase/functions/submit-tow-request/index.ts`: Edge Function dla zapytan o lawete.
+- `supabase/functions/_shared/sendAdminEmail.ts`: wspolny helper wysylki maili admina przez Resend.
+- `docs/ANTYSPAM_TURNSTILE.md`: dokumentacja Turnstile, Edge Functions i rate limitingu.
+- `docs/MAIL_OVH_ZIMBRA.md`: dokumentacja maila OVH Zimbra.
+- `docs/ADMIN_EMAIL_NOTIFICATIONS.md`: dokumentacja powiadomien admina przez Resend.
 
 Konfiguracja srodowiskowa:
 - Lokalny przyklad: `react-app/.env.example`.
@@ -104,19 +129,33 @@ Polaczenia z Supabase:
 
 ## 3. Zmienne Srodowiskowe
 
-Wymagane `VITE_*`:
+Render frontend - wymagane publiczne `VITE_*`:
 - `VITE_SUPABASE_URL`: publiczny URL projektu Supabase.
 - `VITE_SUPABASE_PUBLISHABLE_KEY`: publiczny klucz Supabase do klienta frontendowego.
-- `VITE_PUBLIC_APP_ORIGIN`: publiczny origin aplikacji uzywany do redirectow Auth, np. `https://domena.pl`.
-- `VITE_CONTACT_EMAIL`: publiczny adres kontaktowy uzywany w UI.
+- `VITE_PUBLIC_APP_ORIGIN`: publiczny origin aplikacji uzywany do redirectow Auth, produkcyjnie `https://busyjaroslaw.pl`.
+- `VITE_CONTACT_EMAIL`: publiczny adres kontaktowy uzywany w UI, produkcyjnie `kontakt@busyjaroslaw.pl`.
+- `VITE_TURNSTILE_SITE_KEY`: publiczny site key Cloudflare Turnstile.
+
+Supabase Edge Function Secrets:
+- `TURNSTILE_SECRET_KEY`: tajny klucz Cloudflare Turnstile do Siteverify.
+- `EDGE_SUPABASE_URL`: URL projektu Supabase dla Edge Functions.
+- `EDGE_SUPABASE_SERVICE_ROLE_KEY`: tajny service role key dla Edge Functions.
+- `RESEND_API_KEY`: tajny klucz Resend do wysylki maili admina.
+- `ADMIN_NOTIFICATION_EMAIL`: adres odbiorcy powiadomien admina, docelowo `kontakt@busyjaroslaw.pl`.
+- `MAIL_FROM`: nadawca techniczny, docelowo `Busy Jarosław <powiadomienia@busyjaroslaw.pl>`.
 
 Wazne: w Vite kazda zmienna `VITE_*` trafia do bundla frontendowego, wiec jest publiczna. Nie wolno umieszczac w frontendzie:
 - `service_role`,
+- `EDGE_SUPABASE_SERVICE_ROLE_KEY`,
+- `TURNSTILE_SECRET_KEY`,
+- `RESEND_API_KEY`,
 - `DATABASE_URL`,
 - hasel SMTP,
 - sekretow OAuth,
 - prywatnych tokenow Render/Supabase,
 - kluczy API niewlasciwych do ekspozycji w przegladarce.
+
+`TURNSTILE_SECRET_KEY`, `EDGE_SUPABASE_SERVICE_ROLE_KEY` i `RESEND_API_KEY` nie moga trafiac do `react-app/src` ani do Render frontend env.
 
 ## 4. Supabase
 
@@ -158,7 +197,7 @@ RLS:
 - `rental_calendar_blocks`: publiczny odczyt przez RPC `get_rental_calendar_blocks`; administracyjne zarzadzanie blokadami w panelu.
 - `trip_prices`: publiczny SELECT; zapis przez RPC `admin_set_trip_price`.
 - `payments`: SELECT/INSERT/UPDATE tylko dla admina.
-- `rental_requests` i `tow_requests`: admin SELECT/UPDATE; tworzenie zapytan odbywa sie przez publiczne RPC `create_rental_request` i `create_tow_request`.
+- `rental_requests` i `tow_requests`: admin SELECT/UPDATE; frontend publiczny powinien tworzyc zapytania przez Edge Functions `submit-rental-request` i `submit-tow-request`, ktore po Turnstile/rate limitingu wywoluja RPC `create_rental_request` i `create_tow_request`.
 - `notification_events`: SELECT tylko dla admina.
 
 RPC rezerwacji:
@@ -173,9 +212,18 @@ RPC cen, platnosci i zapytan:
 - `admin_set_payment_status(...)`: admin ustawia status, metode, kwote i notatke platnosci dla rezerwacji.
 - `get_rental_calendar_blocks(...)`: publicznie zwraca aktywne blokady kalendarza wynajmu dla busa i zakresu dat.
 - `rental_is_range_available(...)`: sprawdza dostepnosc zakresu wynajmu przed wyslaniem zapytania.
-- `create_rental_request(...)`: zapisuje zapytanie o wynajem busa; dostepne dla `anon` i `authenticated`.
-- `create_tow_request(...)`: zapisuje zapytanie o lawete; dostepne dla `anon` i `authenticated`.
+- `create_rental_request(...)`: zapisuje zapytanie o wynajem busa; aktualnie traktowane jako funkcja wewnetrzna wywolywana przez Edge Function `submit-rental-request`.
+- `create_tow_request(...)`: zapisuje zapytanie o lawete; aktualnie traktowane jako funkcja wewnetrzna wywolywana przez Edge Function `submit-tow-request`.
 - `admin_update_rental_request(...)`, `admin_update_tow_request(...)`: admin aktualizuje statusy i notatki zapytan.
+
+Wiadomosci rental/tow:
+- Dodatkowe pola formularzy nie wymagaja migracji bazy; sa skladane do istniejacego pola `p_message`.
+- `/rental` zbiera m.in. imie i nazwisko, telefon, email, daty, bus, planowana trase, liczbe osob, cel wynajmu i dodatkowa wiadomosc.
+- `/tow` zbiera m.in. imie i nazwisko, telefon, email, skad/dokad, pojazd lub ladunek, preferowany termin, informacje czy pojazd odpala i czy ma kola oraz dodatkowa wiadomosc.
+
+Ostrozny stan uprawnien RPC:
+- Jezeli `EXECUTE` dla `create_rental_request` i `create_tow_request` nadal jest przyznane `anon`/`authenticated`, frontend nie powinien juz korzystac z tych RPC bezposrednio.
+- TODO po potwierdzeniu pelnego dzialania `/rental` i `/tow` przez Edge Functions: odebrac `EXECUTE` dla `anon`/`authenticated` i zostawic wywolanie przez `service_role` w Edge Functions.
 
 Auth:
 - Email/password, rejestracja, login, reset hasla, potwierdzenie emaila.
@@ -193,9 +241,9 @@ Storage/buckety:
 
 Publiczne:
 - Strona glowna z uslugami i CTA.
-- Wynajem busow: wybor pojazdu, wybor zakresu dat, blokady z `rental_calendar_blocks`, zapis zapytania do `rental_requests`.
+- Wynajem busow: wybor pojazdu, wybor zakresu dat, blokady z `rental_calendar_blocks`, dane do wyceny, Cloudflare Turnstile, wysylka do Edge Function, zapis zapytania do `rental_requests` i mail do admina przez Resend.
 - Rezerwacja przejazdu Jaroslaw-Wieden / Wieden-Jaroslaw: anonim moze ogladac trasy, ceny i terminy, ale nie moze wyslac zgloszenia.
-- Transport laweta: formularz wyceny zapisuje zapytanie do `tow_requests`.
+- Transport laweta: formularz wyceny zbiera praktyczne dane do transportu, uzywa Cloudflare Turnstile, wysyla dane do Edge Function, zapisuje zapytanie do `tow_requests` i wysyla mail do admina przez Resend.
 - Rejestracja, logowanie, reset hasla, weryfikacja emaila.
 - Widok "Moje rezerwacje" dla zalogowanych.
 - Anulowanie wlasnej rezerwacji przez RPC `cancel_own_reservation`.
@@ -222,7 +270,8 @@ Admin:
 
 Formularze:
 - Booking zapisuje zgloszenie do Supabase przez RPC.
-- Rental/tow zapisuja leady do Supabase przez RPC.
+- Rental/tow wysylaja leady do Supabase Edge Functions (`submit-rental-request`, `submit-tow-request`), a Edge Functions po Turnstile/rate limitingu wywoluja RPC.
+- Edge Functions po udanym RPC probuja wyslac mail do admina; blad Resend nie cofa zapisu i nie zmienia sukcesu widocznego dla klienta.
 - Contact nie ma osobnego formularza wysylkowego.
 
 ## 6. Wyniki Testow Produkcyjnych MVP
@@ -254,11 +303,15 @@ Wynajem busa - przetestowane i dziala:
 - Formularz zapisuje `rental_request`.
 - Admin widzi zapytanie.
 - Admin zmienia status zapytania.
+- Publiczny formularz uzywa Cloudflare Turnstile, Edge Function `submit-rental-request` i rate limitingu.
+- Po udanym zapisie Edge Function wysyla mail do admina na `kontakt@busyjaroslaw.pl`.
 
 Laweta - przetestowane i dziala:
 - Formularz zapisuje `tow_request`.
 - Admin widzi zapytanie.
 - Admin zmienia status i `estimated_price`.
+- Publiczny formularz uzywa Cloudflare Turnstile, Edge Function `submit-tow-request` i rate limitingu.
+- Po udanym zapisie Edge Function wysyla mail do admina na `kontakt@busyjaroslaw.pl`.
 
 Notification events - przetestowane i dzialaja jako zapis zdarzen:
 - Po rezerwacji powstaje event.
@@ -313,20 +366,25 @@ Zamkniete i potwierdzone testami produkcyjnymi MVP:
 - Ceny tras i snapshoty cen w rezerwacjach dzialaja.
 - Reczna ewidencja platnosci dziala.
 - Zapytania rental/tow zapisuja sie i sa obslugiwane w panelu admina.
+- Formularze `/rental` i `/tow` sa zabezpieczone Cloudflare Turnstile.
+- Zapytania `/rental` i `/tow` przechodza przez Supabase Edge Functions.
+- Rate limiting dla `/rental` i `/tow` jest wdrozony w Edge Functions.
 - `notification_events` powstaja po rezerwacji, anulowaniu oraz rental/tow request.
 - Domena produkcyjna `https://busyjaroslaw.pl` jest podpieta.
 - SEO techniczne dla publicznych tras ma `title`, `meta`, `sitemap`, `robots`, Open Graph i structured data.
+- Sluzbowy mail `kontakt@busyjaroslaw.pl` jest ustawiony jako publiczny kontakt.
 
 TODO po MVP:
 - Poprawki wizualne/UX.
-- Cloudflare Turnstile / antyspam.
-- Rate limiting.
 - Realna wysylka `notification_events`.
+- Automatyczne maile do klientow.
+- SPF/DKIM/DMARC dla maila OVH Zimbra do sprawdzenia.
 - Regulamin i polityka prywatnosci.
 - Backupy Supabase.
 - Monitoring bledow.
 - Aktualizacja zaleznosci / `npm audit`.
 - Uporzadkowanie testowych danych.
+- Po potwierdzeniu dzialania `/rental` i `/tow` przez Edge Functions mozna rozwazyc odebranie `EXECUTE` dla `anon`/`authenticated` na `create_rental_request` i `create_tow_request`.
 
 ## 9. Uruchomienie Lokalne
 
@@ -349,6 +407,7 @@ VITE_SUPABASE_URL=https://...supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=...
 VITE_PUBLIC_APP_ORIGIN=http://localhost:5173
 VITE_CONTACT_EMAIL=kontakt@busyjaroslaw.pl
+VITE_TURNSTILE_SITE_KEY=...
 ```
 
 Dev:
@@ -395,11 +454,24 @@ Environment Variables na Renderze:
 ```bash
 VITE_SUPABASE_URL=
 VITE_SUPABASE_PUBLISHABLE_KEY=
-VITE_PUBLIC_APP_ORIGIN=
-VITE_CONTACT_EMAIL=
+VITE_PUBLIC_APP_ORIGIN=https://busyjaroslaw.pl
+VITE_CONTACT_EMAIL=kontakt@busyjaroslaw.pl
+VITE_TURNSTILE_SITE_KEY=
 ```
 
 Po zmianie envow trzeba przebudowac aplikacje, bo Vite wstrzykuje `VITE_*` na etapie builda.
+
+Supabase Edge Function Secrets:
+```bash
+TURNSTILE_SECRET_KEY=
+EDGE_SUPABASE_URL=
+EDGE_SUPABASE_SERVICE_ROLE_KEY=
+RESEND_API_KEY=
+ADMIN_NOTIFICATION_EMAIL=kontakt@busyjaroslaw.pl
+MAIL_FROM=Busy Jarosław <powiadomienia@busyjaroslaw.pl>
+```
+
+Te sekrety sa ustawiane po stronie Supabase Edge Functions. Nie ustawiamy ich w Render frontend env i nie dodajemy ich do `react-app/src`.
 
 Custom Domain i SSL:
 - Domena produkcyjna: `https://busyjaroslaw.pl`.
@@ -441,9 +513,13 @@ Gotowe i potwierdzone testami produkcyjnymi MVP:
 - Uzytkownik nie widzi technicznego statusu platnosci.
 - Rental/tow requests zapisuja sie w bazie i sa widoczne w panelu admina.
 - Admin zmienia status rental/tow request oraz `estimated_price` dla lawety.
+- Cloudflare Turnstile / antyspam dla `/rental` i `/tow` jest wdrozony.
+- Rate limiting dla `/rental` i `/tow` jest wdrozony w Edge Functions.
+- Maile admina dla nowych zapytan `/rental` i `/tow` sa obslugiwane przez Resend po udanym zapisie requestu.
 - `notification_events` powstaja po rezerwacji, anulowaniu oraz rental/tow request.
 - Domena produkcyjna `https://busyjaroslaw.pl` dziala.
 - SEO techniczne publicznych tras jest wdrozone.
+- Sluzbowy mail `kontakt@busyjaroslaw.pl` jest wdrozony i opisany w `docs/MAIL_OVH_ZIMBRA.md`.
 
 Do potwierdzenia / utrzymania operacyjnego:
 - Supabase Auth redirect URLs sa poprawne.
@@ -452,18 +528,19 @@ Do potwierdzenia / utrzymania operacyjnego:
 
 Nadal do zrobienia:
 - Poprawki wizualne/UX.
-- Cloudflare Turnstile / antyspam.
-- Rate limiting.
 - Realna wysylka `notification_events`.
+- Automatyczne maile do klientow.
+- SPF/DKIM/DMARC dla maila OVH Zimbra do sprawdzenia.
 - Regulamin i polityka prywatnosci.
 - Backupy Supabase.
 - Monitoring bledow.
 - Aktualizacja zaleznosci po `npm audit`.
 - Uporzadkowanie testowych danych.
+- Po pelnych testach Edge Functions mozna ograniczyc bezposrednie `EXECUTE` `create_rental_request` i `create_tow_request` dla `anon`/`authenticated`.
 
 ## 12. Dane Potrzebne Dla ChatGPT Do Przygotowania Listy Testow Systemu
 
-Projekt: React 18 + Vite 5 + Supabase + Render Static Site.
+Projekt: React 18 + Vite 5 + Supabase + Supabase Edge Functions + Render Static Site.
 
 Trasy: `/`, `/rental`, `/booking`, `/tow`, `/contact`, `/auth`, `/my-reservations`, `/admin`, `/verify-email`, `/reset-password`.
 
@@ -474,6 +551,8 @@ Supabase:
 - RPC rezerwacji: `create_reservation_request`, `cancel_own_reservation`, `admin_set_reservation_status`.
 - RPC cen/platnosci: `admin_set_trip_price`, `admin_set_payment_status`.
 - RPC zapytan i wynajmu: `get_rental_calendar_blocks`, `rental_is_range_available`, `create_rental_request`, `create_tow_request`, `admin_update_rental_request`, `admin_update_tow_request`.
+- Edge Functions dla publicznych zapytan: `submit-rental-request`, `submit-tow-request`.
+- Wspolny helper maili admina: `supabase/functions/_shared/sendAdminEmail.ts`.
 - Stare RPC `create_reservation_atomic` nie powinno istniec po migracji secure reservations ani byc uzywane przez frontend.
 
 Auth:
@@ -493,14 +572,14 @@ RLS aktualny:
 - `rental_calendar_blocks`: publiczny odczyt przez RPC, zarzadzanie admin.
 - `trip_prices`: publiczny odczyt, zapis przez admin RPC.
 - `payments`, `reservation_audit_log`, `notification_events`: admin.
-- `rental_requests`, `tow_requests`: tworzenie przez RPC dla anon/auth, podglad/aktualizacja admin.
+- `rental_requests`, `tow_requests`: publiczny frontend tworzy zapytania przez Edge Functions; RPC `create_rental_request` i `create_tow_request` pozostaja funkcjami wywolywanymi przez Edge Functions; podglad/aktualizacja admin.
 
 Publiczne funkcje do testow:
 - Anonim oglada kursy i wolne miejsca.
 - Anonim nie moze zarezerwowac przejazdu.
 - Zalogowany bez potwierdzonego emaila nie moze zarezerwowac przejazdu.
 - Zalogowany z potwierdzonym emailem moze wyslac `requested`.
-- Rental/tow zapisuja request do bazy.
+- Rental/tow uzywaja Cloudflare Turnstile, Edge Functions i rate limitingu, a potem zapisuja request do bazy oraz probuja wyslac mail do admina przez Resend.
 - Rental uzywa blokad `rental_calendar_blocks` i walidacji zakresu dat.
 - Moje rezerwacje pokazuja rezerwacje zalogowanego uzytkownika.
 - Anulowanie wlasnej rezerwacji dziala przez RPC.
@@ -518,21 +597,22 @@ Admin do testow:
 
 Ryzyka i TODO nadal otwarte:
 - Poprawki wizualne/UX.
-- Brak Cloudflare Turnstile / antyspam.
-- Brak rate limitingu.
 - Brak faktycznej wysylki powiadomien admina.
+- SPF/DKIM/DMARC dla maila OVH Zimbra do sprawdzenia.
 - Brak backupow opisanych w repo.
 - Supabase Auth redirect URLs do utrzymania recznie w panelu Supabase.
 - Brak monitoringu bledow.
 - Podatnosci `vite/esbuild` z `npm audit`.
 - Regulamin i polityka prywatnosci do finalizacji.
 - Uporzadkowanie testowych danych.
+- Po pelnych testach Edge Functions mozna ograniczyc bezposrednie `EXECUTE` `create_rental_request` i `create_tow_request` dla `anon`/`authenticated`.
 
 ## 13. Aktualny Status Etapow
 
 - Etap 1/2: secure reservations - wdrozone i potwierdzone testami produkcyjnymi MVP.
 - Etap 3: ceny i reczne platnosci - wdrozone i potwierdzone testami produkcyjnymi MVP.
 - Etap 4: rental/tow requests - wdrozone i potwierdzone testami produkcyjnymi MVP.
-- Etap 5: notification events - zapis zdarzen wdrozony i potwierdzony testami; realna wysylka powiadomien do zrobienia.
-- Etap 6: testy produkcyjne MVP - wykonane dla zakresu opisanego w sekcji 6.
-- Etap 7: prace post-MVP - lista TODO w sekcji 8.
+- Etap 5: Cloudflare Turnstile, Edge Functions i rate limiting dla rental/tow - wdrozone.
+- Etap 6: notification events - zapis zdarzen wdrozony i potwierdzony testami; realna wysylka powiadomien do zrobienia.
+- Etap 7: domena `https://busyjaroslaw.pl`, SEO techniczne i mail `kontakt@busyjaroslaw.pl` - wdrozone.
+- Etap 8: prace post-MVP - lista TODO w sekcji 8.

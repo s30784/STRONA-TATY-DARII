@@ -162,7 +162,7 @@ export function BookingPage(props) {
             <p className="step-label">2. Dane pasażera</p>
             <Card>
               <div className="fg2"><div className="fg"><label>Imię i nazwisko</label><input name="name" defaultValue={meta.full_name || ''} autoComplete="name" /></div><div className="fg"><label>Email</label><input type="email" name="email" defaultValue={currentUser?.email || ''} autoComplete="email" /></div></div>
-              <div className="fg2"><div className="fg"><label>Telefon</label><input type="tel" name="phone" defaultValue={currentProfile?.phone || ''} autoComplete="tel" /></div><div className="fg"><label>Liczba miejsc</label><input type="hidden" name="seats" value="1" /><input type="text" value="1" readOnly /></div></div>
+              <div className="fg2"><div className="fg"><label>Telefon</label><input type="tel" name="phone" defaultValue={currentProfile?.phone || ''} placeholder="+48 000 000 000" autoComplete="tel" /></div><div className="fg"><label>Liczba miejsc</label><input type="hidden" name="seats" value="1" /><input type="text" value="1" readOnly /></div></div>
               <p className="form-help">Chcesz zarezerwować więcej miejsc? Skontaktuj się z nami bezpośrednio.</p>
               <datalist id="booking-route-stops">{routeDetails.stops.map((stop) => <option key={stop.name} value={stop.name} />)}</datalist>
               <div className="fg2">

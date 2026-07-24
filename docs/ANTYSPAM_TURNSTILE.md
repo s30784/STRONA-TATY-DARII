@@ -19,6 +19,7 @@ Formularz rezerwacji przejazdów, panel admina, statusy i przepływy płatności
    - `create_rental_request`,
    - `create_tow_request`.
 6. RPC zapisuje rekord w `rental_requests` albo `tow_requests` i tworzy `notification_events`.
+7. Po udanym zapisie Edge Function próbuje wysłać mail do admina przez Resend. Błąd maila nie cofa zapisu requestu.
 
 ## Env Frontendu
 
@@ -38,9 +39,12 @@ Supabase Edge Functions używają sekretów:
 TURNSTILE_SECRET_KEY=
 EDGE_SUPABASE_URL=
 EDGE_SUPABASE_SERVICE_ROLE_KEY=
+RESEND_API_KEY=
+ADMIN_NOTIFICATION_EMAIL=
+MAIL_FROM=
 ```
 
-`TURNSTILE_SECRET_KEY` i `EDGE_SUPABASE_SERVICE_ROLE_KEY` nie mogą trafić do Reacta, bo kod frontendu jest publiczny w przeglądarce. Secret key służy do serwerowego potwierdzenia tokena Turnstile, a service role key daje podwyższone uprawnienia do bazy.
+`TURNSTILE_SECRET_KEY`, `EDGE_SUPABASE_SERVICE_ROLE_KEY` i `RESEND_API_KEY` nie mogą trafić do Reacta, bo kod frontendu jest publiczny w przeglądarce. Secret key służy do serwerowego potwierdzenia tokena Turnstile, service role key daje podwyższone uprawnienia do bazy, a Resend API key pozwala wysyłać maile.
 
 ## Edge Functions
 
@@ -57,7 +61,9 @@ Obie funkcje:
 - walidują wymagane pola,
 - sprawdzają Cloudflare Siteverify,
 - limitują zapytania do 3 na godzinę i 10 na 24 godziny dla tego samego emaila lub telefonu,
-- wywołują istniejące RPC dopiero po pozytywnej walidacji.
+- wywołują istniejące RPC dopiero po pozytywnej walidacji,
+- składają pełne `p_message` z pól formularza,
+- po udanym RPC wysyłają mail do admina przez Resend.
 
 ## Deploy
 
@@ -75,6 +81,7 @@ Po deployu upewnij się, że sekrety Edge Functions są ustawione w Supabase.
 - Z poprawnym tokenem `/tow` zapisuje rekord w `tow_requests`.
 - Po przekroczeniu limitu funkcja zwraca HTTP 429 i komunikat o zbyt wielu zapytaniach.
 - Admin widzi nowe zapytania w panelu.
+- Admin dostaje mail dla `/rental` i `/tow` na `kontakt@busyjaroslaw.pl`.
 - `notification_events` dalej powstają po zapisaniu zapytania.
 
 ## TODO

@@ -12,6 +12,8 @@ kontakt@busyjaroslaw.pl
 
 OVH Zimbra Starter.
 
+Powiadomienia techniczne z formularzy `/rental` i `/tow` wysyla Resend, a OVH Zimbra sluzy do odbioru i recznego odpisywania klientom.
+
 ## Webmail
 
 ```text
@@ -43,4 +45,6 @@ Hasła do poczty nie trzymamy w repozytorium. Nie wpisujemy loginów ani haseł 
 - Sprawdzić SPF.
 - Sprawdzić DKIM.
 - Dodać albo zweryfikować DMARC.
-- Później podpiąć powiadomienia ze strony na `kontakt@busyjaroslaw.pl`.
+- Utrzymac testy powiadomien Resend po zmianach DNS/mail.
+
+Szczegoly wysylki maili admina sa opisane w `docs/ADMIN_EMAIL_NOTIFICATIONS.md`.

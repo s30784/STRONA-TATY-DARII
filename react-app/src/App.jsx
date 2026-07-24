@@ -554,13 +554,21 @@ export function App() {
     if (rentalSubmittingRef.current) return;
     const formEl = event.currentTarget;
     const form = new FormData(formEl);
+    const customerName = field(form, 'customer_name');
     const phone = field(form, 'phone');
     const email = field(form, 'email');
+    const passengerCount = field(form, 'passenger_count');
+    const routeDescription = field(form, 'route_description');
+    const rentalPurpose = field(form, 'rental_purpose');
     const notes = field(form, 'notes');
     const validationError = validateRequired(selectedBus, 'Bus')
       || validateRentalRange(rentalRangeStart, rentalRangeEnd, rentalBlocks)
+      || validateRequired(customerName, 'Imię i nazwisko')
       || validatePhone(phone)
-      || validateEmail(email);
+      || validateEmail(email)
+      || validateRequired(passengerCount, 'Liczba osób')
+      || (Number(passengerCount) > 0 ? null : 'Liczba osób musi być większa od zera.')
+      || validateRequired(routeDescription, 'Planowana trasa');
     if (validationError) {
       setRentalRangeError(validateRentalRange(rentalRangeStart, rentalRangeEnd, rentalBlocks));
       setRentalMsg({ type: 'err', text: validationError });
@@ -598,7 +606,11 @@ export function App() {
           p_end_date: rentalRangeEnd,
           p_phone: phone,
           p_email: email,
-          p_message: notes || null
+          p_message: notes || null,
+          customer_name: customerName,
+          route_description: routeDescription,
+          passenger_count: passengerCount,
+          rental_purpose: rentalPurpose || null
         }
       });
       if (error) {
@@ -643,20 +655,19 @@ export function App() {
     const name = field(form, 'name');
     const phone = field(form, 'phone');
     const email = field(form, 'email');
-    const car = field(form, 'car');
-    const state = field(form, 'state');
+    const vehicleInfo = field(form, 'vehicle_info');
     const from = field(form, 'from');
     const to = field(form, 'to');
     const date = field(form, 'date');
-    const direction = field(form, 'direction');
+    const vehicleRuns = field(form, 'vehicle_runs');
+    const vehicleHasWheels = field(form, 'vehicle_has_wheels');
     const notes = field(form, 'notes');
     const validationError = validateRequired(name, 'Imię i nazwisko')
       || validatePhone(phone)
       || validateEmail(email)
-      || validateRequired(car, 'Marka i model')
+      || validateRequired(vehicleInfo, 'Pojazd lub ładunek')
       || validateRequired(from, 'Miejsce odbioru')
-      || validateRequired(to, 'Miejsce dostawy')
-      || validateRequired(date, 'Preferowana data');
+      || validateRequired(to, 'Miejsce dostawy');
     if (validationError) {
       setTowMsg({ type: 'err', text: validationError });
       return;
@@ -673,10 +684,14 @@ export function App() {
           turnstileToken: towTurnstileToken,
           p_pickup_location: from,
           p_dropoff_location: to,
-          p_vehicle_info: `${car} | Stan: ${state} | Kierunek: ${direction} | Preferowana data: ${date}`,
+          p_vehicle_info: vehicleInfo,
           p_phone: phone,
           p_email: email,
-          p_message: `Imię i nazwisko: ${name}${notes ? ` | ${notes}` : ''}`
+          p_message: notes || null,
+          customer_name: name,
+          preferred_date: date || null,
+          vehicle_runs: vehicleRuns || null,
+          vehicle_has_wheels: vehicleHasWheels || null
         }
       });
       if (error) {

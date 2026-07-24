@@ -1,8 +1,10 @@
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+import { sendAdminEmail } from '../_shared/sendAdminEmail.ts';
 
 const TURNSTILE_VERIFY_URL = 'https://challenges.cloudflare.com/turnstile/v0/siteverify';
 const RATE_LIMIT_MESSAGE = 'Wysłano zbyt wiele zapytań. Spróbuj ponownie później albo zadzwoń: 663 063 364.';
 const TURNSTILE_FAILED_MESSAGE = 'Nie udało się potwierdzić zabezpieczenia antyspamowego. Spróbuj ponownie.';
+const ADMIN_PANEL_URL = 'https://busyjaroslaw.pl/admin';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -30,6 +32,55 @@ function normalizeEmail(value: unknown) {
 
 function required(value: unknown) {
   return normalizedText(value).length > 0;
+}
+
+function displayValue(value: unknown) {
+  return normalizedText(value) || '-';
+}
+
+function requestIdFrom(data: unknown) {
+  if (typeof data === 'string') return data;
+  if (data && typeof data === 'object' && 'id' in data) {
+    return String((data as { id?: unknown }).id || '');
+  }
+  return data ? String(data) : '';
+}
+
+function buildRentalMessage(fields: {
+  customerName: string;
+  phone: string;
+  email: string;
+  busId: string;
+  startDate: string;
+  endDate: string;
+  passengerCount: string;
+  routeDescription: string;
+  rentalPurpose: string;
+  customerMessage: string;
+}) {
+  return [
+    `Imię i nazwisko: ${displayValue(fields.customerName)}`,
+    `Telefon: ${displayValue(fields.phone)}`,
+    `Email: ${displayValue(fields.email)}`,
+    `Bus: ${displayValue(fields.busId)}`,
+    `Data od: ${displayValue(fields.startDate)}`,
+    `Data do: ${displayValue(fields.endDate)}`,
+    `Liczba osób: ${displayValue(fields.passengerCount)}`,
+    `Trasa / plan: ${displayValue(fields.routeDescription)}`,
+    `Cel wynajmu: ${displayValue(fields.rentalPurpose)}`,
+    `Wiadomość klienta: ${displayValue(fields.customerMessage)}`
+  ].join('\n');
+}
+
+function buildAdminEmailText(type: string, requestId: string, message: string) {
+  return [
+    `Typ zapytania: ${type}`,
+    `ID zapytania: ${displayValue(requestId)}`,
+    '',
+    message,
+    '',
+    `Panel admina: ${ADMIN_PANEL_URL}`
+  ].join('\n');
 }
 
 function requestIp(request: Request) {
@@ -124,10 +175,18 @@ Deno.serve(async (request) => {
     const p_end_date = normalizedText(body.p_end_date);
     const p_phone = normalizedText(body.p_phone);
     const p_email = normalizeEmail(body.p_email);
-    const p_message = normalizedText(body.p_message);
+    const customer_name = normalizedText(body.customer_name);
+    const route_description = normalizedText(body.route_description);
+    const passenger_count = normalizedText(body.passenger_count);
+    const rental_purpose = normalizedText(body.rental_purpose);
+    const customerMessage = normalizedText(body.p_message);
 
-    if (!required(turnstileToken) || !required(p_bus_id) || !required(p_start_date) || !required(p_end_date) || !required(p_phone) || !required(p_email)) {
+    if (!required(turnstileToken) || !required(p_bus_id) || !required(p_start_date) || !required(p_end_date) || !required(p_phone) || !required(p_email) || !required(customer_name) || !required(route_description) || !required(passenger_count)) {
       return jsonResponse(400, { success: false, message: 'Uzupełnij wymagane pola formularza.' });
+    }
+
+    if (!(Number(passenger_count) > 0)) {
+      return jsonResponse(400, { success: false, message: 'Liczba osób musi być większa od zera.' });
     }
 
     const turnstile = await verifyTurnstile(turnstileToken, request);
@@ -143,13 +202,26 @@ Deno.serve(async (request) => {
       return jsonResponse(429, { success: false, message: RATE_LIMIT_MESSAGE });
     }
 
+    const finalMessage = buildRentalMessage({
+      customerName: customer_name,
+      phone: p_phone,
+      email: p_email,
+      busId: p_bus_id,
+      startDate: p_start_date,
+      endDate: p_end_date,
+      passengerCount: passenger_count,
+      routeDescription: route_description,
+      rentalPurpose: rental_purpose,
+      customerMessage
+    });
+
     const { data, error } = await supabase.rpc('create_rental_request', {
       p_bus_id,
       p_start_date,
       p_end_date,
       p_phone,
       p_email,
-      p_message: p_message || null
+      p_message: finalMessage
     });
 
     if (error) {
@@ -157,7 +229,14 @@ Deno.serve(async (request) => {
       return jsonResponse(400, { success: false, message: `Nie udało się wysłać zapytania: ${error.message}` });
     }
 
-    return jsonResponse(200, { success: true, request_id: data?.id || data });
+    const requestId = requestIdFrom(data);
+    const emailSent = await sendAdminEmail({
+      subject: 'Nowe zapytanie o wynajem busa — Busy Jarosław',
+      replyTo: p_email,
+      text: buildAdminEmailText('Wynajem busa', requestId, finalMessage)
+    });
+
+    return jsonResponse(200, { success: true, request_id: requestId || data, email_sent: emailSent });
   } catch (error) {
     console.error('submit-rental-request failed', error);
     return jsonResponse(500, { success: false, message: 'Nie udało się wysłać zapytania. Spróbuj ponownie.' });

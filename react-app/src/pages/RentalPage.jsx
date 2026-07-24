@@ -1,3 +1,4 @@
+import React from 'react';
 import { Link } from 'react-router-dom';
 import { Card } from '../components/Card.jsx';
 import { CalendarLegend } from '../components/CalendarLegend.jsx';
@@ -32,6 +33,12 @@ function selectedRangeText(startDate, endDate) {
   if (!startDate || !endDate) return '';
   if (startDate === endDate) return formatDate(startDate);
   return `${formatDate(startDate)} - ${formatDate(endDate)}`;
+}
+
+function photoCountLabel(count) {
+  if (count === 1) return '1 zdjęcie';
+  if (count > 1 && count < 5) return `${count} zdjęcia`;
+  return `${count} zdjęć`;
 }
 
 export function RentalPage(props) {
@@ -75,16 +82,22 @@ export function RentalPage(props) {
             <div className="fleet-grid">
               {Object.entries(BUS_DETAILS).map(([id, item]) => (
                 <article className={`fleet-card ${selectedBus === id ? 'selected' : ''}`} key={id}>
-                  <img src={item.image} alt={`${item.name} - wynajem busa w Jarosławiu`} />
+                  <div className="fleet-image-wrap">
+                    <img src={item.image} alt={`${item.name} - wynajem busa w Jarosławiu`} />
+                    <span className="fleet-photo-count">{photoCountLabel(item.photos?.length || 1)}</span>
+                  </div>
                   <div className="fleet-card-body">
                     <h3>{item.name}</h3>
                     <p className="muted">{item.description}</p>
                     <div className="fleet-meta">{item.features.slice(0, 3).map((feature) => <span className="pill" key={feature}>{feature}</span>)}</div>
-                    <button className="btn-outline" onClick={() => setSelectedBus(id)} type="button">Pokaż szczegóły</button>
+                    <button className="btn-outline fleet-select-btn" onClick={() => setSelectedBus(id)} type="button" aria-pressed={selectedBus === id}>{selectedBus === id ? 'Wybrany bus' : 'Wybierz busa'}</button>
                   </div>
                 </article>
               ))}
             </div>
+            <Card title={`Galeria pojazdu: ${bus.name}`} className="vehicle-gallery-card mt">
+              <VehicleGallery bus={bus} busId={selectedBus} />
+            </Card>
             <Card title="Cennik orientacyjny" className="mt">
               <table className="price-table">
                 <thead><tr><th>Usługa</th><th>Cena od</th></tr></thead>
@@ -123,9 +136,13 @@ export function RentalPage(props) {
                 <div className="fg"><label>Wybrany termin</label><input type="text" value={rangeText ? `Wybrany termin: ${rangeText}` : ''} placeholder="Wybierz początek i koniec w kalendarzu" readOnly /></div>
                 <div className="fg"><label>Liczba dni</label><input type="text" value={rentalDays ? `${rentalDays} ${rentalDays === 1 ? 'dzień' : 'dni'}` : ''} placeholder="-" readOnly /></div>
                 <div className={`range-status ${rentalRangeError ? 'err' : rentalRangeStart && rentalRangeEnd ? 'ok' : ''}`}>{rentalRangeError || (rentalRangeStart && rentalRangeEnd ? 'Wybrany zakres jest dostępny według aktualnego kalendarza.' : 'Wybierz datę od i datę do.')}</div>
+                <div className="fg"><label>Imię i nazwisko</label><input name="customer_name" placeholder="Jan Kowalski" autoComplete="name" /></div>
                 <div className="fg"><label>Email</label><input type="email" name="email" defaultValue={currentUser?.email || ''} placeholder="jan@example.com" autoComplete="email" /></div>
                 <div className="fg"><label>Telefon</label><input type="tel" name="phone" placeholder="+48 000 000 000" autoComplete="tel" /></div>
-                <div className="fg"><label>Opis wyjazdu</label><textarea name="notes" rows="3" placeholder="np. wesele, lotnisko, wyjazd firmowy"></textarea></div>
+                <div className="fg"><label>Liczba osób</label><input type="number" name="passenger_count" min="1" step="1" placeholder="np. 8" inputMode="numeric" /></div>
+                <div className="fg"><label>Skąd - dokąd / planowana trasa</label><textarea name="route_description" rows="3" placeholder="np. Jarosław - Kraków - Jarosław, odbiór z adresu"></textarea></div>
+                <div className="fg"><label>Cel wynajmu</label><input name="rental_purpose" placeholder="np. lotnisko, impreza, delegacja" /></div>
+                <div className="fg"><label>Dodatkowa wiadomość</label><textarea name="notes" rows="3" placeholder="Godziny, postoje, bagaże albo inne szczegóły"></textarea></div>
                 <TurnstileWidget onVerify={onTurnstileVerify} resetKey={turnstileResetKey} />
                 <button className="btn-primary" type="submit" disabled={submitDisabled}>{rentalSubmitting ? 'Zapisuję zapytanie...' : 'Wyślij zapytanie'}</button>
               </form>
@@ -133,6 +150,71 @@ export function RentalPage(props) {
           </aside>
         </div>
       </section>
+    </div>
+  );
+}
+
+function VehicleGallery({ bus, busId }) {
+  const photos = bus.photos?.length ? bus.photos : [{ src: bus.image, alt: `${bus.name} - zdjęcie pojazdu`, label: bus.name }];
+  const [activePhotoIndex, setActivePhotoIndex] = React.useState(0);
+  const [lightboxOpen, setLightboxOpen] = React.useState(false);
+  const activePhoto = photos[activePhotoIndex] || photos[0];
+
+  React.useEffect(() => {
+    setActivePhotoIndex(0);
+    setLightboxOpen(false);
+  }, [busId]);
+
+  React.useEffect(() => {
+    if (!lightboxOpen) return undefined;
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') setLightboxOpen(false);
+      if (event.key === 'ArrowLeft') movePhoto(-1);
+      if (event.key === 'ArrowRight') movePhoto(1);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [lightboxOpen, photos.length]);
+
+  function movePhoto(direction) {
+    setActivePhotoIndex((current) => (current + direction + photos.length) % photos.length);
+  }
+
+  return (
+    <div className="vehicle-gallery">
+      <div className="vehicle-gallery-viewer">
+        <button className="vehicle-gallery-image" onClick={() => setLightboxOpen(true)} type="button" aria-label={`Powiększ zdjęcie: ${activePhoto.alt}`}>
+          <img src={activePhoto.src} alt={activePhoto.alt} />
+        </button>
+        {photos.length > 1 ? (
+          <>
+            <button className="gallery-nav prev" onClick={() => movePhoto(-1)} type="button" aria-label="Poprzednie zdjęcie">‹</button>
+            <button className="gallery-nav next" onClick={() => movePhoto(1)} type="button" aria-label="Następne zdjęcie">›</button>
+          </>
+        ) : null}
+        <span className="gallery-counter">{activePhotoIndex + 1} / {photos.length}</span>
+      </div>
+      <div className="vehicle-gallery-caption">{activePhoto.label || activePhoto.alt}</div>
+      {photos.length > 1 ? (
+        <div className="vehicle-thumbs" aria-label={`Zdjęcia pojazdu ${bus.name}`}>
+          {photos.map((photo, index) => (
+            <button className={`vehicle-thumb ${activePhotoIndex === index ? 'active' : ''}`} key={`${photo.src}-${index}`} onClick={() => setActivePhotoIndex(index)} type="button" aria-label={`Pokaż zdjęcie ${index + 1}: ${photo.label || photo.alt}`} aria-current={activePhotoIndex === index ? 'true' : undefined}>
+              <img src={photo.src} alt="" />
+            </button>
+          ))}
+        </div>
+      ) : null}
+      {lightboxOpen ? (
+        <div className="vehicle-lightbox" role="dialog" aria-modal="true" aria-label={`Galeria pojazdu ${bus.name}`} onClick={() => setLightboxOpen(false)}>
+          <button className="vehicle-lightbox-close" onClick={(event) => { event.stopPropagation(); setLightboxOpen(false); }} type="button">Zamknij</button>
+          {photos.length > 1 ? <button className="vehicle-lightbox-nav prev" onClick={(event) => { event.stopPropagation(); movePhoto(-1); }} type="button" aria-label="Poprzednie zdjęcie">‹</button> : null}
+          <figure className="vehicle-lightbox-frame" onClick={(event) => event.stopPropagation()}>
+            <img src={activePhoto.src} alt={activePhoto.alt} />
+            <figcaption>{bus.name} · {activePhotoIndex + 1} / {photos.length}</figcaption>
+          </figure>
+          {photos.length > 1 ? <button className="vehicle-lightbox-nav next" onClick={(event) => { event.stopPropagation(); movePhoto(1); }} type="button" aria-label="Następne zdjęcie">›</button> : null}
+        </div>
+      ) : null}
     </div>
   );
 }

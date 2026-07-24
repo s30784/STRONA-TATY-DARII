@@ -1,15 +1,52 @@
+const MERCEDES_VITO_COVER = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg';
+const VOLKSWAGEN_CARAVELLE_COVER = 'https://assets.volkswagen.com/is/image/volkswagenag/cv001184pic-vw-caravelle-gallery-01-2x1?Zml0PWNyb3AsMSZmbXQ9cG5nJndpZD04MDAmYWxpZ249MC4wMCwwLjAwJmJmYz1vZmYmYzRiMA=%3D';
+
 export const BUS_DETAILS = {
   bus9: {
     name: 'Mercedes-Benz Vito',
     selectLabel: 'Mercedes-Benz Vito',
-    image: 'https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg',
+    image: MERCEDES_VITO_COVER,
+    photos: [
+      {
+        src: MERCEDES_VITO_COVER,
+        alt: 'Mercedes-Benz Vito z zewnątrz',
+        label: 'Widok zewnętrzny'
+      },
+      {
+        src: 'https://images.pexels.com/photos/17455631/pexels-photo-17455631.jpeg?auto=compress&cs=tinysrgb&w=1400',
+        alt: 'Wnętrze busa z jasnymi fotelami pasażerskimi',
+        label: 'Układ foteli'
+      },
+      {
+        src: 'https://images.unsplash.com/photo-1641755081894-f340f8eb8bdd?auto=format&fit=crop&w=1400&q=80',
+        alt: 'Kokpit busa Mercedes-Benz',
+        label: 'Kokpit'
+      }
+    ],
     description: 'Nowoczesny bus do wyjazdów lokalnych, rodzinnych i pracowniczych. Dobry wybór na wesela, lotniska i jednodniowe trasy.',
     features: ['9 miejsc z kierowcą', 'klimatyzacja', 'przestrzeń na bagaż', 'wynajem z kierowcą lub według ustaleń']
   },
   bus8: {
     name: 'Volkswagen Caravelle',
     selectLabel: 'Volkswagen Caravelle',
-    image: 'https://assets.volkswagen.com/is/image/volkswagenag/cv001184pic-vw-caravelle-gallery-01-2x1?Zml0PWNyb3AsMSZmbXQ9cG5nJndpZD04MDAmYWxpZ249MC4wMCwwLjAwJmJmYz1vZmYmYzRiMA=%3D',
+    image: VOLKSWAGEN_CARAVELLE_COVER,
+    photos: [
+      {
+        src: VOLKSWAGEN_CARAVELLE_COVER,
+        alt: 'Volkswagen Caravelle z zewnątrz',
+        label: 'Widok zewnętrzny'
+      },
+      {
+        src: 'https://images.unsplash.com/photo-1768400554801-2002b63e0591?auto=format&fit=crop&fm=jpg&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&ixlib=rb-4.1.0&q=60&w=3000',
+        alt: 'Biały bus z zewnątrz na postoju',
+        label: 'Bryła pojazdu'
+      },
+      {
+        src: 'https://images.pexels.com/photos/17455631/pexels-photo-17455631.jpeg?auto=compress&cs=tinysrgb&w=1400',
+        alt: 'Wnętrze busa z komfortowymi fotelami pasażerskimi',
+        label: 'Wnętrze'
+      }
+    ],
     description: 'Komfortowy wariant na dłuższe przejazdy, transfery i wyjazdy firmowe, gdzie liczy się wygoda pasażerów oraz elastyczna przestrzeń.',
     features: ['8 miejsc pasażerskich', 'wygodne fotele', 'USB / ładowanie', 'polecany na dłuższe trasy']
   }

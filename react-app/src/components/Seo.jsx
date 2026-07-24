@@ -26,7 +26,7 @@ const PUBLIC_SEO = {
   },
   '/contact': {
     title: 'Kontakt | Busy Jarosław',
-    description: 'Skontaktuj się z Busy Jarosław. Przejazdy Jarosław Wiedeń, wynajem busa, laweta i transport pojazdów. Telefon 663 063 364.'
+    description: 'Skontaktuj się z Busy Jarosław. Przejazdy Jarosław Wiedeń, wynajem busa, laweta i transport pojazdów. Telefon +48 663 063 364.'
   },
   ...Object.fromEntries(Object.values(LANDING_PAGES).map((page) => [page.path, { title: page.title, description: page.description }]))
 };

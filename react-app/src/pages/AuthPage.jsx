@@ -24,7 +24,7 @@ export function AuthPage({ authForm, setAuthForm, authMsg, authLoading, doLogin,
               <div className="fg2"><div className="fg"><label>Imię</label><input name="fname" autoComplete="given-name" /></div><div className="fg"><label>Nazwisko</label><input name="lname" autoComplete="family-name" /></div></div>
               <div className="fg"><label>Email</label><input type="email" name="email" autoComplete="email" /></div>
               <div className="fg"><label>Hasło</label><input type="password" name="password" autoComplete="new-password" /></div>
-              <div className="fg"><label>Telefon</label><input type="tel" name="phone" autoComplete="tel" /></div>
+              <div className="fg"><label>Telefon</label><input type="tel" name="phone" placeholder="+48 000 000 000" autoComplete="tel" /></div>
               <button className="btn-primary" disabled={authLoading === 'register'} type="submit">{authLoading === 'register' ? 'Rejestruję...' : 'Zarejestruj się'}</button>
             </form>
             <hr className="divider" />

@@ -26,11 +26,12 @@ export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, 
               <p className="form-help">Kontakt telefoniczny: <a href={contactPhoneHref}>{contactPhone}</a>.</p>
               <Message message={towMsg} />
               <form onSubmit={submitTowRequest}>
-                <div className="tow-form-grid"><div className="fg"><label>Imię i nazwisko</label><input name="name" autoComplete="name" /></div><div className="fg"><label>Telefon</label><input name="phone" type="tel" autoComplete="tel" /></div><div className="fg"><label>Email</label><input name="email" type="email" defaultValue={currentUser?.email || ''} autoComplete="email" /></div><div className="fg"><label>Marka i model</label><input name="car" /></div><div className="fg"><label>Stan pojazdu</label><select name="state"><option>Sprawny</option><option>Niesprawny, odpala</option><option>Niesprawny, nie odpala</option><option>Powypadkowy</option></select></div></div>
-                <div className="fg"><label>Miejsce odbioru</label><input name="from" /></div>
-                <div className="fg"><label>Miejsce dostawy</label><input name="to" /></div>
-                <div className="fg2"><div className="fg"><label>Preferowana data</label><input type="date" name="date" /></div><div className="fg"><label>Kierunek</label><select name="direction"><option>{'Polska -> Austria'}</option><option>{'Austria -> Polska'}</option></select></div></div>
-                <div className="fg"><label>Dodatkowe informacje</label><textarea name="notes" rows="3"></textarea></div>
+                <div className="tow-form-grid"><div className="fg"><label>Imię i nazwisko</label><input name="name" autoComplete="name" /></div><div className="fg"><label>Telefon</label><input name="phone" type="tel" placeholder="+48 000 000 000" autoComplete="tel" /></div><div className="fg"><label>Email</label><input name="email" type="email" defaultValue={currentUser?.email || ''} autoComplete="email" /></div><div className="fg"><label>Pojazd / ładunek</label><input name="vehicle_info" placeholder="np. VW Passat albo maszyna rolnicza" /></div></div>
+                <div className="fg"><label>Skąd odebrać</label><input name="from" placeholder="Adres lub miejscowość odbioru" /></div>
+                <div className="fg"><label>Dokąd zawieźć</label><input name="to" placeholder="Adres lub miejscowość dostawy" /></div>
+                <div className="fg2"><div className="fg"><label>Preferowany termin</label><input type="date" name="date" /></div><div className="fg"><label>Czy pojazd odpala</label><select name="vehicle_runs"><option value="">Nie wiem / nie dotyczy</option><option>Tak</option><option>Nie</option><option>Nie wiem</option></select></div></div>
+                <div className="fg"><label>Czy pojazd ma koła</label><select name="vehicle_has_wheels"><option value="">Nie wiem / nie dotyczy</option><option>Tak</option><option>Nie</option><option>Nie wiem</option></select></div>
+                <div className="fg"><label>Dodatkowa wiadomość</label><textarea name="notes" rows="3" placeholder="Stan, utrudniony dojazd, godziny albo inne szczegóły"></textarea></div>
                 <TurnstileWidget onVerify={onTurnstileVerify} resetKey={turnstileResetKey} />
                 <button className="btn-primary" type="submit" disabled={towSubmitting}>{towSubmitting ? 'Zapisuję zapytanie...' : 'Przygotuj zapytanie'}</button>
               </form>
