@@ -73,14 +73,14 @@ function TowVehiclePhotos({ vehicle }) {
   return (
     <div className="tow-vehicle-photos">
       <div className="tow-vehicle-photo-main">
-        <img src={activePhoto.src} alt={activePhoto.alt} />
+        <img src={activePhoto.src} alt={activePhoto.alt} loading="lazy" decoding="async" />
         <span>{activePhotoIndex + 1} / {photos.length}</span>
       </div>
       {photos.length > 1 ? (
         <div className="tow-vehicle-thumbs" aria-label={`Zdjęcia: ${vehicle.name}`}>
           {photos.map((photo, index) => (
             <button className={activePhotoIndex === index ? 'active' : ''} key={`${photo.src}-${index}`} onClick={() => setActivePhotoIndex(index)} type="button" aria-label={`Pokaż zdjęcie ${index + 1}: ${photo.label || photo.alt}`} aria-current={activePhotoIndex === index ? 'true' : undefined}>
-              <img src={photo.src} alt="" />
+              <img src={photo.src} alt="" loading="lazy" decoding="async" />
             </button>
           ))}
         </div>

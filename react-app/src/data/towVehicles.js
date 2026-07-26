@@ -1,53 +1,53 @@
 export const TOW_VEHICLES = [
   {
-    name: 'Laweta do aut osobowych',
-    description: 'Najczęściej wybierana do samochodów osobowych po awarii, kolizji albo przy transporcie auta kupionego za granicą.',
+    name: 'Laweta 406 cm do aut osobowych',
+    description: 'Platforma do przewozu samochodów osobowych i pojazdów niesprawnych. Dobrze sprawdza się przy odbiorze auta z warsztatu, parkingu albo komisu.',
     photos: [
       {
-        src: 'https://images.pexels.com/photos/4488636/pexels-photo-4488636.jpeg?auto=compress&cs=tinysrgb&w=1400',
-        alt: 'Laweta do transportu aut osobowych',
+        src: '/images/tow-vehicles/laweta-406-bok.jpeg',
+        alt: 'Laweta 406 cm widoczna z boku',
+        label: 'Bok lawety'
+      },
+      {
+        src: '/images/tow-vehicles/laweta-406-tyl.jpeg',
+        alt: 'Laweta 406 cm widoczna od tyłu',
+        label: 'Tył lawety'
+      }
+    ],
+    parameters: ['platforma 406 cm', 'ładowność 1800 kg', 'DMC 2200 kg']
+  },
+  {
+    name: 'Laweta 505 cm do większych pojazdów',
+    description: 'Dłuższa platforma do przewozu większych samochodów, SUV-ów i pojazdów wymagających dodatkowego zapasu miejsca na mocowanie.',
+    photos: [
+      {
+        src: '/images/tow-vehicles/laweta-505-bok.jpeg',
+        alt: 'Laweta 505 cm widoczna z boku',
+        label: 'Bok lawety'
+      },
+      {
+        src: '/images/tow-vehicles/laweta-505-platforma.jpeg',
+        alt: 'Platforma lawety 505 cm widoczna od tyłu',
         label: 'Platforma'
-      },
-      {
-        src: 'https://images.pexels.com/photos/97075/pexels-photo-97075.jpeg?auto=compress&cs=tinysrgb&w=1400',
-        alt: 'Samochód przygotowany do transportu lawetą',
-        label: 'Załadunek auta'
       }
     ],
-    parameters: ['auta osobowe', 'wyciągarka', 'transport lokalny i trasy Polska-Austria']
+    parameters: ['platforma 505 cm', 'ładowność 1900 kg', 'DMC 2500 kg']
   },
   {
-    name: 'Laweta do SUV-ów i vanów',
-    description: 'Wariant pod większe pojazdy, gdy znaczenie mają gabaryty, masa auta i bezpieczne mocowanie na dłuższej trasie.',
+    name: 'Przyczepa z plandeką do ładunków',
+    description: 'Opcja do przewozu rzeczy, wyposażenia i ładunków, które wymagają osłony przed pogodą oraz wcześniejszego potwierdzenia wymiarów.',
     photos: [
       {
-        src: 'https://images.pexels.com/photos/128421/pexels-photo-128421.jpeg?auto=compress&cs=tinysrgb&w=1400',
-        alt: 'Większy pojazd na drodze przed transportem',
-        label: 'Większe gabaryty'
+        src: '/images/tow-vehicles/przyczepa-plandeka-bok.jpeg',
+        alt: 'Przyczepa z plandeką widoczna z boku',
+        label: 'Bok przyczepy'
       },
       {
-        src: 'https://images.pexels.com/photos/2244746/pexels-photo-2244746.jpeg?auto=compress&cs=tinysrgb&w=1400',
-        alt: 'Samochód terenowy na postoju',
-        label: 'SUV / van'
+        src: '/images/tow-vehicles/przyczepa-plandeka-tyl.jpeg',
+        alt: 'Przyczepa z plandeką widoczna od tyłu',
+        label: 'Tył przyczepy'
       }
     ],
-    parameters: ['SUV / van', 'dłuższa platforma', 'wycena po wymiarach pojazdu']
-  },
-  {
-    name: 'Zestaw do nietypowego ładunku',
-    description: 'Rozwiązanie do motocykli, maszyn i ładunków wymagających indywidualnego ustawienia oraz potwierdzenia parametrów przed odbiorem.',
-    photos: [
-      {
-        src: 'https://images.pexels.com/photos/163210/motorcycles-race-helmets-pilots-163210.jpeg?auto=compress&cs=tinysrgb&w=1400',
-        alt: 'Motocykle przygotowane do transportu',
-        label: 'Motocykle'
-      },
-      {
-        src: 'https://images.pexels.com/photos/162568/forklift-truck-forklift-fork-truck-lifting-162568.jpeg?auto=compress&cs=tinysrgb&w=1400',
-        alt: 'Maszyna wymagająca indywidualnego transportu',
-        label: 'Maszyny'
-      }
-    ],
-    parameters: ['motocykle i maszyny', 'elastyczne mocowanie', 'ustalenie szczegółów przed kursem']
+    parameters: ['310 x 158 x 160 cm', 'DMC 750 kg', 'masa własna 350 kg']
   }
 ];
