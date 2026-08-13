@@ -419,7 +419,7 @@ img {
   background-image:
     radial-gradient(circle at 76% 24%, rgba(238, 43, 71, 0.28), transparent 27%),
     linear-gradient(105deg, rgba(17, 24, 39, 0.96) 0%, rgba(44, 46, 62, 0.88) 44%, rgba(44, 46, 62, 0.48) 68%, rgba(17, 24, 39, 0.2) 100%),
-    url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
+    url("/images/vehicles/vito/vito-2024-bok.jpg");
   background-position: center right;
   background-size: cover;
 }
@@ -2338,7 +2338,7 @@ form .btn-primary,
   overflow: hidden;
   background-image:
     linear-gradient(100deg, rgba(17, 24, 39, 0.96), rgba(44, 46, 62, 0.78) 58%, rgba(44, 46, 62, 0.38)),
-    url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
+    url("/images/vehicles/vito/vito-2024-bok.jpg");
   background-position: center right;
   background-size: cover;
 }
@@ -2347,7 +2347,7 @@ form .btn-primary,
 .landing-vehicle-transport {
   background-image:
     linear-gradient(100deg, rgba(17, 24, 39, 0.96), rgba(44, 46, 62, 0.78) 58%, rgba(44, 46, 62, 0.38)),
-    url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
+    url("/images/vehicles/vito/vito-2024-bok.jpg");
 }
 
 .landing-hero-inner {
@@ -2600,7 +2600,7 @@ form .btn-primary,
     background-image:
       radial-gradient(circle at 74% 16%, rgba(238, 43, 71, 0.2), transparent 30%),
       linear-gradient(90deg, rgba(17, 24, 39, 0.96), rgba(44, 46, 62, 0.84)),
-      url("https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg");
+      url("/images/vehicles/vito/vito-2024-bok.jpg");
   }
 
   .home-hero-inner,

@@ -1,4 +1,4 @@
-const MERCEDES_VITO_COVER = 'https://commons.wikimedia.org/wiki/Special:Redirect/file/2024_Mercedes-Benz_Vito_119_CDI_Tourer_Pro.jpg';
+const MERCEDES_VITO_COVER = '/images/vehicles/vito/vito-2024-bok.jpg';
 const VOLKSWAGEN_CARAVELLE_COVER = 'https://assets.volkswagen.com/is/image/volkswagenag/cv001184pic-vw-caravelle-gallery-01-2x1?Zml0PWNyb3AsMSZmbXQ9cG5nJndpZD04MDAmYWxpZ249MC4wMCwwLjAwJmJmYz1vZmYmYzRiMA=%3D';
 
 export const BUS_DETAILS = {
@@ -11,17 +11,22 @@ export const BUS_DETAILS = {
       {
         src: MERCEDES_VITO_COVER,
         alt: 'Mercedes Vito 2024 z zewnątrz',
-        label: 'Widok zewnętrzny'
+        label: 'Bok pojazdu'
       },
       {
-        src: 'https://images.pexels.com/photos/17455631/pexels-photo-17455631.jpeg?auto=compress&cs=tinysrgb&w=1400',
-        alt: 'Wnętrze busa z jasnymi fotelami pasażerskimi',
-        label: 'Układ foteli'
+        src: '/images/vehicles/vito/vito-2024-tyl-bok.jpg',
+        alt: 'Mercedes Vito 2024 widoczny od tyłu i boku',
+        label: 'Tył i bok'
       },
       {
-        src: 'https://images.unsplash.com/photo-1641755081894-f340f8eb8bdd?auto=format&fit=crop&w=1400&q=80',
-        alt: 'Kokpit busa Mercedes-Benz',
+        src: '/images/vehicles/vito/vito-2024-kokpit.jpg',
+        alt: 'Kokpit Mercedesa Vito 2024',
         label: 'Kokpit'
+      },
+      {
+        src: '/images/vehicles/vito/vito-2024-fotele.jpg',
+        alt: 'Fotele pasażerskie Mercedesa Vito 2024',
+        label: 'Fotele pasażerskie'
       }
     ],
     description: 'Nowoczesny Mercedes Vito 2024 z automatem 9G-tronic, wygodnymi fotelami z V-klasy i dużym bagażnikiem. Dobrze sprawdza się przy wyjazdach rodzinnych, firmowych, transferach i trasach indywidualnych.',
