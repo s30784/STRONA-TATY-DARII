@@ -4,7 +4,7 @@ import { ProtectedAdminRoute } from './components/ProtectedAdminRoute.jsx';
 import { Seo } from './components/Seo.jsx';
 import { ADMIN_ROLES, BLOCKING_RESERVATION_STATUSES, CONTACT_PHONE_DISPLAY, CONTACT_PHONE_HREF, MONTHS, MAX_SEATS, TERMS_VERSION } from './data/constants.js';
 import { ROUTE_DETAILS } from './data/routeDetails.js';
-import { BUS_DETAILS } from './data/vehicles.js';
+import { DEFAULT_RENTAL_BUS_ID } from './data/vehicles.js';
 import { useAuth } from './hooks/useAuth.js';
 import { parseAuthUrlError, isExpiredAuthUrlError } from './lib/authUrl.js';
 import { dateOnly, formatDate, monthRange, todayStr } from './lib/date.js';
@@ -129,7 +129,7 @@ export function App() {
   const [authMsg, setAuthMsg] = React.useState(null);
   const [authLoading, setAuthLoading] = React.useState('');
 
-  const [selectedBus, setSelectedBus] = React.useState('bus9');
+  const [selectedBus, setSelectedBus] = React.useState(DEFAULT_RENTAL_BUS_ID);
   const [rentalViewMonth, setRentalViewMonth] = React.useState(new Date());
   const [rentalRangeStart, setRentalRangeStart] = React.useState(null);
   const [rentalRangeEnd, setRentalRangeEnd] = React.useState(null);

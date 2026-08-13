@@ -42,7 +42,7 @@ export const LANDING_PAGES = {
       'Wynajem busa z kierowcą Jarosław jest dobrym rozwiązaniem przy wyjazdach rodzinnych, delegacjach, transferach lotniskowych i przejazdach na wydarzenia.'
     ],
     audience: ['rodziny i grupy znajomych', 'firmy planujące delegacje lub transfery', 'osoby szukające busa z kierowcą na trasę indywidualną'],
-    steps: ['wybierz pojazd i termin w kalendarzu', 'opisz trasę oraz liczbę pasażerów', 'wyślij zapytanie i poczekaj na potwierdzenie dostępności'],
+    steps: ['sprawdź dostępny bus i termin w kalendarzu', 'opisz trasę oraz liczbę pasażerów', 'wyślij zapytanie i poczekaj na potwierdzenie dostępności'],
     area: 'Najczęściej obsługiwany obszar to Jarosław, okolice Jarosławia, Przeworsk, Przemyśl, Rzeszów i Podkarpacie.',
     links: [
       ['Formularz wynajmu busa', '/rental'],
@@ -52,7 +52,7 @@ export const LANDING_PAGES = {
     faq: [
       ['Czy wynajem busa wymaga logowania?', 'Nie, zapytanie o wynajem busa możesz wysłać bez logowania.'],
       ['Czy można wynająć busa z kierowcą?', 'Tak, wynajem busa z kierowcą jest ustalany indywidualnie na podstawie trasy, terminu i liczby pasażerów.'],
-      ['Czy kalendarz pokazuje zajęte terminy?', 'Tak, formularz korzysta z kalendarza dostępności i pokazuje blokady dla wybranego pojazdu.'],
+      ['Czy kalendarz pokazuje zajęte terminy?', 'Tak, formularz korzysta z kalendarza dostępności i pokazuje blokady dla dostępnego busa.'],
       ['Czy obsługiwane są trasy poza Podkarpaciem?', 'Tak, trasy indywidualne są możliwe po wcześniejszym kontakcie i wycenie.']
     ]
   },

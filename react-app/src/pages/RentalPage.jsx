@@ -7,7 +7,7 @@ import { Message } from '../components/Message.jsx';
 import { TurnstileWidget } from '../components/TurnstileWidget.jsx';
 import { Weekdays } from '../components/Weekdays.jsx';
 import { MONTHS } from '../data/constants.js';
-import { BUS_DETAILS, busIdFromLabel } from '../data/vehicles.js';
+import { BUS_DETAILS, DEFAULT_RENTAL_BUS_ID, RENTAL_BUS_DETAILS, busIdFromLabel } from '../data/vehicles.js';
 import { daysInclusive, formatDate, monthRange, todayStr } from '../lib/date.js';
 
 function blockStart(block) {
@@ -62,26 +62,32 @@ export function RentalPage(props) {
     onTurnstileVerify,
     turnstileResetKey
   } = props;
-  const bus = BUS_DETAILS[selectedBus];
+  const visibleBusEntries = Object.entries(RENTAL_BUS_DETAILS);
+  const selectedRentalBus = RENTAL_BUS_DETAILS[selectedBus] ? selectedBus : DEFAULT_RENTAL_BUS_ID;
+  const bus = RENTAL_BUS_DETAILS[selectedRentalBus] || BUS_DETAILS[selectedRentalBus] || BUS_DETAILS[DEFAULT_RENTAL_BUS_ID];
   const rangeText = selectedRangeText(rentalRangeStart, rentalRangeEnd);
   const rentalDays = daysInclusive(rentalRangeStart, rentalRangeEnd);
-  const submitDisabled = rentalSubmitting || !selectedBus || !rentalRangeStart || !rentalRangeEnd || Boolean(rentalRangeError);
+  const submitDisabled = rentalSubmitting || !selectedRentalBus || !rentalRangeStart || !rentalRangeEnd || Boolean(rentalRangeError);
+
+  React.useEffect(() => {
+    if (selectedBus !== selectedRentalBus) setSelectedBus(selectedRentalBus);
+  }, [selectedBus, selectedRentalBus, setSelectedBus]);
 
   return (
     <div className="page active">
-      <Hero title="Wynajem busa w Jarosławiu i na Podkarpaciu" text="Wybierz pojazd, zakres dat i wyślij zapytanie o wynajem bez logowania." />
+      <Hero title="Wynajem busa w Jarosławiu i na Podkarpaciu" text="Sprawdź dostępny bus, zakres dat i wyślij zapytanie o wynajem bez logowania." />
       <section className="section">
         <div className="seo-panel mb">
           <h2>Bus do wynajęcia Jarosław i okolice</h2>
-          <p>Wynajem busa Jarosław i wynajem busa Podkarpacie to rozwiązanie dla wyjazdów rodzinnych, firmowych oraz transportu grupowego po wcześniejszym ustaleniu szczegółów. Wybierz bus do wynajęcia, zaznacz termin i wyślij zapytanie.</p>
+          <p>Wynajem busa Jarosław i wynajem busa Podkarpacie to rozwiązanie dla wyjazdów rodzinnych, firmowych oraz transportu grupowego po wcześniejszym ustaleniu szczegółów. Sprawdź dostępny bus do wynajęcia, zaznacz termin i wyślij zapytanie.</p>
           <p>Obsługujemy zapytania z Jarosławia, okolic Jarosławia, Przeworska, Przemyśla i Rzeszowa. Trasy indywidualne oraz dłuższe przejazdy ustalamy telefonicznie.</p>
           <div className="seo-text-actions"><Link className="btn-outline" to="/contact">Kontakt w sprawie wynajmu</Link></div>
         </div>
         <div className="split-layout">
           <div>
             <div className="fleet-grid">
-              {Object.entries(BUS_DETAILS).map(([id, item]) => (
-                <article className={`fleet-card ${selectedBus === id ? 'selected' : ''}`} key={id}>
+              {visibleBusEntries.map(([id, item]) => (
+                <article className={`fleet-card ${selectedRentalBus === id ? 'selected' : ''}`} key={id}>
                   <div className="fleet-image-wrap">
                     <img src={item.image} alt={`${item.name} - wynajem busa w Jarosławiu`} />
                     <span className="fleet-photo-count">{photoCountLabel(item.photos?.length || 1)}</span>
@@ -90,13 +96,13 @@ export function RentalPage(props) {
                     <h3>{item.name}</h3>
                     <p className="muted">{item.description}</p>
                     <div className="fleet-meta">{item.features.slice(0, 3).map((feature) => <span className="pill" key={feature}>{feature}</span>)}</div>
-                    <button className="btn-outline fleet-select-btn" onClick={() => setSelectedBus(id)} type="button" aria-pressed={selectedBus === id}>{selectedBus === id ? 'Wybrany bus' : 'Wybierz busa'}</button>
+                    <button className="btn-outline fleet-select-btn" onClick={() => setSelectedBus(id)} type="button" aria-pressed={selectedRentalBus === id}>{selectedRentalBus === id ? 'Wybrany bus' : 'Wybierz busa'}</button>
                   </div>
                 </article>
               ))}
             </div>
             <Card title={`Galeria pojazdu: ${bus.name}`} className="vehicle-gallery-card mt">
-              <VehicleGallery bus={bus} busId={selectedBus} />
+              <VehicleGallery bus={bus} busId={selectedRentalBus} />
             </Card>
             <Card title="Cennik orientacyjny" className="mt">
               <table className="price-table">
@@ -131,7 +137,7 @@ export function RentalPage(props) {
               <p className="form-help">W razie pytań możesz też zadzwonić: <a href={contactPhoneHref}>{contactPhone}</a>.</p>
               <Message message={rentalMsg} />
               <form onSubmit={submitRentalRequest}>
-                <div className="fg"><label>Wybrany bus</label><select value={BUS_DETAILS[selectedBus].selectLabel} onChange={(e) => setSelectedBus(busIdFromLabel(e.target.value))}>{Object.values(BUS_DETAILS).map((item) => <option key={item.name}>{item.selectLabel}</option>)}</select></div>
+                <div className="fg"><label>Wybrany bus</label><select value={bus.selectLabel} onChange={(e) => setSelectedBus(busIdFromLabel(e.target.value, RENTAL_BUS_DETAILS))}>{Object.values(RENTAL_BUS_DETAILS).map((item) => <option key={item.name}>{item.selectLabel}</option>)}</select></div>
                 <div className="fg2"><div className="fg"><label>Data od</label><input type="date" value={rentalRangeStart || ''} min={todayStr()} onChange={(e) => setRentalRange(e.target.value, rentalRangeEnd || e.target.value)} /></div><div className="fg"><label>Data do</label><input type="date" value={rentalRangeEnd || ''} min={rentalRangeStart || todayStr()} onChange={(e) => setRentalRange(rentalRangeStart || e.target.value, e.target.value)} /></div></div>
                 <div className="fg"><label>Wybrany termin</label><input type="text" value={rangeText ? `Wybrany termin: ${rangeText}` : ''} placeholder="Wybierz początek i koniec w kalendarzu" readOnly /></div>
                 <div className="fg"><label>Liczba dni</label><input type="text" value={rentalDays ? `${rentalDays} ${rentalDays === 1 ? 'dzień' : 'dni'}` : ''} placeholder="-" readOnly /></div>

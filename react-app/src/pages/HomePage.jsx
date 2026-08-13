@@ -1,19 +1,19 @@
 export function HomePage({ showPage, currentUser, contactEmail, contactPhone, contactPhoneHref }) {
   const services = [
-    ['01', 'Wynajem busów', 'Busy dla rodzin, firm, ekip i grup wyjazdowych w okolicach Jarosławia, Przeworska i Rzeszowa.', 'Sprawdź dostępność', '/rental'],
+    ['01', 'Wynajem busa', 'Bus dla rodzin, firm, ekip i grup wyjazdowych w okolicach Jarosławia, Przeworska i Rzeszowa.', 'Sprawdź dostępność', '/rental'],
     ['02', 'Przejazdy Jarosław-Wiedeń', 'Regularne kursy z rezerwacją miejsc online i podglądem dostępnych terminów w kalendarzu.', 'Zarezerwuj miejsce', '/booking'],
     ['03', 'Transport lawetą', 'Przewóz samochodów i motocykli na trasie Polska-Austria, także przy okazji regularnych wyjazdów.', 'Zamów wycenę', '/tow']
   ];
 
   const trustBadges = [
     ['Przejazdy', '/booking'],
-    ['Wynajem busów', '/rental'],
+    ['Wynajem busa', '/rental'],
     ['Transport lawetą', '/tow'],
     ['Kontakt', '/contact']
   ];
   const trustItems = [
     ['Regularne kursy Jarosław-Wiedeń', 'Stałe kierunki i przejrzyste terminy w kalendarzu.'],
-    ['Komfortowe busy', 'Pojazdy przygotowane pod trasy rodzinne, firmowe i międzynarodowe.'],
+    ['Komfortowy bus', 'Pojazd przygotowany pod trasy rodzinne, firmowe i międzynarodowe.'],
     ['Jasne terminy i dostępność', 'Widzisz dostępne dni oraz wolne miejsca przed wysłaniem rezerwacji.'],
     ['Kontakt bez pośredników', 'Zapytanie trafia bezpośrednio do firmy, bez zbędnych kroków.']
   ];

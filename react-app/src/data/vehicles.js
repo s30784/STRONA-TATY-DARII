@@ -3,13 +3,14 @@ const VOLKSWAGEN_CARAVELLE_COVER = 'https://assets.volkswagen.com/is/image/volks
 
 export const BUS_DETAILS = {
   bus9: {
-    name: 'Mercedes-Benz Vito',
-    selectLabel: 'Mercedes-Benz Vito',
+    name: 'Mercedes Vito 2024',
+    selectLabel: 'Mercedes Vito 2024',
+    rentalVisible: true,
     image: MERCEDES_VITO_COVER,
     photos: [
       {
         src: MERCEDES_VITO_COVER,
-        alt: 'Mercedes-Benz Vito z zewnątrz',
+        alt: 'Mercedes Vito 2024 z zewnątrz',
         label: 'Widok zewnętrzny'
       },
       {
@@ -23,12 +24,13 @@ export const BUS_DETAILS = {
         label: 'Kokpit'
       }
     ],
-    description: 'Nowoczesny bus do wyjazdów lokalnych, rodzinnych i pracowniczych. Dobry wybór na wesela, lotniska i jednodniowe trasy.',
-    features: ['9 miejsc z kierowcą', 'klimatyzacja', 'przestrzeń na bagaż', 'wynajem z kierowcą lub według ustaleń']
+    description: 'Nowoczesny Mercedes Vito 2024 z automatem 9G-tronic, wygodnymi fotelami z V-klasy i dużym bagażnikiem. Dobrze sprawdza się przy wyjazdach rodzinnych, firmowych, transferach i trasach indywidualnych.',
+    features: ['2.0 CDI', 'skrzynia automatyczna 9G-tronic', '164 KM', '8 miejsc z kierowcą', 'fotele z V-klasy z systemem szyn przesuwnych i regulacją oparć', 'prawo jazdy kat. B', 'Android Auto + nawigacja', 'duży bagażnik', 'klimatyzacja przód / tył', 'kamera cofania']
   },
   bus8: {
     name: 'Volkswagen Caravelle',
     selectLabel: 'Volkswagen Caravelle',
+    rentalVisible: false,
     image: VOLKSWAGEN_CARAVELLE_COVER,
     photos: [
       {
@@ -52,6 +54,12 @@ export const BUS_DETAILS = {
   }
 };
 
-export function busIdFromLabel(label) {
-  return Object.keys(BUS_DETAILS).find((id) => BUS_DETAILS[id].selectLabel === label) || 'bus9';
+export const RENTAL_BUS_DETAILS = Object.fromEntries(
+  Object.entries(BUS_DETAILS).filter(([, bus]) => bus.rentalVisible !== false)
+);
+
+export const DEFAULT_RENTAL_BUS_ID = Object.keys(RENTAL_BUS_DETAILS)[0] || 'bus9';
+
+export function busIdFromLabel(label, busDetails = BUS_DETAILS) {
+  return Object.keys(busDetails).find((id) => busDetails[id].selectLabel === label) || DEFAULT_RENTAL_BUS_ID;
 }

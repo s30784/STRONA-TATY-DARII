@@ -168,6 +168,7 @@ function blockRangeLabel(block) {
 }
 
 function AdminRentalBlocks({ adminBlockViewMonth, setAdminBlockViewMonth, selectedAdminBus, setSelectedAdminBus, blocks, adminBlockMsg, loading, adminBlockSubmitting, adminBlockActionId, addBlock, deactivateBlock }) {
+  const adminBusEntries = Object.entries(BUS_DETAILS);
   const range = monthRange(adminBlockViewMonth);
   const firstDay = new Date(range.year, range.month, 1).getDay();
   const startOffset = (firstDay + 6) % 7;
@@ -186,7 +187,7 @@ function AdminRentalBlocks({ adminBlockViewMonth, setAdminBlockViewMonth, select
     <>
       <div className="admin-calendar-section">
       <div className="admin-month-ctrl"><button className="month-btn" onClick={() => setAdminBlockViewMonth(new Date(range.year, range.month - 1, 1))} type="button">‹</button><span>{MONTHS[range.month]} {range.year}</span><button className="month-btn" onClick={() => setAdminBlockViewMonth(new Date(range.year, range.month + 1, 1))} type="button">›</button></div>
-      <div className="route-switch"><button className={selectedAdminBus === 'bus9' ? 'active' : ''} onClick={() => setSelectedAdminBus('bus9')} type="button">{BUS_DETAILS.bus9.name}</button><button className={selectedAdminBus === 'bus8' ? 'active' : ''} onClick={() => setSelectedAdminBus('bus8')} type="button">{BUS_DETAILS.bus8.name}</button></div>
+      <div className="route-switch">{adminBusEntries.map(([id, bus]) => <button className={selectedAdminBus === id ? 'active' : ''} key={id} onClick={() => setSelectedAdminBus(id)} type="button">{bus.name}</button>)}</div>
       {loading ? <div className="loading-box">Ładuję blokady wynajmu...</div> : null}
       <Weekdays />
       <div className="calendar-grid">{cells}</div>
@@ -202,7 +203,7 @@ function AdminRentalBlocks({ adminBlockViewMonth, setAdminBlockViewMonth, select
         <button className="btn-primary" type="submit" disabled={adminBlockSubmitting}>{adminBlockSubmitting ? 'Zapisuję...' : 'Dodaj blokadę'}</button>
       </form>
       <div className="admin-list-block">
-        <p className="admin-route-title">Aktywne blokady: {BUS_DETAILS[selectedAdminBus].name}</p>
+        <p className="admin-route-title">Aktywne blokady: {BUS_DETAILS[selectedAdminBus]?.name || selectedAdminBus}</p>
         {!blocks.length ? <p className="muted">Brak blokad w tym miesiącu.</p> : null}
         {blocks.map((block) => (
           <div className="res-card" key={block.id}>

@@ -18,7 +18,7 @@ const PUBLIC_SEO = {
   },
   '/rental': {
     title: 'Wynajem busa Jarosław | Busy Jarosław',
-    description: 'Wynajem busa w Jarosławiu i na Podkarpaciu. Busy na wyjazdy rodzinne, firmowe, transfery, delegacje i trasy indywidualne.'
+    description: 'Wynajem busa w Jarosławiu i na Podkarpaciu. Bus na wyjazdy rodzinne, firmowe, transfery, delegacje i trasy indywidualne.'
   },
   '/tow': {
     title: 'Laweta Jarosław | Transport pojazdów i pomoc drogowa',
