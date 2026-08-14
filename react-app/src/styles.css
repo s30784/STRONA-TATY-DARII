@@ -417,11 +417,13 @@ img {
   padding: 72px 24px 78px;
   overflow: hidden;
   background-image:
-    radial-gradient(circle at 76% 24%, rgba(238, 43, 71, 0.28), transparent 27%),
-    linear-gradient(105deg, rgba(17, 24, 39, 0.96) 0%, rgba(44, 46, 62, 0.88) 44%, rgba(44, 46, 62, 0.48) 68%, rgba(17, 24, 39, 0.2) 100%),
-    url("/images/vehicles/vito/vito-2024-bok.jpg");
-  background-position: center right;
+    radial-gradient(circle at 82% 26%, rgba(238, 43, 71, 0.24), transparent 28%),
+    linear-gradient(105deg, rgba(17, 24, 39, 0.97) 0%, rgba(44, 46, 62, 0.9) 43%, rgba(44, 46, 62, 0.54) 66%, rgba(17, 24, 39, 0.22) 100%),
+    linear-gradient(180deg, rgba(17, 24, 39, 0.08), rgba(17, 24, 39, 0.18)),
+    url("/images/hero/home-fleet-hero.jpg");
+  background-position: center center;
   background-size: cover;
+  background-color: #171B27;
 }
 
 .home-hero::after {
@@ -2598,9 +2600,11 @@ form .btn-primary,
     min-height: 500px;
     padding: 54px 20px 58px;
     background-image:
-      radial-gradient(circle at 74% 16%, rgba(238, 43, 71, 0.2), transparent 30%),
-      linear-gradient(90deg, rgba(17, 24, 39, 0.96), rgba(44, 46, 62, 0.84)),
-      url("/images/vehicles/vito/vito-2024-bok.jpg");
+      radial-gradient(circle at 76% 18%, rgba(238, 43, 71, 0.18), transparent 30%),
+      linear-gradient(90deg, rgba(17, 24, 39, 0.97), rgba(44, 46, 62, 0.86)),
+      linear-gradient(180deg, rgba(17, 24, 39, 0.1), rgba(17, 24, 39, 0.18)),
+      url("/images/hero/home-fleet-hero.jpg");
+    background-position: 58% center;
   }
 
   .home-hero-inner,
@@ -2728,6 +2732,7 @@ form .btn-primary,
   .home-hero {
     min-height: auto;
     padding: 42px 16px 46px;
+    background-position: 61% center;
   }
 
   .landing-hero {
