@@ -45,7 +45,7 @@ function photoCountLabel(count) {
 const RENTAL_PRICE_ITEMS = [
   { label: 'Do 4 godzin', value: 'od 200 zł' },
   { label: 'Doba', value: 'od 330 zł', highlighted: true },
-  { label: 'Weekend', value: 'od 850 zł', highlighted: true },
+  { label: 'Weekend', value: 'od 800 zł', highlighted: true },
   { label: 'Powyżej 3 dni', value: 'od 300 zł / doba' },
   { label: 'Powyżej 7 dni', value: 'wycena indywidualna' },
   { label: 'Wynajem z kierowcą', value: 'wycena indywidualna' },

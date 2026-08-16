@@ -1277,7 +1277,7 @@ aside .card:last-child {
 }
 
 .rental-price-row.highlighted {
-  background: rgba(238, 43, 71, 0.045);
+  background: #F4F5F7;
 }
 
 .rental-price-label {
@@ -1297,7 +1297,7 @@ aside .card:last-child {
 }
 
 .rental-price-row.highlighted .rental-price-value {
-  color: var(--accent-dark);
+  color: var(--ink);
 }
 
 .rental-price-note {
