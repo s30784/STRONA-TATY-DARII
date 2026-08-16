@@ -1249,28 +1249,68 @@ aside .card:last-child {
   color: #FFFFFF;
 }
 
-.price-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.price-table th,
-.price-table td {
-  padding: 13px 0;
-  border-bottom: 1px solid var(--line);
-  text-align: left;
-}
-
-.price-table th {
+.rental-price-intro {
+  margin: -2px 0 14px;
   color: var(--muted);
-  font-size: 13px;
-  text-transform: uppercase;
+  font-size: 14px;
+  line-height: 1.58;
 }
 
-.price-table td:last-child,
-.price-table th:last-child {
+.rental-price-list {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: linear-gradient(180deg, #FFFFFF 0%, #FAFAFB 100%);
+}
+
+.rental-price-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  gap: 16px;
+  align-items: center;
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--line);
+}
+
+.rental-price-row:last-child {
+  border-bottom: 0;
+}
+
+.rental-price-row.highlighted {
+  background: rgba(238, 43, 71, 0.045);
+}
+
+.rental-price-label {
+  min-width: 0;
+  color: var(--ink-soft);
+  font-weight: 740;
+  line-height: 1.35;
+}
+
+.rental-price-value {
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 850;
+  line-height: 1.35;
   text-align: right;
-  font-weight: 800;
+  white-space: nowrap;
+}
+
+.rental-price-row.highlighted .rental-price-value {
+  color: var(--accent-dark);
+}
+
+.rental-price-note {
+  display: grid;
+  gap: 6px;
+  margin-top: 12px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.rental-price-note p {
+  margin: 0;
 }
 
 .mini-list {
@@ -2830,6 +2870,17 @@ form .btn-primary,
   .fleet-card-body,
   .card {
     padding: 18px;
+  }
+
+  .rental-price-row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 11px 12px;
+  }
+
+  .rental-price-value {
+    text-align: left;
+    white-space: normal;
   }
 
   .fleet-grid {

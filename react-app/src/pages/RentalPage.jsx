@@ -41,6 +41,17 @@ function photoCountLabel(count) {
   return `${count} zdjęć`;
 }
 
+// TODO: docelowo przenieść cennik wynajmu do Supabase i edytować z panelu admina.
+const RENTAL_PRICE_ITEMS = [
+  { label: 'Do 4 godzin', value: 'od 200 zł' },
+  { label: 'Doba', value: 'od 330 zł', highlighted: true },
+  { label: 'Weekend', value: 'od 850 zł', highlighted: true },
+  { label: 'Powyżej 3 dni', value: 'od 300 zł / doba' },
+  { label: 'Powyżej 7 dni', value: 'wycena indywidualna' },
+  { label: 'Wynajem z kierowcą', value: 'wycena indywidualna' },
+  { label: 'Transfer lotniskowy', value: 'wycena po trasie' },
+];
+
 export function RentalPage(props) {
   const {
     selectedBus,
@@ -105,15 +116,19 @@ export function RentalPage(props) {
               <VehicleGallery bus={bus} busId={selectedRentalBus} />
             </Card>
             <Card title="Cennik orientacyjny" className="mt">
-              <table className="price-table">
-                <thead><tr><th>Usługa</th><th>Cena od</th></tr></thead>
-                <tbody>
-                  <tr><td>Wynajem do 24h</td><td>350 zł</td></tr>
-                  <tr><td>Weekend</td><td>850 zł</td></tr>
-                  <tr><td>Dłuższa trasa z kierowcą</td><td>wycena indywidualna</td></tr>
-                  <tr><td>Transfer lotniskowy</td><td>wycena po trasie</td></tr>
-                </tbody>
-              </table>
+              <p className="rental-price-intro">Ceny startowe dla wynajmu Mercedesa Vito 2024. Szczegóły ustalamy indywidualnie przy rezerwacji.</p>
+              <div className="rental-price-list">
+                {RENTAL_PRICE_ITEMS.map((item) => (
+                  <div className={`rental-price-row ${item.highlighted ? 'highlighted' : ''}`} key={item.label}>
+                    <span className="rental-price-label">{item.label}</span>
+                    <strong className="rental-price-value">{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <div className="rental-price-note">
+                <p>Podane ceny są orientacyjne i dotyczą wynajmu bez kierowcy. Ostateczna kwota zależy od terminu, długości wynajmu, trasy oraz ustalonego limitu kilometrów.</p>
+                <p>Wyjazdy zagraniczne, dłuższe trasy oraz wynajem z kierowcą wyceniamy indywidualnie.</p>
+              </div>
             </Card>
           </div>
           <aside>
