@@ -6,6 +6,15 @@ import { Message } from '../components/Message.jsx';
 import { TurnstileWidget } from '../components/TurnstileWidget.jsx';
 import { TOW_VEHICLES } from '../data/towVehicles.js';
 
+// TODO: docelowo przenieść cennik lawet do Supabase i edytować z panelu admina.
+const TOW_RENTAL_PRICE_ITEMS = [
+  { label: 'Mniejsza laweta / krótki wynajem', value: 'od 80 zł' },
+  { label: 'Laweta samochodowa', value: 'od 120 zł / doba', highlighted: true },
+  { label: 'Dłuższy wynajem', value: 'wycena indywidualna' },
+  { label: 'Transport pojazdu z kierowcą', value: 'wycena indywidualna' },
+  { label: 'Pomoc drogowa / odbiór auta z trasy', value: 'wycena indywidualna' },
+];
+
 export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, contactPhone, contactPhoneHref, onTurnstileVerify, turnstileResetKey }) {
   return (
     <div className="page active">
@@ -14,7 +23,8 @@ export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, 
         <div className="seo-panel mb">
           <h2>Laweta Jarosław, Podkarpacie i trasy Polska-Austria</h2>
           <p>Laweta Jarosław obejmuje transport pojazdów, transport maszyn oraz transport wybranych towarów po wcześniejszym potwierdzeniu możliwości przewozu. Opisz ładunek w formularzu, podaj miejsce odbioru i dostawy, a wrócimy z potwierdzeniem szczegółów.</p>
-          <p>Przyjmujemy zapytania z Jarosławia i okolic oraz z terenu Podkarpacia. Trasy indywidualne, w tym kierunek Wiedeń i Austria, ustalamy osobno.</p>
+          <p>Przyjmujemy zapytania o transport pojazdów z Jarosławia, Przemyśla, Przeworska i innych miejscowości na Podkarpaciu. Realizujemy przewóz samochodów, motocykli oraz wybranych większych rzeczy po wcześniejszym ustaleniu szczegółów trasy, załadunku i wyceny.</p>
+          <p>Transport z kierowcą, pomoc drogowa, odbiór auta z trasy oraz przewóz niestandardowych ładunków wyceniamy indywidualnie.</p>
           <div className="seo-text-actions"><Link className="btn-outline" to="/contact">Kontakt w sprawie lawety</Link></div>
         </div>
         <div className="split-layout">
@@ -38,7 +48,22 @@ export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, 
                 ))}
               </div>
             </section>
-            <Card title="Co można zamówić"><p className="form-help">Realizujemy transport pojazdów, maszyn i wybranych towarów. Opisz ładunek w formularzu, a potwierdzimy możliwość transportu.</p><ul className="mini-list"><li>przewóz auta z Polski do Austrii albo z Austrii do Polski</li><li>transport pojazdu niesprawnego po awarii lub kolizji</li><li>odbiór pojazdu z adresu, parkingu, warsztatu albo komisu</li><li>dostarczenie pod wskazany adres na trasie przejazdu</li></ul></Card>
+            <Card title="Cennik orientacyjny wynajmu lawety" className="mt">
+              <p className="rental-price-intro">Ceny startowe dla wynajmu lawety. Ostateczna kwota zależy od rodzaju lawety, terminu i długości wynajmu.</p>
+              <div className="rental-price-list">
+                {TOW_RENTAL_PRICE_ITEMS.map((item) => (
+                  <div className={`rental-price-row ${item.highlighted ? 'highlighted' : ''}`} key={item.label}>
+                    <span className="rental-price-label">{item.label}</span>
+                    <strong className="rental-price-value">{item.value}</strong>
+                  </div>
+                ))}
+              </div>
+              <div className="rental-price-note">
+                <p>Podane ceny dotyczą samego wynajmu lawety. Transport pojazdu z kierowcą, pomoc drogowa, załadunek oraz dłuższe trasy wyceniamy indywidualnie.</p>
+                <p>Ostateczna cena zależy od rodzaju lawety, terminu i długości wynajmu.</p>
+              </div>
+            </Card>
+            <Card title="Co można zamówić"><p className="form-help">Realizujemy transport pojazdów, maszyn i wybranych większych rzeczy. Opisz ładunek w formularzu, a potwierdzimy możliwość transportu.</p><ul className="mini-list"><li>przewóz auta z Polski do Austrii albo z Austrii do Polski</li><li>transport pojazdu niesprawnego po awarii lub kolizji</li><li>odbiór pojazdu z adresu, parkingu, warsztatu albo komisu</li><li>transport większych rzeczy po potwierdzeniu wymiarów i możliwości załadunku</li><li>dostarczenie pod wskazany adres na trasie przejazdu</li></ul></Card>
           </div>
           <aside>
             <Card title="Szybka wycena lawety">
@@ -51,7 +76,7 @@ export function TowPage({ towMsg, submitTowRequest, towSubmitting, currentUser, 
                 <div className="fg"><label>Dokąd zawieźć</label><input name="to" placeholder="Adres lub miejscowość dostawy" /></div>
                 <div className="fg2"><div className="fg"><label>Preferowany termin</label><input type="date" name="date" /></div><div className="fg"><label>Czy pojazd odpala</label><select name="vehicle_runs"><option value="">Nie wiem / nie dotyczy</option><option>Tak</option><option>Nie</option><option>Nie wiem</option></select></div></div>
                 <div className="fg"><label>Czy pojazd ma koła</label><select name="vehicle_has_wheels"><option value="">Nie wiem / nie dotyczy</option><option>Tak</option><option>Nie</option><option>Nie wiem</option></select></div>
-                <div className="fg"><label>Dodatkowa wiadomość</label><textarea name="notes" rows="3" placeholder="Stan, utrudniony dojazd, godziny albo inne szczegóły"></textarea></div>
+                <div className="fg"><label>Dodatkowa wiadomość</label><textarea name="notes" rows="3" placeholder="Opisz, czy chodzi o wynajem lawety, transport pojazdu z kierowcą czy pomoc drogową."></textarea></div>
                 <TurnstileWidget onVerify={onTurnstileVerify} resetKey={turnstileResetKey} />
                 <button className="btn-primary" type="submit" disabled={towSubmitting}>{towSubmitting ? 'Zapisuję zapytanie...' : 'Przygotuj zapytanie'}</button>
               </form>

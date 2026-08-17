@@ -1,8 +1,8 @@
 export function HomePage({ showPage, currentUser, contactEmail, contactPhone, contactPhoneHref }) {
   const services = [
-    ['01', 'Wynajem busa', 'Bus dla rodzin, firm, ekip i grup wyjazdowych w okolicach Jarosławia, Przeworska i Rzeszowa.', 'Sprawdź dostępność', '/rental'],
-    ['02', 'Przejazdy Jarosław-Wiedeń', 'Regularne kursy z rezerwacją miejsc online i podglądem dostępnych terminów w kalendarzu.', 'Zarezerwuj miejsce', '/booking'],
-    ['03', 'Transport lawetą', 'Przewóz samochodów i motocykli na trasie Polska-Austria, także przy okazji regularnych wyjazdów.', 'Zamów wycenę', '/tow']
+    ['01', 'Wynajem busa', 'Bus dla rodzin, firm, ekip i grup wyjazdowych w okolicach Jarosławia, Przeworska i Rzeszowa, także przy trasach z większym bagażem.', 'Sprawdź dostępność', '/rental'],
+    ['02', 'Przejazdy Jarosław-Wiedeń', 'Przewóz osób z Jarosławia, Przemyśla, Przeworska i okolic do Wiednia z rezerwacją miejsc online.', 'Zarezerwuj miejsce', '/booking'],
+    ['03', 'Transport lawetą', 'Laweta i transport pojazdów Podkarpacie: przewóz samochodów, motocykli oraz wybranych większych rzeczy po ustaleniu szczegółów.', 'Zamów wycenę', '/tow']
   ];
 
   const trustBadges = [
@@ -23,7 +23,7 @@ export function HomePage({ showPage, currentUser, contactEmail, contactPhone, co
       <section className="home-hero">
         <div className="home-hero-inner">
           <h1>Transport z Jarosławia i Podkarpacia</h1>
-          <p>Przejazdy Jarosław-Wiedeń, wynajem busa w okolicach Jarosławia oraz laweta i transport pojazdów na trasach Polska-Austria.</p>
+          <p>Przejazdy i transport do Wiednia z Jarosławia, Przemyśla, Przeworska i Podkarpacia, wynajem busa oraz laweta i transport pojazdów.</p>
           <div className="trust-badges" aria-label="Najważniejsze usługi">
             {trustBadges.map(([badge, page]) => <button className="trust-badge" key={badge} onClick={() => showPage(page)} type="button">{badge}</button>)}
           </div>
@@ -64,23 +64,23 @@ export function HomePage({ showPage, currentUser, contactEmail, contactPhone, co
       <section className="section seo-section">
         <div className="seo-panel">
           <h2>Usługi transportowe Jarosław, Podkarpacie i Austria</h2>
-          <p>Obsługujemy klientów z Jarosławia i okolic oraz realizujemy usługi na terenie Podkarpacia. W sprawie tras indywidualnych, przejazdu do Austrii albo transportu pojazdu najlepiej skontaktować się telefonicznie i ustalić szczegóły.</p>
+          <p>Busy Jarosław obsługuje przejazdy i transport na trasach z Jarosławia, Przemyśla, Przeworska i okolic w kierunku Wiednia. Oprócz przewozu osób oferujemy wynajem busa, wynajem lawety, transport pojazdów oraz wybranych większych rzeczy po indywidualnym ustaleniu szczegółów.</p>
           <div className="seo-copy-grid">
             <article>
               <h3>Przewóz osób Jarosław - Wiedeń</h3>
-              <p>Regularne przejazdy busem na trasie Jarosław - Wiedeń i Wiedeń - Jarosław mają widoczne terminy, cenę oraz wolne miejsca w kalendarzu rezerwacji.</p>
+              <p>Regularne przejazdy busem na trasie Jarosław - Wiedeń i Wiedeń - Jarosław mają widoczne terminy, cenę oraz wolne miejsca w kalendarzu rezerwacji. Przyjmujemy też zapytania z Przemyśla, Przeworska i okolic.</p>
             </article>
             <article>
               <h3>Wynajem busa</h3>
-              <p>Wynajem busa sprawdza się przy wyjazdach rodzinnych, firmowych i grupowych. Formularz pozwala wybrać termin i wysłać zapytanie o dostępność.</p>
+              <p>Wynajem busa sprawdza się przy wyjazdach rodzinnych, firmowych i grupowych, również gdy trasa wymaga miejsca na większy bagaż. Formularz pozwala wybrać termin i wysłać zapytanie o dostępność.</p>
             </article>
             <article>
               <h3>Laweta i transport</h3>
-              <p>Laweta obejmuje transport pojazdów, maszyn oraz wybranych towarów. Opisz trasę i ładunek w formularzu, a potwierdzimy możliwość transportu.</p>
+              <p>Przyjmujemy zapytania o transport pojazdów z Jarosławia, Przemyśla i Przeworska. Przewóz samochodów na Podkarpaciu, motocykli oraz wybranych ładunków potwierdzamy po sprawdzeniu możliwości przewozu.</p>
             </article>
             <article>
-              <h3>Jarosław i okolice</h3>
-              <p>Oferta jest kierowana do osób z Jarosławia, Przeworska, Przemyśla, Rzeszowa i innych miejscowości Podkarpacia, po wcześniejszym ustaleniu trasy.</p>
+              <h3>Większe rzeczy</h3>
+              <p>Transport większych rzeczy i transport wybranych gabarytów traktujemy jako zapytanie indywidualne: przed przyjęciem zlecenia potwierdzamy wymiary, wagę, trasę i możliwości załadunku.</p>
             </article>
           </div>
         </div>

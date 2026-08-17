@@ -10,19 +10,19 @@ const CONTACT_PHONE_E164 = '+48663063364';
 const PUBLIC_SEO = {
   '/': {
     title: 'Busy Jarosław | Busy Jarosław Wiedeń, wynajem busa i laweta',
-    description: 'Przejazdy Jarosław Wiedeń, wynajem busa oraz laweta w Jarosławiu i na Podkarpaciu. Sprawdź ofertę Busy Jarosław i skontaktuj się z nami.'
+    description: 'Busy Jarosław oferuje przejazdy i transport do Wiednia, wynajem busa, wynajem lawety oraz transport pojazdów. Obsługujemy Jarosław, Przemyśl, Przeworsk, okolice i Podkarpacie.'
   },
   '/booking': {
     title: 'Busy Jarosław Wiedeń | Rezerwacja przejazdu',
-    description: 'Zarezerwuj przejazd na trasie Jarosław Wiedeń lub Wiedeń Jarosław. Sprawdź terminy, wolne miejsca i cenę przejazdu.'
+    description: 'Rezerwuj przejazdy i zapytania transportowe z Jarosławia, Przemyśla, Przeworska i okolic do Wiednia. Busy Jarosław obsługuje trasę Polska-Austria oraz powroty z Wiednia.'
   },
   '/rental': {
     title: 'Wynajem busa Jarosław | Busy Jarosław',
-    description: 'Wynajem busa w Jarosławiu i na Podkarpaciu. Bus na wyjazdy rodzinne, firmowe, transfery, delegacje i trasy indywidualne.'
+    description: 'Wynajem busa w Jarosławiu i na Podkarpaciu. Mercedes Vito na wyjazdy rodzinne, firmowe, transfery, delegacje i trasy z większym bagażem.'
   },
   '/tow': {
     title: 'Laweta Jarosław | Transport pojazdów i pomoc drogowa',
-    description: 'Laweta Jarosław i transport pojazdów na Podkarpaciu. Wycena transportu auta, motocykla lub wybranych towarów.'
+    description: 'Wynajem lawety, transport pojazdów, przewóz samochodów i wybranych większych rzeczy w Jarosławiu, Przemyślu, Przeworsku i okolicach. Wycena indywidualna.'
   },
   '/contact': {
     title: 'Kontakt | Busy Jarosław',
@@ -32,6 +32,7 @@ const PUBLIC_SEO = {
 };
 
 const PRIVATE_PATHS = ['/admin', '/auth', '/login', '/my-reservations', '/reset-password', '/verify-email'];
+const AREA_SERVED = ['Jarosław', 'Przemyśl', 'Przeworsk', 'Podkarpacie', 'Wiedeń', 'Austria'];
 
 function normalizeOrigin(value) {
   return String(value || FALLBACK_ORIGIN).trim().replace(/\/+$/, '') || FALLBACK_ORIGIN;
@@ -125,7 +126,7 @@ function service(name, url, serviceType) {
     name,
     serviceType,
     provider: { '@id': `${baseUrl()}/#business` },
-    areaServed: ['Jarosław', 'Podkarpacie', 'Wiedeń', 'Austria'].map(place),
+    areaServed: AREA_SERVED.map(place),
     url
   };
 }
@@ -152,10 +153,13 @@ function structuredData(contactEmail, pathname) {
   const url = `${baseUrl()}/`;
   const email = String(contactEmail || FALLBACK_CONTACT_EMAIL).trim();
   const services = [
-    service('Przewóz osób Jarosław Wiedeń', `${baseUrl()}/booking`, 'przewóz osób'),
-    service('Wynajem busa Jarosław', `${baseUrl()}/rental`, 'wynajem busa'),
-    service('Laweta Jarosław', `${baseUrl()}/tow`, 'laweta'),
-    service('Transport pojazdów Jarosław', `${baseUrl()}/tow`, 'transport pojazdów')
+    service('Transport do Wiednia', `${baseUrl()}/booking`, 'transport do Wiednia'),
+    service('Przewóz osób do Wiednia', `${baseUrl()}/booking`, 'przewóz osób do Wiednia'),
+    service('Transport pojazdów', `${baseUrl()}/transport-pojazdow-jaroslaw`, 'transport pojazdów'),
+    service('Przewóz samochodów', `${baseUrl()}/transport-pojazdow-jaroslaw`, 'przewóz samochodów'),
+    service('Transport wybranych większych rzeczy', `${baseUrl()}/tow`, 'transport wybranych większych rzeczy'),
+    service('Wynajem lawety', `${baseUrl()}/tow`, 'wynajem lawety'),
+    service('Wynajem busa', `${baseUrl()}/rental`, 'wynajem busa')
   ];
   const faq = faqStructuredData(pathname);
   return {
@@ -168,8 +172,8 @@ function structuredData(contactEmail, pathname) {
         url,
         telephone: CONTACT_PHONE_E164,
         email: email || undefined,
-        areaServed: ['Jarosław', 'Podkarpacie', 'Wiedeń', 'Austria'].map(place),
-        serviceType: ['przewóz osób', 'wynajem busa', 'laweta', 'transport pojazdów'],
+        areaServed: AREA_SERVED.map(place),
+        serviceType: ['transport do Wiednia', 'przewóz osób do Wiednia', 'transport pojazdów', 'przewóz samochodów', 'transport wybranych większych rzeczy', 'wynajem lawety', 'wynajem busa'],
         hasOfferCatalog: {
           '@type': 'OfferCatalog',
           name: 'Usługi transportowe',

@@ -102,6 +102,7 @@ export function BookingPage(props) {
         <div className="seo-panel mb">
           <h2>Przewóz osób Jarosław Wiedeń</h2>
           <p>Busy Jarosław Wiedeń i Wiedeń Jarosław możesz sprawdzić w kalendarzu poniżej. Przy dostępnym kursie widać wolne miejsca, cenę przejazdu i formularz rezerwacji miejsca.</p>
+          <p>Busy Jarosław realizuje przejazdy i zapytania transportowe z Jarosławia, Przemyśla, Przeworska i okolic w kierunku Wiednia oraz powroty z Austrii do Polski. W przypadku większego bagażu, niestandardowej trasy lub przewozu wybranych rzeczy szczegóły ustalamy indywidualnie.</p>
           <p>Na trasie Jarosław - Wiedeń przystanki po stronie Polski służą do wsiadania, a wysiadanie odbywa się w Wiedniu.</p>
           <p>Jeżeli potrzebujesz przejazdu dla większej grupy albo masz pytanie o trasę, skorzystaj z formularza lub przejdź do kontaktu.</p>
           <div className="seo-text-actions"><Link className="btn-outline" to="/contact">Kontakt w sprawie przejazdu</Link></div>
@@ -173,7 +174,7 @@ export function BookingPage(props) {
                   {dropoffLocked ? <p className="form-help field-note">Na trasie Jarosław → Wiedeń wysiadanie jest możliwe tylko w Wiedniu.</p> : null}
                 </div>
               </div>
-              <div className="fg"><label>Uwagi</label><input name="notes" placeholder="np. bagaż ponadgabarytowy" /></div>
+              <div className="fg"><label>Uwagi</label><input name="notes" placeholder="np. większy bagaż albo preferowana godzina odbioru" /></div>
               <div className="booking-summary">
                 <div><span>Termin</span><strong>{formatDate(selectedBookingDate)}</strong></div>
                 <div><span>Trasa</span><strong>{routeDetails.title}</strong></div>

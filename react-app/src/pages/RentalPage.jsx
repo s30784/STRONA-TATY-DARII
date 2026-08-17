@@ -91,7 +91,7 @@ export function RentalPage(props) {
         <div className="seo-panel mb">
           <h2>Bus do wynajęcia Jarosław i okolice</h2>
           <p>Wynajem busa Jarosław i wynajem busa Podkarpacie to rozwiązanie dla wyjazdów rodzinnych, firmowych oraz transportu grupowego po wcześniejszym ustaleniu szczegółów. Sprawdź dostępny bus do wynajęcia, zaznacz termin i wyślij zapytanie.</p>
-          <p>Obsługujemy zapytania z Jarosławia, okolic Jarosławia, Przeworska, Przemyśla i Rzeszowa. Trasy indywidualne oraz dłuższe przejazdy ustalamy telefonicznie.</p>
+          <p>Mercedes Vito 2024 sprawdzi się przy wyjazdach rodzinnych, firmowych, transferach, delegacjach oraz trasach indywidualnych z większym bagażem. Obsługujemy zapytania z Jarosławia, Przemyśla, Przeworska i okolicznych miejscowości.</p>
           <div className="seo-text-actions"><Link className="btn-outline" to="/contact">Kontakt w sprawie wynajmu</Link></div>
         </div>
         <div className="split-layout">
